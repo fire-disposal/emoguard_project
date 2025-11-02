@@ -1,0 +1,222 @@
+from ninja import Router, Query
+from django.shortcuts import get_object_or_404
+from django.db.models import Avg, Count
+from django.utils import timezone
+from datetime import datetime, timedelta
+from .models import MoodJournal
+from .serializers import (
+    MoodJournalCreateSchema, MoodJournalUpdateSchema, MoodJournalResponseSchema,
+    MoodJournalListQuerySchema, MoodStatisticsSchema
+)
+from config.jwt_auth_adapter import jwt_auth
+
+journals_router = Router()
+
+@journals_router.get("/", response=list[MoodJournalResponseSchema])
+def list_journals(request, filters: MoodJournalListQuerySchema = Query(...)):
+    """
+    获取情绪日记列表，支持多种过滤条件和分页
+    """
+    queryset = MoodJournal.objects.select_related('user')
+    
+    # 用户过滤
+    if filters.user_id:
+        queryset = queryset.filter(user_id=filters.user_id)
+    
+    # 日期范围过滤
+    if filters.start_date:
+        start_datetime = datetime.fromisoformat(filters.start_date)
+        queryset = queryset.filter(record_date__gte=start_datetime)
+    
+    if filters.end_date:
+        end_datetime = datetime.fromisoformat(filters.end_date)
+        queryset = queryset.filter(record_date__lte=end_datetime)
+    
+    # 情绪名称过滤
+    if filters.mood_name:
+        queryset = queryset.filter(mood_name__icontains=filters.mood_name)
+    
+    # 分页
+    start = (filters.page - 1) * filters.page_size
+    end = start + filters.page_size
+    journals = queryset[start:end]
+    
+    return [
+        MoodJournalResponseSchema(
+            id=j.id,
+            user_id=str(j.user_id),
+            mood_score=j.mood_score,
+            mood_name=j.mood_name,
+            mood_emoji=j.mood_emoji,
+            text=j.text,
+            record_date=j.record_date.isoformat(),
+            created_at=j.created_at.isoformat(),
+            updated_at=j.updated_at.isoformat()
+        )
+        for j in journals
+    ]
+
+@journals_router.get("/{journal_id}", response=MoodJournalResponseSchema)
+def get_journal(request, journal_id: int):
+    """
+    获取单条情绪日记详情
+    """
+    journal = get_object_or_404(MoodJournal, id=journal_id)
+    return MoodJournalResponseSchema(
+        id=journal.id,
+        user_id=str(journal.user_id),
+        mood_score=journal.mood_score,
+        mood_name=journal.mood_name,
+        mood_emoji=journal.mood_emoji,
+        text=journal.text,
+        record_date=journal.record_date.isoformat(),
+        created_at=journal.created_at.isoformat(),
+        updated_at=journal.updated_at.isoformat()
+    )
+
+@journals_router.post("/", response=MoodJournalResponseSchema, auth=jwt_auth)
+def create_journal(request, data: MoodJournalCreateSchema):
+    """
+    创建情绪日记
+    """
+    # 从认证中获取当前用户
+    current_user = request.auth
+    if not current_user:
+        return {"error": "用户未认证"}
+    
+    user_id = current_user.id
+    
+    # 如果没有指定记录日期，使用当前时间
+    record_date = data.record_date if data.record_date else timezone.now()
+    if isinstance(record_date, str):
+        record_date = datetime.fromisoformat(record_date)
+    
+    journal = MoodJournal.objects.create(
+        user_id=user_id,
+        mood_score=data.mood_score,
+        mood_name=data.mood_name,
+        mood_emoji=data.mood_emoji,
+        text=data.text,
+        record_date=record_date
+    )
+    
+    return MoodJournalResponseSchema(
+        id=journal.id,
+        user_id=str(journal.user_id),
+        mood_score=journal.mood_score,
+        mood_name=journal.mood_name,
+        mood_emoji=journal.mood_emoji,
+        text=journal.text,
+        record_date=journal.record_date.isoformat(),
+        created_at=journal.created_at.isoformat(),
+        updated_at=journal.updated_at.isoformat()
+    )
+
+@journals_router.put("/{journal_id}", response=MoodJournalResponseSchema, auth=jwt_auth)
+def update_journal(request, journal_id: int, data: MoodJournalUpdateSchema):
+    """
+    更新情绪日记
+    """
+    journal = get_object_or_404(MoodJournal, id=journal_id)
+    
+    # 更新字段
+    if data.mood_score is not None:
+        journal.mood_score = data.mood_score
+    if data.mood_name is not None:
+        journal.mood_name = data.mood_name
+    if data.mood_emoji is not None:
+        journal.mood_emoji = data.mood_emoji
+    if data.text is not None:
+        journal.text = data.text
+    if data.record_date is not None:
+        journal.record_date = datetime.fromisoformat(data.record_date)
+    
+    journal.save()
+    
+    return MoodJournalResponseSchema(
+        id=journal.id,
+        user_id=str(journal.user_id),
+        mood_score=journal.mood_score,
+        mood_name=journal.mood_name,
+        mood_emoji=journal.mood_emoji,
+        text=journal.text,
+        record_date=journal.record_date.isoformat(),
+        created_at=journal.created_at.isoformat(),
+        updated_at=journal.updated_at.isoformat()
+    )
+
+@journals_router.delete("/{journal_id}", auth=jwt_auth)
+def delete_journal(request, journal_id: int):
+    """
+    删除情绪日记
+    """
+    journal = get_object_or_404(MoodJournal, id=journal_id)
+    journal.delete()
+    return {"message": "情绪日记删除成功"}
+
+@journals_router.get("/statistics/daily", response=list[MoodStatisticsSchema])
+def get_daily_statistics(request, user_id: str, days: int = Query(30)):
+    """
+    获取用户的日情绪统计
+    """
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=days)
+    
+    # 按日期分组统计
+    statistics = MoodJournal.objects.filter(
+        user_id=user_id,
+        record_date__date__gte=start_date,
+        record_date__date__lte=end_date
+    ).values('record_date__date').annotate(
+        avg_score=Avg('mood_score'),
+        mood_count=Count('id'),
+        dominant_mood=Count('mood_name')
+    ).order_by('record_date__date')
+    
+    # 获取每个日期的主要情绪
+    result = []
+    for stat in statistics:
+        # 获取该日期的主要情绪
+        dominant_mood = MoodJournal.objects.filter(
+            user_id=user_id,
+            record_date__date=stat['record_date__date']
+        ).values('mood_name').annotate(
+            count=Count('id')
+        ).order_by('-count').first()
+        
+        result.append(MoodStatisticsSchema(
+            date=stat['record_date__date'].isoformat(),
+            avg_score=round(stat['avg_score'], 2),
+            mood_count=stat['mood_count'],
+            dominant_mood=dominant_mood['mood_name'] if dominant_mood else '未知'
+        ))
+    
+    return result
+
+@journals_router.get("/trends/score", response=dict)
+def get_mood_trends(request, user_id: str, days: int = Query(30)):
+    """
+    获取用户情绪分数趋势
+    """
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=days)
+    
+    journals = MoodJournal.objects.filter(
+        user_id=user_id,
+        record_date__gte=start_date,
+        record_date__lte=end_date
+    ).order_by('record_date')
+    
+    dates = []
+    scores = []
+    
+    for journal in journals:
+        dates.append(journal.record_date.isoformat())
+        scores.append(journal.mood_score)
+    
+    return {
+        "dates": dates,
+        "scores": scores,
+        "average": sum(scores) / len(scores) if scores else 0,
+        "trend": "上升" if len(scores) > 1 and scores[-1] > scores[0] else "下降" if len(scores) > 1 else "稳定"
+    }
