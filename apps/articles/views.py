@@ -1,4 +1,5 @@
 from ninja import Router, Query
+from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from .models import Article
@@ -124,7 +125,7 @@ def delete_article(request, article_id: int):
     """
     article = get_object_or_404(Article, id=article_id)
     article.delete()
-    return {"message": "文章删除成功"}
+    return {"success": True}
 
 @articles_router.post("/{article_id}/publish")
 def publish_article(request, article_id: int):
@@ -137,7 +138,7 @@ def publish_article(request, article_id: int):
         from django.utils import timezone
         article.publish_time = timezone.now()
     article.save()
-    return {"message": "文章发布成功"}
+    return {"success": True}
 
 @articles_router.post("/{article_id}/draft")
 def draft_article(request, article_id: int):
@@ -147,4 +148,4 @@ def draft_article(request, article_id: int):
     article = get_object_or_404(Article, id=article_id)
     article.status = 'draft'
     article.save()
-    return {"message": "文章已设为草稿"}
+    return {"success": True}

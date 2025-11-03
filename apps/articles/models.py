@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Article(models.Model):
     STATUS_CHOICES = (
         ('draft', '草稿'),
@@ -8,7 +9,6 @@ class Article(models.Model):
 
     title = models.CharField(max_length=255, verbose_name="标题")
     content = models.TextField(verbose_name="内容")
-    cover_image = models.CharField(max_length=512, verbose_name="封面图片")
     publish_time = models.DateTimeField(verbose_name="发布时间")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft', verbose_name="状态")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
@@ -21,3 +21,7 @@ class Article(models.Model):
         verbose_name = "文章"
         verbose_name_plural = "文章"
         ordering = ['-publish_time']
+        indexes = [
+            models.Index(fields=['-publish_time']),
+            models.Index(fields=['status']),
+        ]

@@ -1,4 +1,5 @@
 from ninja import Router, Query
+from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from django.utils import timezone
@@ -160,7 +161,7 @@ def delete_report(request, report_id: int):
     """
     report = get_object_or_404(HealthReport, id=report_id)
     report.delete()
-    return {"message": "健康报告删除成功"}
+    return {"success": True}
 
 @reports_router.get("/summary/{user_id}", response=HealthReportSummarySchema)
 def get_user_report_summary(request, user_id: str):

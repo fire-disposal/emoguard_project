@@ -1,4 +1,5 @@
 from ninja import Router, Query
+from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg, Count
 from django.utils import timezone
@@ -79,12 +80,7 @@ def create_journal(request, data: MoodJournalCreateSchema):
     """
     创建情绪日记
     """
-    # 从认证中获取当前用户
     current_user = request.auth
-    if not current_user:
-        return {"error": "用户未认证"}
-    
-    user_id = current_user.id
     
     # 如果没有指定记录日期，使用当前时间
     record_date = data.record_date if data.record_date else timezone.now()
@@ -92,7 +88,7 @@ def create_journal(request, data: MoodJournalCreateSchema):
         record_date = datetime.fromisoformat(record_date)
     
     journal = MoodJournal.objects.create(
-        user_id=user_id,
+        user_id=current_user.id,
         mood_score=data.mood_score,
         mood_name=data.mood_name,
         mood_emoji=data.mood_emoji,
@@ -117,7 +113,12 @@ def update_journal(request, journal_id: int, data: MoodJournalUpdateSchema):
     """
     更新情绪日记
     """
+    current_user = request.auth
     journal = get_object_or_404(MoodJournal, id=journal_id)
+    
+    # 确保只能修改自己的日记
+    if str(journal.user_id) != str(current_user.id):
+        raise HttpError(403, "无权限修改他人的情绪日记")
     
     # 更新字段
     if data.mood_score is not None:
@@ -150,9 +151,15 @@ def delete_journal(request, journal_id: int):
     """
     删除情绪日记
     """
+    current_user = request.auth
     journal = get_object_or_404(MoodJournal, id=journal_id)
+    
+    # 确保只能删除自己的日记
+    if str(journal.user_id) != str(current_user.id):
+        raise HttpError(403, "无权限删除他人的情绪日记")
+    
     journal.delete()
-    return {"message": "情绪日记删除成功"}
+    return {"success": True}
 
 @journals_router.get("/statistics/daily", response=list[MoodStatisticsSchema])
 def get_daily_statistics(request, user_id: str, days: int = Query(30)):

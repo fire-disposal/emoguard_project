@@ -7,14 +7,10 @@ class UserProfileUpdateSchema(Schema):
     """更新用户资料（现在直接更新User模型）"""
     nickname: Optional[str] = None
     real_name: Optional[str] = None
-    avatar: Optional[str] = None
     gender: Optional[str] = None
     birthday: Optional[date] = None
-    bio: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
-    education: Optional[str] = None
-    occupation: Optional[str] = None
 
 
 class UserResponseSchema(Schema):
@@ -35,14 +31,10 @@ class UserResponseSchema(Schema):
     # 用户资料字段
     nickname: str
     real_name: str
-    avatar: Optional[str] = None
     gender: Optional[str] = None
     birthday: Optional[date] = None
-    bio: str
     phone: Optional[str] = None
     address: str
-    education: Optional[str] = None
-    occupation: str
 
 
 class UserCreateSchema(Schema):

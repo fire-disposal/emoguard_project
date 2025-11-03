@@ -161,9 +161,6 @@ class WeChatAuthService:
                 if not user.nickname and user_info.get('nickName'):
                     user.nickname = self._clean_nickname(user_info.get('nickName'))
                     update_fields.append('nickname')
-                if not user.avatar and user_info.get('avatarUrl'):
-                    user.avatar = self._validate_avatar(user_info.get('avatarUrl'))
-                    update_fields.append('avatar')
                 if not user.gender and user_info.get('gender'):
                     user.gender = self._convert_gender(user_info.get('gender'))
                     update_fields.append('gender')
@@ -177,12 +174,10 @@ class WeChatAuthService:
             with transaction.atomic():  # type: ignore[misc]
                 # 准备用户资料
                 nickname = ''
-                avatar = None
                 gender = None
                 
                 if user_info:
                     nickname = self._clean_nickname(user_info.get('nickName', ''))
-                    avatar = self._validate_avatar(user_info.get('avatarUrl', ''))
                     gender = self._convert_gender(user_info.get('gender'))
                 
                 # 创建用户，直接包含资料字段
@@ -192,7 +187,6 @@ class WeChatAuthService:
                     wechat_unionid=unionid,
                     role='user',
                     nickname=nickname,
-                    avatar=avatar,
                     gender=gender,
                 )
                 user.set_unusable_password()
@@ -226,38 +220,6 @@ class WeChatAuthService:
             cleaned = cleaned[:30]
         
         return cleaned.strip() or '微信用户'
-
-    def _validate_avatar(self, avatar_url):
-        """
-        验证头像URL
-        
-        Args:
-            avatar_url: 头像URL
-            
-        Returns:
-            str: 验证后的URL或None
-        """
-        if not avatar_url:
-            return None
-            
-        # 验证URL格式
-        from urllib.parse import urlparse
-        try:
-            result = urlparse(avatar_url)
-            if not all([result.scheme, result.netloc]):
-                return None
-                
-            # 验证域名（微信头像域名）
-            allowed_domains = ['wx.qlogo.cn', 'thirdwx.qlogo.cn']
-            if result.netloc not in allowed_domains:
-                logger.warning(f"非微信官方头像域名: {result.netloc}")
-                return None
-                
-            return avatar_url
-            
-        except Exception as e:
-            logger.error(f"头像URL验证失败: {str(e)}")
-            return None
 
     def _convert_gender(self, gender_value):
         """

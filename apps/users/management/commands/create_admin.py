@@ -55,7 +55,6 @@ class Command(BaseCommand):
                     user.is_staff = True
                     user.is_active = True
                     user.role = 'admin'
-                    user.login_type = 'password'
                     user.save()
                     
                     self.stdout.write(

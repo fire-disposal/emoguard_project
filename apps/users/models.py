@@ -34,17 +34,7 @@ class User(AbstractUser):
         ('other', '其他'),
     ]
     
-    EDUCATION_CHOICES = [
-        ('primary', '小学'),
-        ('middle', '初中'),
-        ('high', '高中'),
-        ('associate', '大专'),
-        ('bachelor', '本科'),
-        ('master', '硕士'),
-        ('doctor', '博士'),
-        ('other', '其他'),
-    ]
-    
+
     # 使用UUID作为主键（更安全）
     id = models.UUIDField(
         primary_key=True,
@@ -95,13 +85,7 @@ class User(AbstractUser):
         verbose_name='真实姓名'
     )
     
-    avatar = models.URLField(
-        max_length=500,
-        blank=True,
-        null=True,
-        verbose_name='头像'
-    )
-    
+
     gender = models.CharField(
         max_length=10,
         choices=GENDER_CHOICES,
@@ -116,13 +100,7 @@ class User(AbstractUser):
         verbose_name='生日'
     )
     
-    bio = models.TextField(
-        blank=True,
-        default='',
-        max_length=500,
-        verbose_name='个人简介'
-    )
-    
+
     # ========== 联系信息 ==========
     phone = models.CharField(
         max_length=11,
@@ -142,23 +120,8 @@ class User(AbstractUser):
         verbose_name='地址'
     )
     
-    # ========== 教育与职业 ==========
-    education = models.CharField(
-        max_length=20,
-        choices=EDUCATION_CHOICES,
-        blank=True,
-        null=True,
-        verbose_name='学历'
-    )
-    
-    occupation = models.CharField(
-        max_length=100,
-        blank=True,
-        default='',
-        verbose_name='职业'
-    )
-    
-    class Meta:
+
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         verbose_name = '用户'
         verbose_name_plural = '用户'
         ordering = ['-date_joined']
@@ -169,7 +132,7 @@ class User(AbstractUser):
     
     def __str__(self):
         if self.is_wechat_user:
-            return f"微信用户({self.wechat_openid[:8]}...)"
+            return f"微信用户({self.wechat_openid[:8]}...)"  # pyright: ignore[reportIndexIssue]
         if self.nickname:
             return self.nickname
         if self.real_name:
@@ -187,11 +150,7 @@ class User(AbstractUser):
         """判断是否为密码用户"""
         return self.has_usable_password()
     
-    @property
-    def login_type(self):
-        """获取登录类型（动态计算，向后兼容）"""
-        return 'wechat' if self.is_wechat_user else 'password'
-    
+
     @property
     def display_name(self):
         """获取显示名称"""
@@ -204,8 +163,8 @@ class User(AbstractUser):
             return None
         from datetime import date
         today = date.today()
-        return today.year - self.birthday.year - (
-            (today.month, today.day) < (self.birthday.month, self.birthday.day)
+        return today.year - self.birthday.year - (  # pyright: ignore[reportAttributeAccessIssue]
+            (today.month, today.day) < (self.birthday.month, self.birthday.day)  # pyright: ignore[reportAttributeAccessIssue]
         )
     
     @property

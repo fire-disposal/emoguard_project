@@ -24,12 +24,12 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('username', 'nickname', 'real_name', 'email', 'wechat_openid', 'wechat_unionid', 'phone')
     
     # 过滤字段
-    list_filter = ('role', 'gender', 'education', 'is_active', 'is_staff', 'date_joined')
+    list_filter = ('role', 'gender', 'is_active', 'is_staff', 'date_joined')
     
     # 排序
     ordering = ('-date_joined',)
     
-    # 分页
+    # 分页 
     list_per_page = 20
     
     # 字段分组
@@ -38,7 +38,7 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('username', 'email', 'password')
         }),
         ('用户资料', {
-            'fields': ('nickname', 'real_name', 'avatar', 'gender', 'birthday', 'bio')
+            'fields': ('nickname', 'real_name', 'gender', 'birthday')
         }),
         ('微信信息', {
             'fields': ('wechat_openid', 'wechat_unionid'),
@@ -47,10 +47,6 @@ class UserAdmin(BaseUserAdmin):
         }),
         ('联系信息', {
             'fields': ('phone', 'address'),
-            'classes': ('collapse',)
-        }),
-        ('教育与职业', {
-            'fields': ('education', 'occupation'),
             'classes': ('collapse',)
         }),
         ('权限信息', {

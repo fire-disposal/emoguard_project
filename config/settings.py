@@ -39,8 +39,9 @@ INSTALLED_APPS = [
     "apps.journals",
     "apps.reports",
     "apps.scales",
+    "apps.notifications",
 ]
-
+    
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

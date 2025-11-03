@@ -44,14 +44,10 @@ def _user_to_response_schema(user):
         is_staff=user.is_staff,
         nickname=user.nickname,
         real_name=user.real_name,
-        avatar=user.avatar,
         gender=user.gender,
         birthday=user.birthday,
-        bio=user.bio,
         phone=user.phone,
         address=user.address,
-        education=user.education,
-        occupation=user.occupation,
     )
 
 
@@ -173,8 +169,7 @@ def update_my_profile(request, data: UserProfileUpdateSchema):
     user = request.auth
     
     update_fields = []
-    for field in ['nickname', 'real_name', 'avatar', 'gender', 'birthday', 'bio', 
-                  'phone', 'address', 'education', 'occupation']:
+    for field in ['nickname', 'real_name', 'gender', 'birthday', 'phone', 'address']:
         value = getattr(data, field, None)
         if value is not None:
             setattr(user, field, value)
