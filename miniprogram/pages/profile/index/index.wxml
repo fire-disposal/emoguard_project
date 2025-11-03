@@ -1,0 +1,118 @@
+<!--pages/profile/index/index.wxml-->
+<view class="profile-container gradient-bg">
+  <view wx:if="{{loading}}" class="loading-state">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{userInfo}}" class="profile-content">
+    <!-- 用户信息卡片 -->
+    <view class="user-card card">
+      <view class="user-header">
+        <view class="user-avatar">{{userInfo.nickname ? userInfo.nickname.charAt(0) : '用'}}</view>
+        <view class="user-info">
+          <text class="user-nickname">{{userInfo.nickname || '用户'}}</text>
+          <text class="user-role">{{userInfo.role === 'admin' ? '管理员' : '普通用户'}}</text>
+        </view>
+        <view class="edit-btn" bindtap="toggleEdit">
+          <text>{{editing ? '取消' : '编辑'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 个人资料 -->
+    <view class="profile-section card">
+      <text class="section-title">个人资料</text>
+
+      <view class="form-item">
+        <text class="item-label">昵称</text>
+        <input 
+          wx:if="{{editing}}"
+          class="item-input"
+          value="{{formData.nickname}}"
+          data-field="nickname"
+          bindinput="onInput"
+          placeholder="请输入昵称"
+        />
+        <text wx:else class="item-value">{{userInfo.nickname || '未设置'}}</text>
+      </view>
+
+      <view class="form-item">
+        <text class="item-label">真实姓名</text>
+        <input 
+          wx:if="{{editing}}"
+          class="item-input"
+          value="{{formData.real_name}}"
+          data-field="real_name"
+          bindinput="onInput"
+          placeholder="请输入真实姓名"
+        />
+        <text wx:else class="item-value">{{userInfo.real_name || '未设置'}}</text>
+      </view>
+
+      <view class="form-item">
+        <text class="item-label">性别</text>
+        <picker 
+          wx:if="{{editing}}"
+          mode="selector"
+          range="{{['男', '女', '其他']}}"
+          value="{{formData.gender === '男' ? 0 : formData.gender === '女' ? 1 : 2}}"
+          data-field="gender"
+          bindchange="onGenderChange"
+        >
+          <view class="item-input picker">{{formData.gender || '请选择'}}</view>
+        </picker>
+        <text wx:else class="item-value">{{userInfo.gender || '未设置'}}</text>
+      </view>
+
+      <view class="form-item">
+        <text class="item-label">生日</text>
+        <picker 
+          wx:if="{{editing}}"
+          mode="date"
+          value="{{formData.birthday}}"
+          data-field="birthday"
+          bindchange="onDateChange"
+        >
+          <view class="item-input picker">{{formData.birthday || '请选择'}}</view>
+        </picker>
+        <text wx:else class="item-value">{{userInfo.birthday || '未设置'}}</text>
+      </view>
+
+      <view class="form-item">
+        <text class="item-label">手机号</text>
+        <input 
+          wx:if="{{editing}}"
+          class="item-input"
+          type="number"
+          value="{{formData.phone}}"
+          data-field="phone"
+          bindinput="onInput"
+          placeholder="请输入手机号"
+        />
+        <text wx:else class="item-value">{{userInfo.phone || '未设置'}}</text>
+      </view>
+
+      <view class="form-item">
+        <text class="item-label">地址</text>
+        <input 
+          wx:if="{{editing}}"
+          class="item-input"
+          value="{{formData.address}}"
+          data-field="address"
+          bindinput="onInput"
+          placeholder="请输入地址"
+        />
+        <text wx:else class="item-value">{{userInfo.address || '未设置'}}</text>
+      </view>
+
+      <view wx:if="{{editing}}" class="save-btn btn-primary" bindtap="saveProfile">
+        <text>保存修改</text>
+      </view>
+    </view>
+
+    <!-- 退出登录 -->
+    <view class="logout-btn" bindtap="logout">
+      <text>退出登录</text>
+    </view>
+  </view>
+</view>

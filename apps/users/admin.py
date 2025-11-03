@@ -2,8 +2,8 @@
 用户管理后台配置 - 适配单模型设计
 """
 from django.contrib import admin
-admin.site.site_title = "认知照顾情绪监测系统后台"
-admin.site.site_header = "认知照顾情绪监测系统管理"
+admin.site.site_title = "情绪监测系统"
+admin.site.site_header = "情绪监测系统"
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from .models import User

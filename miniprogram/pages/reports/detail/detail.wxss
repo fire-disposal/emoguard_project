@@ -1,0 +1,102 @@
+/* pages/reports/detail/detail.wxss */
+.report-detail-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e6f7ff 0%, #f0f5ff 100%);
+  padding: 32rpx;
+}
+
+.report-header {
+  margin-bottom: 24rpx;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.report-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.risk-badge {
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.risk-low {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.risk-medium {
+  background: #fffbe6;
+  color: #faad14;
+}
+
+.risk-high {
+  background: #fff2e8;
+  color: #fa8c16;
+}
+
+.risk-severe {
+  background: #fff1f0;
+  color: #f5222d;
+}
+
+.report-date {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.section {
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.section-content {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.8;
+}
+
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.item-dot {
+  font-size: 28rpx;
+  color: #1890ff;
+  flex-shrink: 0;
+}
+
+.item-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}

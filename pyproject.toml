@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "deadcode>=2.4.1",
     "django>=5.2.7",
+    "django-cors-headers>=4.9.0",
     "django-ninja>=1.4.5",
     "django-ninja-extra>=0.30.2",
     "django-ninja-jwt>=5.4.0",
@@ -14,6 +15,7 @@ dependencies = [
     "djangorestframework>=3.16.1",
     "psycopg2-binary>=2.9.11",
     "pycryptodome",
+    "python-dotenv>=1.2.1",
     "pyyaml>=6.0.3",
     "requests>=2.32.5",
     "ruff>=0.14.3",

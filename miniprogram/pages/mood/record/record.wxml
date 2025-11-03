@@ -1,0 +1,89 @@
+<!--pages/mood/record/record.wxml-->
+<view class="mood-container gradient-bg">
+  <!-- 心情记录模块 -->
+  <view class="mood-record-section card">
+    <view class="section-header">
+      <view class="header-left">
+        <view class="section-icon">💭</view>
+        <text class="section-title">记录此刻的心情</text>
+      </view>
+    </view>
+
+    <!-- 心情选择 -->
+    <view class="mood-selector">
+      <text class="selector-label">选择心情</text>
+      <view class="mood-options">
+        <view
+          wx:for="{{moodOptions}}"
+          wx:key="value"
+          class="mood-option {{selectedMood === item.value ? 'selected' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="selectMood"
+        >
+          <text class="mood-emoji">{{item.emoji}}</text>
+          <text class="mood-label">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 心情原因输入 -->
+    <view class="mood-reason">
+      <text class="reason-label">心情原因（选填）</text>
+      <textarea
+        value="{{moodReason}}"
+        class="reason-input"
+        placeholder="分享一下现在的感受或发生了什么..."
+        placeholder-class="reason-placeholder"
+        maxlength="200"
+        auto-height
+        bindinput="onReasonInput"
+      />
+      <text class="reason-count">{{moodReason.length}}/200</text>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view 
+      class="submit-mood-btn {{selectedMood ? '' : 'btn-disabled'}}" 
+      bindtap="submitMoodRecord"
+    >
+      <text class="btn-icon">✓</text>
+      <text class="btn-text">记录心情</text>
+    </view>
+  </view>
+
+  <!-- 心情历史 -->
+  <view class="mood-history-section card">
+    <view class="history-header">
+      <text class="history-title">心情历史</text>
+      <text class="history-count">{{journals.length}}条记录</text>
+    </view>
+
+    <view wx:if="{{loading}}" class="loading-state">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <view wx:elif="{{journals.length === 0}}" class="empty-state">
+      <text class="empty-icon">💭</text>
+      <text class="empty-text">还没有心情记录</text>
+      <text class="empty-hint">点击上方按钮记录你的第一条心情吧</text>
+    </view>
+
+    <view wx:else class="history-list">
+      <view 
+        wx:for="{{journals}}" 
+        wx:key="id" 
+        class="history-item"
+      >
+        <view class="item-emoji">{{item.mood_emoji}}</view>
+        <view class="item-content">
+          <view class="item-header">
+            <text class="item-mood-text">{{item.mood_name}}</text>
+            <text class="item-time">{{formatTime(item.created_at)}}</text>
+          </view>
+          <text wx:if="{{item.text}}" class="item-reason">{{item.text}}</text>
+          <text class="item-score">心情分数: {{item.mood_score}}/10</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

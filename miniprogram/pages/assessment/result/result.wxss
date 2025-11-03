@@ -1,0 +1,131 @@
+/* pages/assessment/result/result.wxss */
+.result-container {
+  min-height: 100vh;
+  padding: 32rpx;
+  text-align: center;
+}
+
+.complete-icon {
+  width: 120rpx;
+  height: 120rpx;
+  line-height: 120rpx;
+  background: linear-gradient(135deg, #52c41a 0%, #3f9e16 100%);
+  color: #fff;
+  font-size: 80rpx;
+  border-radius: 50%;
+  margin: 80rpx auto 24rpx;
+}
+
+.complete-text {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 48rpx;
+}
+
+.result-card {
+  text-align: left;
+  margin-bottom: 32rpx;
+}
+
+.scale-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 32rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.conclusion-section,
+.analysis-section {
+  margin-bottom: 32rpx;
+}
+
+.section-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+
+.conclusion-text {
+  display: block;
+  font-size: 30rpx;
+  color: #333;
+  line-height: 1.8;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.analysis-content {
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.analysis-item {
+  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.analysis-item:last-child {
+  margin-bottom: 0;
+}
+
+.analysis-key {
+  color: #666;
+  font-weight: 600;
+}
+
+.analysis-value {
+  color: #333;
+  margin-left: 8rpx;
+}
+
+.time-info {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.time-label {
+  margin-right: 8rpx;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16rpx;
+}
+
+.action-buttons > view {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.action-buttons > view:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #666;
+  border: 2rpx solid #d9d9d9;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #fff;
+  box-shadow: 0 6rpx 20rpx rgba(24, 144, 255, 0.3);
+}

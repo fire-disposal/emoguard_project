@@ -1,0 +1,240 @@
+/* pages/mood/record/record.wxss */
+.mood-container {
+  min-height: 100vh;
+  padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+}
+
+/* 心情记录模块 */
+.mood-record-section {
+  margin-bottom: 32rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.section-icon {
+  font-size: 40rpx;
+  margin-right: 12rpx;
+}
+
+.section-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.mood-selector {
+  margin-bottom: 28rpx;
+}
+
+.selector-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.mood-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+.mood-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border: 3rpx solid transparent;
+  border-radius: 20rpx;
+  padding: 24rpx 12rpx;
+  transition: all 0.3s;
+}
+
+.mood-emoji {
+  font-size: 56rpx;
+  margin-bottom: 8rpx;
+  transition: transform 0.3s;
+}
+
+.mood-label {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+.mood-option.selected {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  border-color: #1890ff;
+  box-shadow: 0 4rpx 16rpx rgba(24, 144, 255, 0.2);
+}
+
+.mood-option.selected .mood-emoji {
+  transform: scale(1.15);
+}
+
+.mood-option.selected .mood-label {
+  color: #0050b3;
+  font-weight: 700;
+}
+
+.mood-reason {
+  margin-bottom: 28rpx;
+}
+
+.reason-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.reason-input {
+  width: 100%;
+  min-height: 160rpx;
+  background: #f8f9fa;
+  border: 2rpx solid #e0e6ed;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.reason-placeholder {
+  color: #bfbfbf;
+  font-size: 26rpx;
+}
+
+.reason-count {
+  display: block;
+  text-align: right;
+  font-size: 22rpx;
+  color: #bfbfbf;
+  margin-top: 8rpx;
+}
+
+.submit-mood-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: white;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  box-shadow: 0 6rpx 20rpx rgba(24, 144, 255, 0.3);
+  transition: all 0.3s;
+}
+
+.submit-mood-btn:active:not(.btn-disabled) {
+  transform: scale(0.98);
+}
+
+.btn-icon {
+  font-size: 28rpx;
+}
+
+.btn-text {
+  font-size: 32rpx;
+}
+
+/* 心情历史 */
+.mood-history-section {
+  margin-bottom: 32rpx;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.history-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.history-count {
+  font-size: 24rpx;
+  color: #999;
+  background: #f5f5f5;
+  padding: 4rpx 16rpx;
+  border-radius: 12rpx;
+}
+
+.history-list .history-item {
+  display: flex;
+  align-items: flex-start;
+  background: #fafbfc;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+}
+
+.item-emoji {
+  font-size: 48rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.item-content {
+  flex: 1;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.item-mood-text {
+  font-size: 28rpx;
+  color: #1890ff;
+  font-weight: 700;
+}
+
+.item-time {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.item-reason {
+  display: block;
+  font-size: 26rpx;
+  color: #595959;
+  line-height: 1.6;
+  margin-bottom: 12rpx;
+}
+
+.item-score {
+  display: block;
+  font-size: 24rpx;
+  color: #8c8c8c;
+}

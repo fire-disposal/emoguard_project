@@ -1,0 +1,45 @@
+<!--pages/articles/list/list.wxml-->
+<view class="articles-container gradient-bg">
+  <view class="articles-header">
+    <text class="header-title">健康科普</text>
+    <text class="header-subtitle">了解心理健康知识</text>
+  </view>
+
+  <view wx:if="{{loading && articles.length === 0}}" class="loading-state">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{articles.length === 0}}" class="empty-state">
+    <text class="empty-icon">📚</text>
+    <text class="empty-text">暂无文章</text>
+  </view>
+
+  <view wx:else class="articles-list">
+    <view 
+      wx:for="{{articles}}" 
+      wx:key="id" 
+      class="article-item card"
+      data-id="{{item.id}}"
+      bindtap="goToDetail"
+    >
+      <image 
+        wx:if="{{item.cover_image}}" 
+        class="article-cover" 
+        src="{{item.cover_image}}" 
+        mode="aspectFill"
+      />
+      <view class="article-content">
+        <text class="article-title">{{item.title}}</text>
+        <text class="article-time">{{formatTime(item.publish_time)}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="load-more">
+      <text class="load-more-text">加载中...</text>
+    </view>
+
+    <view wx:elif="{{!hasMore}}" class="load-more">
+      <text class="load-more-text">没有更多了</text>
+    </view>
+  </view>
+</view>

@@ -5,6 +5,13 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+try:
+    from dotenv import load_dotenv
+    # 加载环境变量
+    load_dotenv()
+except ImportError:
+    # 如果dotenv未安装，跳过加载
+    pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,6 +36,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # --- 第三方框架 ---
+    "corsheaders",
     "ninja",
     "ninja_extra",
     "ninja_jwt",
@@ -44,6 +52,7 @@ INSTALLED_APPS = [
     
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -114,8 +123,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ========== 微信小程序配置 ==========
 # 从环境变量获取，确保生产环境安全
-WECHAT_MINI_PROGRAM_APP_ID = os.environ.get('WECHAT_MINI_PROGRAM_APP_ID', '')
-WECHAT_MINI_PROGRAM_APP_SECRET = os.environ.get('WECHAT_MINI_PROGRAM_APP_SECRET', '')
+WECHAT_MINI_PROGRAM_APP_ID = os.environ.get('WECHAT_MINI_PROGRAM_APP_ID', 'wx4c375b49b33f7b8d')
+WECHAT_MINI_PROGRAM_APP_SECRET = os.environ.get('WECHAT_MINI_PROGRAM_APP_SECRET', 'c249a154f7907e7ef87636a06c7da3fe')
 
 # 微信小程序安全配置
 WECHAT_API_TIMEOUT = 10  # 微信API请求超时时间（秒）
@@ -240,6 +249,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:9000",
+    "http://127.0.0.1:9000",
 ]
 
 # ========== 缓存配置 ==========

@@ -1,0 +1,54 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/index/index",
+    "pages/mood/record/record",
+    "pages/articles/list/list",
+    "pages/articles/detail/detail",
+    "pages/assessment/select/select",
+    "pages/assessment/detail/detail",
+    "pages/assessment/result/result",
+    "pages/reports/list/list",
+    "pages/reports/detail/detail",
+    "pages/profile/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "情绪守护",
+    "navigationBarBackgroundColor": "#f8f8f8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#FFFFFF",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#667eea",
+    "backgroundColor": "#F8F8F8",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/mood/record/record",
+        "text": "情绪记录",
+        "iconPath": "assets/tabbar/mood.png",
+        "selectedIconPath": "assets/tabbar/mood-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index/index",
+        "text": "我的",
+        "iconPath": "assets/tabbar/profile.png",
+        "selectedIconPath": "assets/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "permission": {
+    "scope.userInfo": {
+      "desc": "获取您的用户信息用于登录"
+    }
+  },
+  "sitemapLocation": "sitemap.json"
+}

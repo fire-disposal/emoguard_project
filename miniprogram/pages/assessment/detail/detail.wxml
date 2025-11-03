@@ -1,0 +1,64 @@
+<!--pages/assessment/detail/detail.wxml-->
+<view class="assessment-container">
+  <view wx:if="{{loading}}" class="loading-state">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{scaleConfig}}" class="assessment-content">
+    <!-- 进度条 -->
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{(currentQuestionIndex + 1) / questions.length * 100}}%"></view>
+    </view>
+    <view class="progress-text">
+      <text>{{currentQuestionIndex + 1}}/{{questions.length}}</text>
+    </view>
+
+    <!-- 当前题目 -->
+    <view class="question-section card">
+      <view class="question-number">第 {{currentQuestionIndex + 1}} 题</view>
+      <text class="question-text">{{questions[currentQuestionIndex].question}}</text>
+
+      <!-- 选项 -->
+      <view class="options-list">
+        <view 
+          wx:for="{{questions[currentQuestionIndex].options}}" 
+          wx:key="index"
+          class="option-item {{selectedOptions[currentQuestionIndex] === index ? 'selected' : ''}}"
+          data-index="{{index}}"
+          bindtap="selectOption"
+        >
+          <view class="option-radio">
+            <view wx:if="{{selectedOptions[currentQuestionIndex] === index}}" class="radio-checked"></view>
+          </view>
+          <text class="option-text">{{item.text || item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <view 
+        class="btn-secondary {{currentQuestionIndex === 0 ? 'btn-disabled' : ''}}" 
+        bindtap="prevQuestion"
+      >
+        <text>上一题</text>
+      </view>
+
+      <view 
+        wx:if="{{currentQuestionIndex < questions.length - 1}}"
+        class="btn-primary"
+        bindtap="nextQuestion"
+      >
+        <text>下一题</text>
+      </view>
+
+      <view 
+        wx:else
+        class="btn-primary"
+        bindtap="submitAssessment"
+      >
+        <text>提交答题</text>
+      </view>
+    </view>
+  </view>
+</view>

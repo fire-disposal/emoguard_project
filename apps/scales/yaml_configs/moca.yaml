@@ -1,0 +1,249 @@
+name: 蒙特利尔认知评估量表 (MoCA)
+code: MoCA
+version: "1.0"
+description: 认知功能筛查量表，评估多个认知领域
+type: MoCA
+status: active
+questions:
+  - id: 1
+    question: 视空间与执行能力 - 交替连线测试
+    options:
+      - text: 正确完成
+        value: 1
+      - text: 有错误
+        value: 0
+  - id: 2
+    question: 视空间与执行能力 - 立方体绘画
+    options:
+      - text: 完全正确
+        value: 1
+      - text: 有错误或未完成
+        value: 0
+  - id: 3
+    question: 视空间与执行能力 - 钟表绘制（11点10分）
+    options:
+      - text: 完全正确
+        value: 3
+      - text: 轻微错误
+        value: 2
+      - text: 中等错误
+        value: 1
+      - text: 严重错误
+        value: 0
+  - id: 4
+    question: 命名能力 - 狮子
+    options:
+      - text: 正确命名
+        value: 1
+      - text: 错误或无法命名
+        value: 0
+  - id: 5
+    question: 命名能力 - 犀牛
+    options:
+      - text: 正确命名
+        value: 1
+      - text: 错误或无法命名
+        value: 0
+  - id: 6
+    question: 命名能力 - 骆驼
+    options:
+      - text: 正确命名
+        value: 1
+      - text: 错误或无法命名
+        value: 0
+  - id: 7
+    question: 记忆能力 - 第一次词语重复（面孔）
+    options:
+      - text: 正确重复
+        value: 1
+      - text: 错误或无法重复
+        value: 0
+  - id: 8
+    question: 记忆能力 - 第一次词语重复（天鹅绒）
+    options:
+      - text: 正确重复
+        value: 1
+      - text: 错误或无法重复
+        value: 0
+  - id: 9
+    question: 记忆能力 - 第一次词语重复（教堂）
+    options:
+      - text: 正确重复
+        value: 1
+      - text: 错误或无法重复
+        value: 0
+  - id: 10
+    question: 记忆能力 - 第一次词语重复（菊花）
+    options:
+      - text: 正确重复
+        value: 1
+      - text: 错误或无法重复
+        value: 0
+  - id: 11
+    question: 记忆能力 - 第一次词语重复（红色）
+    options:
+      - text: 正确重复
+        value: 1
+      - text: 错误或无法重复
+        value: 0
+  - id: 12
+    question: 注意力 - 数字广度（顺背）
+    options:
+      - text: 正确完成
+        value: 1
+      - text: 无法完成
+        value: 0
+  - id: 13
+    question: 注意力 - 数字广度（倒背）
+    options:
+      - text: 正确完成
+        value: 1
+      - text: 无法完成
+        value: 0
+  - id: 14
+    question: 注意力 - 连续减7（100-7）
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 15
+    question: 注意力 - 连续减7（93-7）
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 16
+    question: 注意力 - 连续减7（86-7）
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 17
+    question: 注意力 - 连续减7（79-7）
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 18
+    question: 注意力 - 连续减7（72-7）
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 19
+    question: 语言能力 - 重复句子（"我只知道今天张亮是帮过忙的人"）
+    options:
+      - text: 完全正确重复
+        value: 1
+      - text: 有错误或无法重复
+        value: 0
+  - id: 20
+    question: 语言能力 - 重复句子（"狗在房间的时候，猫总是躲在沙发下面"）
+    options:
+      - text: 完全正确重复
+        value: 1
+      - text: 有错误或无法重复
+        value: 0
+  - id: 21
+    question: 语言能力 - 词语流畅性（说出11个动物名称）
+    options:
+      - text: ≥11个
+        value: 1
+      - text: <11个
+        value: 0
+  - id: 22
+    question: 抽象能力 - 火车与自行车
+    options:
+      - text: 正确回答（都是交通工具/运输工具）
+        value: 1
+      - text: 回答错误或具体回答
+        value: 0
+  - id: 23
+    question: 抽象能力 - 手表与尺子
+    options:
+      - text: 正确回答（都是测量工具）
+        value: 1
+      - text: 回答错误或具体回答
+        value: 0
+  - id: 24
+    question: 延迟回忆 - 面孔（无提示）
+    options:
+      - text: 正确回忆
+        value: 1
+      - text: 无法回忆
+        value: 0
+  - id: 25
+    question: 延迟回忆 - 天鹅绒（无提示）
+    options:
+      - text: 正确回忆
+        value: 1
+      - text: 无法回忆
+        value: 0
+  - id: 26
+    question: 延迟回忆 - 教堂（无提示）
+    options:
+      - text: 正确回忆
+        value: 1
+      - text: 无法回忆
+        value: 0
+  - id: 27
+    question: 延迟回忆 - 菊花（无提示）
+    options:
+      - text: 正确回忆
+        value: 1
+      - text: 无法回忆
+        value: 0
+  - id: 28
+    question: 延迟回忆 - 红色（无提示）
+    options:
+      - text: 正确回忆
+        value: 1
+      - text: 无法回忆
+        value: 0
+  - id: 29
+    question: 定向力 - 日期
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 30
+    question: 定向力 - 月份
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 31
+    question: 定向力 - 年份
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 32
+    question: 定向力 - 星期
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 33
+    question: 定向力 - 地点
+    options:
+      - text: 正确
+        value: 1
+      - text: 错误
+        value: 0
+  - id: 34
+    question: 教育程度修正（≤12年教育）
+    options:
+      - text: 是（需要加1分）
+        value: 1
+      - text: 否（>12年教育）
+        value: 0

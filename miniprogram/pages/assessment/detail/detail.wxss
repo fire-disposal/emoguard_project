@@ -1,0 +1,131 @@
+/* pages/assessment/detail/detail.wxss */
+.assessment-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e6f7ff 0%, #f0f5ff 100%);
+  padding: 32rpx;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8rpx;
+  background: #e0e6ed;
+  border-radius: 4rpx;
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1890ff 0%, #096dd9 100%);
+  transition: width 0.3s;
+}
+
+.progress-text {
+  text-align: right;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 32rpx;
+}
+
+.question-section {
+  margin-bottom: 32rpx;
+}
+
+.question-number {
+  font-size: 24rpx;
+  color: #1890ff;
+  margin-bottom: 16rpx;
+}
+
+.question-text {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 32rpx;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border: 2rpx solid #e0e6ed;
+  border-radius: 16rpx;
+  transition: all 0.3s;
+}
+
+.option-item.selected {
+  background: #e6f7ff;
+  border-color: #1890ff;
+}
+
+.option-radio {
+  width: 40rpx;
+  height: 40rpx;
+  border: 2rpx solid #d9d9d9;
+  border-radius: 50%;
+  margin-right: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.option-item.selected .option-radio {
+  border-color: #1890ff;
+}
+
+.radio-checked {
+  width: 24rpx;
+  height: 24rpx;
+  background: #1890ff;
+  border-radius: 50%;
+}
+
+.option-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16rpx;
+}
+
+.action-buttons > view {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.action-buttons > view:active:not(.btn-disabled) {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #666;
+  border: 2rpx solid #d9d9d9;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #fff;
+  box-shadow: 0 6rpx 20rpx rgba(24, 144, 255, 0.3);
+}

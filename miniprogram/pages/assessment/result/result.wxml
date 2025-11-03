@@ -1,0 +1,49 @@
+<!--pages/assessment/result/result.wxml-->
+<view class="result-container gradient-bg">
+  <view wx:if="{{loading}}" class="loading-state">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{result}}" class="result-content">
+    <!-- 完成提示 -->
+    <view class="complete-icon">✓</view>
+    <text class="complete-text">测评完成</text>
+
+    <!-- 结果卡片 -->
+    <view class="result-card card">
+      <text class="scale-name">{{result.scale_config.name}}</text>
+      
+      <view wx:if="{{result.conclusion}}" class="conclusion-section">
+        <text class="section-label">测评结论</text>
+        <text class="conclusion-text">{{result.conclusion}}</text>
+      </view>
+
+      <view wx:if="{{result.analysis}}" class="analysis-section">
+        <text class="section-label">详细分析</text>
+        <view class="analysis-content">
+          <block wx:for="{{Object.keys(result.analysis)}}" wx:key="*this">
+            <view class="analysis-item">
+              <text class="analysis-key">{{item}}:</text>
+              <text class="analysis-value">{{result.analysis[item]}}</text>
+            </view>
+          </block>
+        </view>
+      </view>
+
+      <view class="time-info">
+        <text class="time-label">完成时间：</text>
+        <text class="time-value">{{result.completed_at}}</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <view class="btn-secondary" bindtap="goHome">
+        <text>返回首页</text>
+      </view>
+      <view class="btn-primary" bindtap="goToReports">
+        <text>查看报告</text>
+      </view>
+    </view>
+  </view>
+</view>

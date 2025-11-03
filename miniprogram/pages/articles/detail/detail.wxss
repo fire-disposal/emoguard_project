@@ -1,0 +1,44 @@
+/* pages/articles/detail/detail.wxss */
+.article-detail-container {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.article-detail {
+  padding: 32rpx;
+}
+
+.article-header {
+  margin-bottom: 32rpx;
+}
+
+.article-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.5;
+  margin-bottom: 16rpx;
+}
+
+.article-time {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.article-cover {
+  width: 100%;
+  border-radius: 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.article-content {
+  font-size: 30rpx;
+  line-height: 1.8;
+  color: #333;
+}
+
+.article-content rich-text {
+  width: 100%;
+}

@@ -1,0 +1,52 @@
+<!--pages/reports/detail/detail.wxml-->
+<view class="report-detail-container">
+  <view wx:if="{{loading}}" class="loading-state">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{report}}" class="report-detail">
+    <!-- 报告标题 -->
+    <view class="report-header card">
+      <view class="header-top">
+        <text class="report-title">{{report.report_type}}</text>
+        <view class="risk-badge risk-{{report.overall_risk}}">
+          {{report.overall_risk}}
+        </view>
+      </view>
+      <text class="report-date">生成时间：{{report.created_at}}</text>
+    </view>
+
+    <!-- 综合分析 -->
+    <view class="section card">
+      <text class="section-title">综合分析</text>
+      <text class="section-content">{{report.summary}}</text>
+    </view>
+
+    <!-- 专业建议 -->
+    <view class="section card">
+      <text class="section-title">专业建议</text>
+      <text class="section-content">{{report.professional_advice}}</text>
+    </view>
+
+    <!-- 健康建议 -->
+    <view class="section card">
+      <text class="section-title">健康建议</text>
+      <view class="recommendations-list">
+        <view 
+          wx:for="{{report.recommendations}}" 
+          wx:key="index"
+          class="recommendation-item"
+        >
+          <text class="item-dot">•</text>
+          <text class="item-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 趋势分析 -->
+    <view wx:if="{{report.trend_analysis}}" class="section card">
+      <text class="section-title">趋势分析</text>
+      <text class="section-content">{{report.trend_analysis}}</text>
+    </view>
+  </view>
+</view>

@@ -1,7 +1,7 @@
-name: 阿尔茨海默症量表
-code: AD-001
+name: MMSE
+code: MMSE-simple
 version: "1.0"
-description: 阿尔茨海默症筛查问卷（MMSE简化版）
+description: MMSE简化版
 type: MMSE
 status: active
 questions:
