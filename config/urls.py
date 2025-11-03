@@ -14,6 +14,7 @@ urlpatterns = [
     path('', health_info_view, name='root'),  # 根路径处理
     path('admin/', admin.site.urls),
     path('api/', include('config.api')),  # Ninja API统一路由
+    path('summernote/', include('django_summernote.urls')),  # 富文本编辑器
 ]
 
 if settings.DEBUG:

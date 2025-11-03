@@ -1,0 +1,227 @@
+name: 日常生活能力量表 (ADL)
+code: ADL
+version: "1.0"
+description: 日常生活能力评估量表
+type: ADL
+status: active
+questions:
+  - id: 1
+    question: 自己搭公共汽车
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 2
+    question: 到家附近的地方去（步行范围）
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 3
+    question: 自己做饭（包括生火）
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 4
+    question: 做家务
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 5
+    question: 吃药
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 6
+    question: 吃饭
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 7
+    question: 穿脱衣服
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 8
+    question: 梳头、刷牙等
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 9
+    question: 洗自己的衣服
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 10
+    question: 在平坦的室内走动
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 11
+    question: 上下楼梯
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 12
+    question: 上下床、坐下或站起
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 13
+    question: 提水煮饭或洗澡
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 14
+    question: 洗澡（水已放好）
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 15
+    question: 剪脚趾甲
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 16
+    question: 逛街，购物
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 17
+    question: 定时去厕所
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 18
+    question: 打电话
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 19
+    question: 处理自己的钱财
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4
+  - id: 20
+    question: 独自在家
+    options:
+      - text: 自己可以做
+        value: 1
+      - text: 有些困难
+        value: 2
+      - text: 需要帮助
+        value: 3
+      - text: 根本没法做
+        value: 4

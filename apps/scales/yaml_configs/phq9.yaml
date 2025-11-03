@@ -1,0 +1,106 @@
+name: 病人健康问卷-9项 (PHQ-9)
+code: PHQ-9
+version: "1.0"
+description: 抑郁症筛查量表
+type: PHQ
+status: active
+questions:
+  - id: 1
+    question: 做事时提不起劲或没有兴趣。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 2
+    question: 感到心情低落、沮丧或绝望。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 3
+    question: 入睡困难、睡不安稳或睡眠过多。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 4
+    question: 感觉疲倦或没有活力。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 5
+    question: 食欲不振或吃太多。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 6
+    question: 觉得自己很糟——或觉得自己很失败，或让自己和家人失望。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 7
+    question: 对事物专注有困难，例如阅读报纸或看电视时。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 8
+    question: 动作或说话速度缓慢到别人已经察觉，或正好相反——烦躁或坐立不安、动来动去的情况更胜于平常。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 9
+    question: 有不如死掉或用某种方式伤害自己的念头。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3

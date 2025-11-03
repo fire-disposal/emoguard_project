@@ -1,0 +1,97 @@
+name: 阿尔茨海默症量表
+code: AD-001
+version: "1.0"
+description: 阿尔茨海默症筛查问卷（MMSE简化版）
+type: MMSE
+status: active
+questions:
+  - id: 1
+    question: "记忆力是否减退？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "轻微"
+        value: 1
+      - text: "严重"
+        value: 0
+  - id: 2
+    question: "是否经常忘记约定或重要事件？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "偶尔"
+        value: 1
+      - text: "经常"
+        value: 0
+  - id: 3
+    question: "是否会忘记熟悉的人的名字？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "偶尔"
+        value: 1
+      - text: "经常"
+        value: 0
+  - id: 4
+    question: "是否会迷路或走错地方？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "偶尔"
+        value: 1
+      - text: "经常"
+        value: 0
+  - id: 5
+    question: "是否难以完成日常事务？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "偶尔"
+        value: 1
+      - text: "经常"
+        value: 0
+  - id: 6
+    question: "是否难以理解或表达语言？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "偶尔"
+        value: 1
+      - text: "经常"
+        value: 0
+  - id: 7
+    question: "是否出现判断力下降？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "偶尔"
+        value: 1
+      - text: "经常"
+        value: 0
+  - id: 8
+    question: "是否出现情绪或行为异常？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "偶尔"
+        value: 1
+      - text: "经常"
+        value: 0
+  - id: 9
+    question: "是否需要他人协助生活？"
+    options:
+      - text: "不需要"
+        value: 2
+      - text: "偶尔需要"
+        value: 1
+      - text: "经常需要"
+        value: 0
+  - id: 10
+    question: "是否有家族痴呆史？"
+    options:
+      - text: "没有"
+        value: 2
+      - text: "不清楚"
+        value: 0
+      - text: "有"
+        value: 0

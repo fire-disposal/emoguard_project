@@ -8,7 +8,6 @@ from .models import ScaleConfig, ScaleResult
 from .serializers import (
     ScaleConfigCreateSchema, ScaleConfigUpdateSchema, ScaleConfigResponseSchema,
     ScaleResultCreateSchema, ScaleResultResponseSchema, ScaleResultListQuerySchema,
-    ScaleAnalysisSchema, ScaleCompletionSchema
 )
 from config.jwt_auth_adapter import jwt_auth
 
@@ -204,24 +203,44 @@ def get_result(request, result_id: int):
         updated_at=result.updated_at.isoformat()
     )
 
+from .score_calculator import calculate_score_by_instance
+
 @scales_router.post("/results", response=ScaleResultResponseSchema, auth=jwt_auth)
 def create_result(request, data: ScaleResultCreateSchema):
     """
-    创建量表结果
+    创建量表结果，自动计算分值与分析
     """
     scale_config = get_object_or_404(ScaleConfig, id=data.scale_config_id)
-    
+    selected_options = data.selected_options if isinstance(data.selected_options, list) else []
+    started_at = datetime.fromisoformat(data.started_at)
+    completed_at = datetime.fromisoformat(data.completed_at)
+    # 自动计算答题时长
+    try:
+        duration_ms = int((completed_at - started_at).total_seconds() * 1000)
+    except Exception:
+        duration_ms = data.duration_ms
+    # 分值与分析
+    score_info = calculate_score_by_instance(scale_config, ScaleResult(
+        user_id=data.user_id,
+        scale_config=scale_config,
+        selected_options=selected_options,
+        duration_ms=duration_ms,
+        started_at=started_at,
+        completed_at=completed_at,
+    ))
+    # 结论字段可存储分析摘要
     result = ScaleResult.objects.create(
         user_id=data.user_id,
         scale_config=scale_config,
-        selected_options=data.selected_options if isinstance(data.selected_options, list) else [],
-        conclusion=data.conclusion,
-        duration_ms=data.duration_ms,
-        started_at=datetime.fromisoformat(data.started_at),
-        completed_at=datetime.fromisoformat(data.completed_at),
-        status='completed'
+        selected_options=selected_options,
+        conclusion=f"分值:{score_info['score']} 分级:{score_info['level']} 建议:{'、'.join(score_info['recommendations'])}",
+        duration_ms=duration_ms,
+        started_at=started_at,
+        completed_at=completed_at,
+        status='completed',
+        analysis=score_info  # 分析结果存储为 JSON 字段
     )
-    
+    # 响应中直接返回分析结果
     return ScaleResultResponseSchema(
         id=result.id,
         user_id=str(result.user_id),
@@ -243,97 +262,7 @@ def create_result(request, data: ScaleResultCreateSchema):
         started_at=result.started_at.isoformat(),
         completed_at=result.completed_at.isoformat(),
         status=result.status,
+        analysis=result.analysis,
         created_at=result.created_at.isoformat(),
         updated_at=result.updated_at.isoformat()
     )
-
-@scales_router.post("/results/{result_id}/analyze", response=ScaleAnalysisSchema, auth=jwt_auth)
-def analyze_result(request, result_id: int):
-    """
-    分析量表结果
-    """
-    result = get_object_or_404(ScaleResult, id=result_id)
-    
-    # 这里实现具体的分析逻辑
-    # 根据选择的选项计算总分
-    total_score = sum(result.selected_options) if result.selected_options else 0
-    
-    # 根据分数确定风险等级
-    if total_score <= 10:
-        risk_level = "低风险"
-    elif total_score <= 20:
-        risk_level = "中风险"
-    elif total_score <= 30:
-        risk_level = "高风险"
-    else:
-        risk_level = "极高风险"
-    
-    # 生成建议
-    recommendations = []
-    if risk_level == "高风险":
-        recommendations.append("建议寻求专业心理咨询")
-        recommendations.append("保持规律的作息时间")
-    elif risk_level == "中风险":
-        recommendations.append("建议进行放松训练")
-        recommendations.append("增加社交活动")
-    else:
-        recommendations.append("继续保持良好的生活习惯")
-        recommendations.append("定期进行自我评估")
-    
-    # 详细分析
-    detailed_analysis = {
-        "情绪状态": 0.8,
-        "社交功能": 0.6,
-        "睡眠质量": 0.7,
-        "工作压力": 0.5
-    }
-    
-    # 下次评估日期
-    next_assessment = timezone.now() + timedelta(days=30)
-    
-    return ScaleAnalysisSchema(
-        total_score=float(total_score),
-        risk_level=risk_level,
-        recommendations=recommendations,
-        detailed_analysis=detailed_analysis,
-        next_assessment_date=next_assessment.date().isoformat()
-    )
-
-@scales_router.get("/completion-stats", response=list[ScaleCompletionSchema])
-def get_completion_stats(request, days: int = Query(30)):
-    """
-    获取量表完成统计
-    """
-    end_date = timezone.now()
-    start_date = end_date - timedelta(days=days)
-    
-    # 获取所有量表配置
-    configs = ScaleConfig.objects.all()
-    stats = []
-    
-    for config in configs:
-        # 获取该量表的完成数量
-        completions = ScaleResult.objects.filter(
-            scale_config=config,
-            created_at__gte=start_date,
-            created_at__lte=end_date
-        )
-        
-        total_completions = completions.count()
-        
-        # 计算平均完成时间
-        avg_duration = completions.aggregate(
-            avg_duration=Avg('duration_ms')
-        )['avg_duration'] or 0
-        
-        # 计算完成率（这里简化处理，假设所有注册用户都应该完成）
-        completion_rate = 0.75  # 默认值，实际应该基于注册用户计算
-        
-        stats.append(ScaleCompletionSchema(
-            scale_config_id=config.id,
-            completion_rate=completion_rate,
-            average_duration=int(avg_duration),
-            total_completions=total_completions
-        ))
-    
-    return stats

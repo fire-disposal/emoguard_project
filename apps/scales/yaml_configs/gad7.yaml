@@ -1,0 +1,84 @@
+name: 广泛性焦虑障碍量表-7项 (GAD-7)
+code: GAD-7
+version: "1.0"
+description: 广泛性焦虑障碍筛查量表
+type: GAD
+status: active
+questions:
+  - id: 1
+    question: 感觉紧张，焦虑或急切。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 2
+    question: 对各种各样的事情担忧过多。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 3
+    question: 担心过多不同的事情。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 4
+    question: 很难放松下来。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 5
+    question: 由于不安而无法静坐。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 6
+    question: 变得容易烦恼或急躁。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3
+  - id: 7
+    question: 感到似乎将有可怕的事情发生而害怕。
+    options:
+      - text: 完全不会
+        value: 0
+      - text: 好几天
+        value: 1
+      - text: 超过一周
+        value: 2
+      - text: 几乎每天
+        value: 3

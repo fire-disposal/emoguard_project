@@ -1,0 +1,137 @@
+name: 系统可用性量表 (SUS)
+code: SUS
+version: "1.0"
+description: 系统可用性评估量表
+type: SUS
+status: active
+questions:
+  - id: 1
+    question: 我愿意经常使用这个系统
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 2
+    question: 我发现这个系统过于复杂
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 3
+    question: 我认为这个系统用起来很容易
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 4
+    question: 我认为我需要技术人员的帮助才能使用这个系统
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 5
+    question: 我发现这个系统很好地集成了各种功能
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 6
+    question: 在使用该系统过程中，我发现很多操作结果和预想功能不一样
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 7
+    question: 我想大多数用户能很快学会使用该系统
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 8
+    question: 我发现这个系统使用起来很别扭
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 9
+    question: 我对熟练掌握这个系统很有信心
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5
+  - id: 10
+    question: 在使用这个系统之前，我需要学习很多知识
+    options:
+      - text: 非常反对
+        value: 1
+      - text: 反对
+        value: 2
+      - text: 一般
+        value: 3
+      - text: 赞同
+        value: 4
+      - text: 非常赞同
+        value: 5

@@ -1,0 +1,76 @@
+name: SCD-Q9 问卷
+code: SCD-Q9
+version: "1.0"
+description: 主观认知障碍筛查问卷
+type: SCD
+status: active
+questions:
+  - id: 1
+    question: 你认为自己有记忆问题吗？
+    options:
+      - text: 是
+        value: 1
+      - text: 否
+        value: 0
+  - id: 2
+    question: 你回忆3-5天前的对话有困难吗？
+    options:
+      - text: 是
+        value: 1
+      - text: 否
+        value: 0
+  - id: 3
+    question: 你觉得自己近两年有记忆问题吗？
+    options:
+      - text: 是
+        value: 1
+      - text: 否
+        value: 0
+  - id: 4
+    question: 下列问题经常发生吗：忘记对个人来说重要的日期（如生日等）
+    options:
+      - text: 经常
+        value: 1
+      - text: 偶尔
+        value: 0.5
+      - text: 从未
+        value: 0
+  - id: 5
+    question: 下列问题经常发生吗：忘记常用号码（手机号、身份证号等）
+    options:
+      - text: 经常
+        value: 1
+      - text: 偶尔
+        value: 0.5
+      - text: 从未
+        value: 0
+  - id: 6
+    question: 总的来说，你是否认为自己对要做的事或要说的话容易忘记？
+    options:
+      - text: 是
+        value: 1
+      - text: 否
+        value: 0
+  - id: 7
+    question: 下列问题经常发生吗：到了商店忘记要买什么？
+    options:
+      - text: 经常
+        value: 1
+      - text: 偶尔
+        value: 0.5
+      - text: 从未
+        value: 0
+  - id: 8
+    question: 你认为自己的记忆力比5年前要差吗？
+    options:
+      - text: 是
+        value: 1
+      - text: 否
+        value: 0
+  - id: 9
+    question: 你认为自己越来越记不住东西放哪儿了吗？
+    options:
+      - text: 是
+        value: 1
+      - text: 否
+        value: 0

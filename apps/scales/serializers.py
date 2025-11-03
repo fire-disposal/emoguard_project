@@ -1,12 +1,10 @@
 from ninja import Schema
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 
 class QuestionSchema(Schema):
     id: int
     question: str
     options: List[Dict[str, str]]
-    category: Optional[str] = None
-    weight: float = 1.0
 
 class ScaleConfigCreateSchema(Schema):
     name: str
@@ -54,6 +52,7 @@ class ScaleResultResponseSchema(Schema):
     started_at: str
     completed_at: str
     status: str
+    analysis: Dict  # 分析结果字段，结构灵活
     created_at: str
     updated_at: str
 
@@ -64,16 +63,3 @@ class ScaleResultListQuerySchema(Schema):
     end_date: Optional[str] = None
     page: int = 1
     page_size: int = 10
-
-class ScaleAnalysisSchema(Schema):
-    total_score: float
-    risk_level: str
-    recommendations: List[str]
-    detailed_analysis: Dict[str, float]
-    next_assessment_date: str
-
-class ScaleCompletionSchema(Schema):
-    scale_config_id: int
-    completion_rate: float
-    average_duration: int
-    total_completions: int

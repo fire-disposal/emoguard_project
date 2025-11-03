@@ -1,0 +1,49 @@
+name: 情绪量表
+code: Emotiontest
+version: "1.0"
+description: 情绪状态快速筛查量表
+type: Emotion
+status: active
+questions:
+  - id: 1
+    question: 在过去的几个小时里，您是否觉得心情低落，或者对平常喜欢做的事情提不起兴趣？
+    options:
+      - text: 没有
+        value: 0
+      - text: 轻微
+        value: 1
+      - text: 中等
+        value: 2
+      - text: 很严重
+        value: 3
+  - id: 2
+    question: 在过去的几个小时里，您是否感到紧张、焦虑，或者坐立不安？
+    options:
+      - text: 完全没有
+        value: 0
+      - text: 非常严重
+        value: 10
+  - id: 3
+    question: 在过去的几个小时里，您是否觉得没有精力，容易感到疲劳？
+    options:
+      - text: 没有
+        value: 0
+      - text: 有一点
+        value: 1
+      - text: 明显
+        value: 2
+      - text: 非常严重
+        value: 3
+  - id: 4
+    question: 请回顾今天（或昨晚），您的睡眠情况如何？
+    options:
+      - text: 非常好
+        value: 0
+      - text: 比较好
+        value: 1
+      - text: 一般
+        value: 2
+      - text: 不太好
+        value: 3
+      - text: 很差
+        value: 4

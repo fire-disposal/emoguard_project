@@ -31,11 +31,11 @@ class ScaleResult(models.Model):
     user_id = models.UUIDField()
     scale_config = models.ForeignKey(ScaleConfig, on_delete=models.CASCADE, related_name='results')
     selected_options = models.JSONField(default=list)
-    conclusion = models.TextField(blank=True)
     duration_ms = models.IntegerField()
     started_at = models.DateTimeField()
     completed_at = models.DateTimeField()
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='completed')
+    analysis = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

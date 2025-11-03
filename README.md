@@ -50,6 +50,11 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
+### 量表初始化（导入yaml量表配置）
+```bash
+python manage.py load_scales_from_yaml
+```
+
 ### 运行开发服务器
 ```bash
 python manage.py runserver
