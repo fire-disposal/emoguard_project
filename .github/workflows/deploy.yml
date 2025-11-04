@@ -58,10 +58,13 @@ jobs:
 
         ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
         set -euo pipefail
-
+        
+        VERSION="${{ steps.get_version.outputs.VERSION }}"
+        IMAGE="${{ env.IMAGE_BASE_NAME }}:$VERSION"
+        
         echo "🔐 Logging into GHCR..."
         echo "${{ secrets.GHCR_PAT_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
-
+        
         echo "📦 Pulling new image..."
         docker pull $IMAGE || { echo "❌ Pull failed"; exit 1; }
 
