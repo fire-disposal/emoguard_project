@@ -1,0 +1,75 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+eggs
+.eggs
+parts
+bin
+var
+wheels
+pip-wheel-metadata
+*.egg-info/
+.installed.cfg
+*.egg-info
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.sqlite3
+*.db
+media/
+staticfiles/
+logs/
+*.log
+.env
+.env.*
+!.env.example
+
+# Documentation
+doc/
+README.md
+*.md
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# CI/CD
+.github/
+
+# Miniprogram (frontend)
+miniprogram/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

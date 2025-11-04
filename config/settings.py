@@ -4,6 +4,7 @@ Django设置文件 - 简化版本
 """
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url
 import os
 
 # 基础路径配置
@@ -84,19 +85,22 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # 数据库配置
 DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
-    import dj_database_url
-    DATABASES = {
+
+DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL)
     }
-else:
-    # 默认SQLite配置（开发环境）
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+
+# 数据库连接池配置
+DATABASES['default']['CONN_MAX_AGE'] = 600  # 连接保持时间（秒）
+DATABASES['default']['CONN_HEALTH_CHECKS'] = True  # Django 4.1+ 连接健康检查
+
+# 数据库性能优化配置
+# 仅适配PostgreSQL数据库连接配置
+DATABASES['default']['OPTIONS'] = {
+    'connect_timeout': 10,
+    'options': '-c statement_timeout=30000'  # 30秒查询超时
+}
+
 
 # 密码验证
 AUTH_PASSWORD_VALIDATORS = [
@@ -160,8 +164,35 @@ CORS_ALLOWED_ORIGINS = [
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    }
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5分钟缓存超时
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,  # 最大缓存条目数
+            'CULL_FREQUENCY': 3,  # 缓存清理频率
+        }
+    },
+    'database': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+        'TIMEOUT': 600,  # 10分钟缓存超时
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000,
+        }
+    },
+    # 移除不支持的数据库缓存配置，避免 session_cache 表不存在异常
 }
+
+# 会话配置优化
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# 移除 SESSION_CACHE_ALIAS，避免引用不存在的缓存连接
+SESSION_COOKIE_AGE = 86400  # 24小时会话过期时间
+SESSION_SAVE_EVERY_REQUEST = False  # 减少数据库写入
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# 数据库查询缓存优化
+CACHE_MIDDLEWARE_SECONDS = 600
+CACHE_MIDDLEWARE_KEY_PREFIX = ''
+CACHE_MIDDLEWARE_ALIAS = 'default'
 
 # 安全配置
 SECURE_BROWSER_XSS_FILTER = True
