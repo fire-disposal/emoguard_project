@@ -24,7 +24,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-b2#f(%-90xf8y7$54+l50
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 # 允许的主机
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if not DEBUG else []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'cg.aoxintech.com').split(',') if not DEBUG else ['*']
 
 # 用户模型
 AUTH_USER_MODEL = 'users.User'
