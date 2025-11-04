@@ -28,7 +28,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Get version
+    - name: Get Version
       id: get_version
       run: echo "VERSION=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
 
@@ -51,37 +51,65 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Deploy
+    - name: Deploy to Server
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
         IMAGE="${{ env.IMAGE_BASE_NAME }}:$VERSION"
 
-        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<EOF
-        set -e
-        docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} -p ${{ secrets.GHCR_PAT_TOKEN }}
+        ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        set -euo pipefail
 
+        echo "🔐 Logging into GHCR..."
+        echo "${{ secrets.GHCR_PAT_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+        echo "📦 Pulling new image..."
+        docker pull $IMAGE || { echo "❌ Pull failed"; exit 1; }
+
+        echo "🛑 Stopping previous container (if exists)..."
         docker stop emoguard-backend || true
         docker rm emoguard-backend || true
 
-        docker pull \$IMAGE
-        docker logout ghcr.io
-
+        echo "🚀 Starting new container..."
         docker run -d \
           --name emoguard-backend \
           --restart unless-stopped \
           -p 8000:8000 \
-          -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
-          -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
-          -e WECHAT_MINI_PROGRAM_APP_ID=${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }} \
-          -e WECHAT_MINI_PROGRAM_APP_SECRET=${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }} \
+          -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+          -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+          -e WECHAT_MINI_PROGRAM_APP_ID="${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}" \
+          -e WECHAT_MINI_PROGRAM_APP_SECRET="${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}" \
           -v /srv/emoguard/media:/app/media \
           -v /srv/emoguard/logs:/app/logs \
           -v /srv/emoguard/staticfiles:/app/staticfiles \
-          \$IMAGE
+          $IMAGE
 
-        sleep 10
-        docker ps | grep emoguard-backend
+        echo "⏳ Waiting for service to come up..."
+        for i in {1..10}; do
+          if curl -fs http://localhost:8000/health/ > /dev/null; then
+            echo "✅ Service healthy"
+            sleep 2
+            exit 0
+          fi
+          echo "  ⌛ Health check retry \$i..."
+          sleep 3
+        done
+
+        echo "❌ Health check failed"
+        echo "📜 Recent logs:"
+        docker logs emoguard-backend --tail 50
+
+        echo "♻️ Rolling back to previous image..."
+        docker stop emoguard-backend || true
+        docker rm emoguard-backend || true
+        docker run -d --name emoguard-backend --restart unless-stopped \
+          -p 8000:8000 \
+          -v /srv/emoguard/media:/app/media \
+          -v /srv/emoguard/logs:/app/logs \
+          -v /srv/emoguard/staticfiles:/app/staticfiles \
+          ${{ env.IMAGE_BASE_NAME }}:latest
+
+        exit 1
         EOF
 
-    - name: Done
-      run: 'echo 🚀 Deploy complete: ${{ steps.get_version.outputs.VERSION }}'
+    - name: ✅ Deployment Finished
+      run: echo "🚀 Deploy OK — version ${{ steps.get_version.outputs.VERSION }}"
