@@ -42,7 +42,9 @@ jobs:
 
     - name: Extract version from tag
       id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      run: |
+        VERSION="${GITHUB_SHA:0:8}"
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Build and push Docker image to GHCR
       uses: docker/build-push-action@v5
