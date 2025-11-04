@@ -4,26 +4,6 @@ set -e
 echo "🚀 启动 EmoGuard 后端服务..."
 
 # ============================
-# ✅ 等数据库就绪（PostgreSQL）
-# ============================
-echo "⏳ 等待数据库连接..."
-timeout=60
-while ! .venv/bin/python - <<EOF 2>/dev/null
-import os, psycopg2
-conn = psycopg2.connect(os.getenv("DATABASE_URL"))
-EOF
-do
-    timeout=$((timeout - 1))
-    if [ $timeout -eq 0 ]; then
-        echo "❌ 数据库连接超时"
-        exit 1
-    fi
-    echo "  等待数据库连接... ($timeout 秒剩余)"
-    sleep 1
-done
-echo "✅ 数据库连接成功"
-
-# ============================
 # ✅ 执行数据库迁移
 # ============================
 echo "🔄 执行数据库迁移..."
