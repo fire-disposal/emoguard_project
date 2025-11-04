@@ -5,6 +5,11 @@
   </view>
 
   <view wx:elif="{{scaleConfig}}" class="assessment-content">
+    <!-- 顶栏 - 问卷名称 -->
+    <view class="header-bar">
+      <text class="header-title">{{scaleConfig.name}}</text>
+    </view>
+
     <!-- 进度条 -->
     <view class="progress-bar">
       <view class="progress-fill" style="width: {{(currentQuestionIndex + 1) / questions.length * 100}}%"></view>

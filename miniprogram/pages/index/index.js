@@ -5,17 +5,20 @@ Page({
   data: {
     currentDate: '',
     currentTime: '',
-    userNickname: ''
+    userNickname: '',
+    currentPeriod: '' // 添加当前时段（早间/晚间）
   },
 
   onLoad() {
     this.getCurrentDate();
     this.getCurrentTime();
     this.loadUserInfo();
+    this.updatePeriod(); // 更新时段
     
     // 每分钟更新时间
     this.timer = setInterval(() => {
       this.getCurrentTime();
+      this.updatePeriod(); // 同时更新时段
     }, 60000);
   },
 
@@ -55,6 +58,32 @@ Page({
   },
 
   /**
+   * 更新当前时段（早间/晚间）
+   */
+  updatePeriod() {
+    const now = new Date();
+    const hours = now.getHours();
+    let period = '';
+    let periodText = '';
+    
+    if (hours >= 5 && hours < 12) {
+      period = 'morning';
+      periodText = '早间';
+    } else if (hours >= 12 && hours < 18) {
+      period = 'afternoon';
+      periodText = '下午';
+    } else {
+      period = 'evening';
+      periodText = '晚间';
+    }
+    
+    this.setData({
+      currentPeriod: period,
+      currentPeriodText: periodText
+    });
+  },
+
+  /**
    * 加载用户信息
    */
   loadUserInfo() {
@@ -90,5 +119,15 @@ Page({
    */
   goToReports() {
     wx.navigateTo({ url: '/pages/reports/list/list' });
+  },
+
+  /**
+   * 跳转到情绪测试
+   */
+  goToEmotionTest() {
+    const period = this.data.currentPeriod;
+    wx.navigateTo({
+      url: `/pages/emotiontest/emotiontest?period=${period}`
+    });
   }
 });

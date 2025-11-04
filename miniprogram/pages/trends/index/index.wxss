@@ -1,0 +1,329 @@
+/* 趋势变化页面样式 */
+.trends-container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding: 20rpx;
+}
+
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 40rpx;
+  font-size: 30rpx;
+}
+
+.page-title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.page-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 标签页切换 */
+.tab-container {
+  display: flex;
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 8rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
+}
+
+.tab-item.active {
+  background-color: #667eea;
+  color: #fff;
+}
+
+.tab-text {
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+/* 图表容器 */
+.chart-container {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.chart-period {
+  font-size: 26rpx;
+  color: #ffffff;
+}
+
+/* 图表图片 */
+.chart-image {
+  width: 100%;
+  height: 300rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border-radius: 12rpx;
+}
+
+.trend-image {
+  width: 90%;
+  height: 90%;
+}
+
+/* 焦虑汇总 */
+.anxiety-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+/* 精力汇总 */
+.energy-summary {
+  display: flex;
+  justify-content: space-around;
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 评估列表 */
+.assessment-list {
+  margin-bottom: 20rpx;
+}
+
+.assessment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.assessment-item:last-child {
+  border-bottom: none;
+}
+
+.assessment-date {
+  display: flex;
+  flex-direction: column;
+}
+
+.date-text {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 5rpx;
+}
+
+.type-text {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.assessment-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.score-text {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5rpx;
+}
+
+.level-text {
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+/* 睡眠图表 */
+.sleep-chart {
+  height: 200rpx;
+  margin-bottom: 20rpx;
+}
+
+.chart-bars {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 150rpx;
+  border-bottom: 2rpx solid #e0e0e0;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80rpx;
+}
+
+.bar {
+  width: 60rpx;
+  border-radius: 8rpx 8rpx 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10rpx;
+}
+
+.bar-value {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: bold;
+}
+
+.bar-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 10rpx;
+}
+
+/* 汇总信息 */
+.mood-summary,
+.sleep-summary {
+  display: flex;
+  justify-content: space-around;
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+}
+
+.summary-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 评估汇总 */
+.assessment-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.summary-card {
+  flex: 1;
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 15rpx;
+}
+
+.card-status {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 500;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.status-normal {
+  background-color: #e8f5e8;
+  color: #4CAF50;
+}
+
+.status-mild {
+  background-color: #fff3e0;
+  color: #FF9800;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+}
+
+.btn-primary,
+.btn-secondary {
+  flex: 1;
+  padding: 30rpx;
+  border-radius: 16rpx;
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: #667eea;
+  color: #fff;
+}
+
+.btn-secondary {
+  background-color: #fff;
+  color: #667eea;
+  border: 2rpx solid #667eea;
+}
+
+.btn-text {
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 375px) {
+  .tab-container {
+    padding: 6rpx;
+  }
+  
+  .tab-text {
+    font-size: 28rpx;
+  }
+  
+  .chart-container {
+    padding: 20rpx;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+}

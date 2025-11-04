@@ -48,10 +48,74 @@
   opacity: 0.85;
 }
 
+/* 情绪测试入口 */
+.emotion-test-entry {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-top: 24rpx;
+  box-shadow: 0 6rpx 20rpx rgba(255, 107, 107, 0.3);
+  transition: all 0.3s;
+}
+
+.emotion-test-entry-ninght {
+  background: linear-gradient(135deg, #8617f4 0%, #093a89 100%);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-top: 24rpx;  
+  box-shadow: 0 6rpx 20rpx rgba(255, 107, 107, 0.3);
+  transition: all 0.3s;
+}
+
+
+.emotion-test-entry:active {
+  transform: scale(0.98);
+}
+
+.entry-content {
+  display: flex;
+  align-items: center;
+}
+
+.entry-icon {
+  font-size: 48rpx;
+  margin-right: 20rpx;
+}
+
+.entry-info {
+  flex: 1;
+}
+
+.entry-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4rpx;
+}
+
+.entry-desc {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.entry-status {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 16rpx;
+  padding: 8rpx 16rpx;  
+}
+
+.status-text {
+  font-size: 22rpx;
+  color: white;
+  font-weight: 500;
+}
+
 /* 快捷功能区 */
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20rpx;
   margin-bottom: 32rpx;
 }

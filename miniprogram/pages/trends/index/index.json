@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "趋势变化",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#f8f8f8",
+  "usingComponents": {}
+}

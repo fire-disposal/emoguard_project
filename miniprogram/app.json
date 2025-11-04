@@ -3,6 +3,7 @@
     "pages/login/login",
     "pages/index/index",
     "pages/mood/record/record",
+    "pages/trends/index/index",
     "pages/articles/list/list",
     "pages/articles/detail/detail",
     "pages/assessment/select/select",
@@ -33,9 +34,15 @@
       },
       {
         "pagePath": "pages/mood/record/record",
-        "text": "情绪记录",
+        "text": "心情日志",
         "iconPath": "assets/tabbar/mood.png",
         "selectedIconPath": "assets/tabbar/mood-active.png"
+      },
+      {
+        "pagePath": "pages/trends/index/index",
+        "text": "心变化",
+        "iconPath": "assets/tabbar/change.png",
+        "selectedIconPath": "assets/tabbar/change-active.png"
       },
       {
         "pagePath": "pages/profile/index/index",

@@ -1,0 +1,38 @@
+<!-- 趋势变化页面 -->
+<view class="trends-container">
+  <!-- 页面标题 -->
+
+  <view class="tab-content" wx:if="{{activeTab === 'mood'}}">
+    <view class="chart-container">
+      <view class="chart-header">
+        <text class="chart-title">心情低落趋势</text>
+        <text class="chart-period">最近7天</text>
+      </view>
+      <view class="chart-image">
+        <image src="/assets/trends/1.png" mode="scaleToFill" class="trend-image"></image>
+      </view>
+      <view class="chart-header">
+        <text class="chart-title">焦虑紧张趋势</text>
+        <text class="chart-period">最近记录</text>
+      </view>
+      <view class="chart-image">
+        <image src="/assets/trends/2.png" mode="scaleToFill" class="trend-image"></image>
+      </view>
+      <view class="chart-header">
+        <text class="chart-title">精力疲劳趋势</text>
+        <text class="chart-period">最近7天</text>
+      </view>
+      <view class="chart-image">
+        <image src="/assets/trends/3.png" mode="scaleToFill" class="trend-image"></image>
+      </view>
+      <view class="chart-header">
+        <text class="chart-title">睡眠质量趋势</text>
+        <text class="chart-period">最近7天</text>
+      </view>
+      <view class="chart-image">
+        <image src="/assets/trends/4.png" mode="scaleToFill" class="trend-image"></image>
+      </view>
+    </view>
+  </view>
+  
+</view>

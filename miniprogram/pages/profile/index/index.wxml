@@ -1,9 +1,8 @@
-<!--pages/profile/index/index.wxml-->
+<!-- pages/profile/index/index.wxml -->
 <view class="profile-container gradient-bg">
   <view wx:if="{{loading}}" class="loading-state">
     <text class="loading-text">加载中...</text>
   </view>
-
   <view wx:elif="{{userInfo}}" class="profile-content">
     <!-- 用户信息卡片 -->
     <view class="user-card card">
@@ -18,12 +17,15 @@
         </view>
       </view>
     </view>
-
     <!-- 个人资料 -->
     <view class="profile-section card">
-      <text class="section-title">个人资料</text>
-
-      <view class="form-item">
+      <text class="section-title">个人档案</text>
+      <text class="section-title">系统消息</text>
+      <text class="section-title">意见反馈</text>
+      <text class="section-title">系统设置</text>
+      <text class="section-title">账号安全</text>
+      <text class="section-title">使用帮助</text>
+      <!-- <view class="form-item">
         <text class="item-label">昵称</text>
         <input 
           wx:if="{{editing}}"
@@ -103,13 +105,11 @@
           placeholder="请输入地址"
         />
         <text wx:else class="item-value">{{userInfo.address || '未设置'}}</text>
-      </view>
-
+      </view> -->
       <view wx:if="{{editing}}" class="save-btn btn-primary" bindtap="saveProfile">
         <text>保存修改</text>
       </view>
     </view>
-
     <!-- 退出登录 -->
     <view class="logout-btn" bindtap="logout">
       <text>退出登录</text>

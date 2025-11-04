@@ -5,7 +5,7 @@
     <view class="section-header">
       <view class="header-left">
         <view class="section-icon">💭</view>
-        <text class="section-title">记录此刻的心情</text>
+        <text class="section-title">心情日志</text>
       </view>
     </view>
 

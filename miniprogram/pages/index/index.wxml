@@ -6,21 +6,41 @@
       <text class="time-text">{{currentTime}}</text>
       <text class="date-text">{{currentDate}}</text>
     </view>
-    <view class="welcome-message">
+    <!-- <view class="welcome-message">
       <text class="greeting">你好，{{userNickname}}</text>
       <text class="subtitle">愿你每天都有好心情 ☀️</text>
+    </view> -->
+      
+    <!-- 情绪测试入口 -->
+    <view class="emotion-test-entry" bindtap="goToEmotionTest">
+      <view class="entry-content">
+        <view class="entry-icon">☀️</view>
+        <view class="entry-info">
+          <text class="entry-title">早间情绪测试</text> 
+        </view>
+        <view class="entry-status">
+          <text class="status-text">未测试</text>
+        </view>
+      </view>
+    </view>
+        <view class="emotion-test-entry-ninght" bindtap="goToEmotionTest">
+      <view class="entry-content">
+        <view class="entry-icon">🌙</view>
+        <view class="entry-info">
+          <text class="entry-title">晚间情绪测试</text>
+        </view>
+        <view class="entry-status">
+          <text class="status-text">未测试</text>
+        </view>
+      </view>
     </view>
   </view>
 
   <!-- 快捷功能区 -->
   <view class="quick-actions">
-    <view class="action-item" bindtap="goToMoodRecord">
-      <view class="action-icon">💭</view>
-      <text class="action-text">情绪记录</text>
-    </view>
     <view class="action-item" bindtap="goToAssessment">
       <view class="action-icon">📝</view>
-      <text class="action-text">心理测评</text>
+      <text class="action-text">认知测评</text>
     </view>
     <view class="action-item" bindtap="goToReports">
       <view class="action-icon">📊</view>
@@ -36,21 +56,11 @@
   <view class="features-section">
     <view class="section-title">主要功能</view>
 
-    <!-- 情绪记录 -->
-    <view class="feature-card" bindtap="goToMoodRecord">
-      <view class="feature-icon">💭</view>
-      <view class="feature-info">
-        <text class="feature-title">情绪日志</text>
-        <text class="feature-desc">随时记录你的心情变化</text>
-      </view>
-      <view class="feature-arrow">→</view>
-    </view>
-
     <!-- 健康测评 -->
     <view class="feature-card" bindtap="goToAssessment">
       <view class="feature-icon">🏥</view>
       <view class="feature-info">
-        <text class="feature-title">心理测评</text>
+        <text class="feature-title">认知测评</text>
         <text class="feature-desc">专业量表评估心理健康状况</text>
       </view>
       <view class="feature-arrow">→</view>
