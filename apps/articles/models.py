@@ -9,7 +9,6 @@ class Article(models.Model):
 
     title = models.CharField(max_length=255, verbose_name="标题")
     content = models.TextField(verbose_name="内容")
-    publish_time = models.DateTimeField(verbose_name="发布时间")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft', verbose_name="状态")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -20,8 +19,8 @@ class Article(models.Model):
     class Meta:
         verbose_name = "文章"
         verbose_name_plural = "文章"
-        ordering = ['-publish_time']
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['-publish_time']),
+            models.Index(fields=['-created_at']),
             models.Index(fields=['status']),
         ]

@@ -6,7 +6,6 @@ from ninja import Router
 from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from typing import List
 import logging
 
 from .models import Notification

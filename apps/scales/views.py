@@ -1,8 +1,6 @@
 from ninja import Router, Query
 from django.shortcuts import get_object_or_404
-from django.db.models import Avg
-from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 from .models import ScaleConfig, ScaleResult
 from .serializers import (

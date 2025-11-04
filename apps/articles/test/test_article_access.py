@@ -3,8 +3,6 @@
 测试用户获取科普文章内容功能
 """
 import requests
-import json
-from datetime import datetime
 
 # API基础URL
 BASE_URL = "http://localhost:8000/api"

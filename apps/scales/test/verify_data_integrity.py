@@ -84,7 +84,7 @@ def verify_data_integrity():
             print(f"❌ 此问卷有 {issues} 个问题")
             total_issues += issues
     
-    print(f"\n=== 验证总结 ===")
+    print("\n=== 验证总结 ===")
     if total_issues == 0:
         print("✅ 所有问卷数据完整，没有发现任何问题")
     else:

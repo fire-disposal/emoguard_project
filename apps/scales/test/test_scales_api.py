@@ -72,7 +72,7 @@ def test_get_scale_config_detail(config_id):
 
 def test_create_scale_result(config_id, user_id):
     """测试创建问卷结果"""
-    print(f"\n=== 测试创建问卷结果 ===")
+    print("\n=== 测试创建问卷结果 ===")
     
     # 首先获取问卷配置以了解问题结构
     config_response = requests.get(f"{BASE_URL}/scales/configs/{config_id}")

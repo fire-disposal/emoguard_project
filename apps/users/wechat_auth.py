@@ -6,7 +6,6 @@ import requests
 import logging
 import base64
 import json
-from typing import Optional, Tuple, Dict, Any
 from Crypto.Cipher import AES
 from django.conf import settings
 from django.contrib.auth import get_user_model

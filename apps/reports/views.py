@@ -1,5 +1,4 @@
 from ninja import Router, Query
-from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from django.utils import timezone

@@ -8,16 +8,8 @@
     <!-- 文章标题 -->
     <view class="article-header">
       <text class="article-title">{{article.title}}</text>
-      <text class="article-time">发布于 {{formatTime(article.publish_time)}}</text>
+      <text class="article-time">发布于 {{formatTime(article.created_at)}}</text>
     </view>
-
-    <!-- 封面图 -->
-    <image 
-      wx:if="{{article.cover_image}}" 
-      class="article-cover" 
-      src="{{article.cover_image}}" 
-      mode="widthFix"
-    />
 
     <!-- 文章内容 -->
     <view class="article-content">

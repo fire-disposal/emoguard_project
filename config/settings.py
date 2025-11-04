@@ -1,33 +1,34 @@
 """
-改进的Django设置文件
-支持多种认证方式
+Django设置文件 - 简化版本
+支持多种认证方式，符合Django最佳实践
 """
 from pathlib import Path
 from datetime import timedelta
 import os
-try:
-    from dotenv import load_dotenv
-    # 加载环境变量
-    load_dotenv()
-except ImportError:
-    # 如果dotenv未安装，跳过加载
-    pass
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# 基础路径配置
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-b2#f(%-90xf8y7$54+l50r_p!eyfxd0xw2qu+uok+(z&_jc*px"
+# 环境变量加载
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
-# 使用改进的用户模型
+# 安全密钥
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-b2#f(%-90xf8y7$54+l50r_p!eyfxd0xw2qu+uok+(z&_jc*px')
+
+# 调试模式
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+
+# 允许的主机
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if not DEBUG else []
+
+# 用户模型
 AUTH_USER_MODEL = 'users.User'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
-# Application definition
+# 应用配置
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -35,13 +36,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # --- 第三方框架 ---
+    # 第三方框架
     "corsheaders",
     "ninja",
     "ninja_extra",
     "ninja_jwt",
     'django_summernote',
-    # --- 模块 ---
+    'import_export',
+    # 自定义应用
     "apps.users",
     "apps.articles",
     "apps.journals",
@@ -49,7 +51,7 @@ INSTALLED_APPS = [
     "apps.scales",
     "apps.notifications",
 ]
-    
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -80,59 +82,52 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Database
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# 数据库配置
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
     }
-}
+else:
+    # 默认SQLite配置（开发环境）
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
-# Password validation
+# 密码验证
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Internationalization
+# 国际化
 LANGUAGE_CODE = "zh-hans"
 TIME_ZONE = "Asia/Shanghai"
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# 静态文件
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Media files
+# 媒体文件
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Default primary key field type
+# 默认主键字段类型
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ========== 微信小程序配置 ==========
-# 从环境变量获取，确保生产环境安全
-WECHAT_MINI_PROGRAM_APP_ID = os.environ.get('WECHAT_MINI_PROGRAM_APP_ID', 'wx4c375b49b33f7b8d')
-WECHAT_MINI_PROGRAM_APP_SECRET = os.environ.get('WECHAT_MINI_PROGRAM_APP_SECRET', 'c249a154f7907e7ef87636a06c7da3fe')
+# 微信小程序配置
+WECHAT_MINI_PROGRAM_APP_ID = os.environ.get('WECHAT_MINI_PROGRAM_APP_ID', '')
+WECHAT_MINI_PROGRAM_APP_SECRET = os.environ.get('WECHAT_MINI_PROGRAM_APP_SECRET', '')
 
-# 微信小程序安全配置
-WECHAT_API_TIMEOUT = 10  # 微信API请求超时时间（秒）
-WECHAT_CODE_EXPIRE_TIME = 300  # 微信code缓存过期时间（秒）
-WECHAT_MAX_LOGIN_ATTEMPTS = 5  # 最大登录尝试次数
-WECHAT_LOGIN_LOCKOUT_TIME = 300  # 登录锁定时间（秒）
-
-# ========== Django Ninja JWT配置 ==========
+# Django Ninja JWT配置
 NINJA_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -144,108 +139,16 @@ NINJA_JWT = {
     'AUTH_TOKEN_CLASSES': ('ninja_jwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
     'TOKEN_USER_CLASS': 'users.User',
-    # 增强JWT安全性
-    'TOKEN_OBTAIN_SERIALIZER': 'ninja_jwt.serializers.TokenObtainPairSerializer',
-    'TOKEN_REFRESH_SERIALIZER': 'ninja_jwt.serializers.TokenRefreshSerializer',
 }
 
-# ========== 认证配置 ==========
-# 使用改进的多认证后端
+# 认证配置
 AUTHENTICATION_BACKENDS = [
-    'apps.users.auth_backend.MultiAuthBackend',  # 统一认证后端
-    'django.contrib.auth.backends.ModelBackend', # Django默认认证（备用）
+    'apps.users.auth_backend.MultiAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
-# ========== 请求频率限制配置 ==========
-# 微信登录频率限制
-WECHAT_LOGIN_RATE_LIMIT = '5/m'  # 每分钟最多5次
-WECHAT_LOGIN_RATE_LIMIT_KEY = 'ip'  # 基于IP限制
-
-# 管理员登录频率限制
-ADMIN_LOGIN_RATE_LIMIT = '3/m'  # 每分钟最多3次
-ADMIN_LOGIN_RATE_LIMIT_KEY = 'ip'  # 基于IP限制
-
-# ========== 安全配置 ==========
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-
-# 生产环境安全配置（当DEBUG=False时生效）
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000  # 1年
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# ========== 权限配置 ==========
-# 管理员权限组
-ADMIN_GROUP_NAME = 'administrators'
-USER_GROUP_NAME = 'users'
-
-# ========== 日志配置 ==========
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'formatter': 'verbose',
-        },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-        'auth_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'auth.log',
-            'formatter': 'verbose',
-        },
-    },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'apps': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'apps.users': {
-            'handlers': ['console', 'auth_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    },
-}
-
-# 创建日志目录
-os.makedirs(BASE_DIR / 'logs', exist_ok=True)
-
-# ========== CORS配置 ==========
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS配置
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -253,54 +156,70 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:9000",
 ]
 
-# ========== 缓存配置 ==========
+# 缓存配置
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
 
-# ========== 安全配置 ==========
+# 安全配置
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# ========== 用户相关配置 ==========
-# 用户密码最小长度
-MIN_PASSWORD_LENGTH = 8
+# 生产环境安全配置
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# 微信用户默认昵称前缀
-WECHAT_USER_NICKNAME_PREFIX = '微信用户'
-
-# 管理员创建用户的默认设置
-ADMIN_CREATE_USER_DEFAULTS = {
-    'is_active': True,
-    'login_type': 'password',
+# 日志配置（简化版）
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
 }
 
-# ========== API配置 ==========
-# API版本
-API_VERSION = 'v1'
+# 用户相关配置
+MIN_PASSWORD_LENGTH = 8
+WECHAT_USER_NICKNAME_PREFIX = '微信用户'
 
-# 分页设置
+# API配置
+API_VERSION = 'v1'
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
 
-# ========== 文件上传配置 ==========
-# 头像上传路径
+# 文件上传配置
 AVATAR_UPLOAD_PATH = 'avatars/'
-
-# 文件大小限制 (5MB)
-MAX_FILE_SIZE = 5 * 1024 * 1024
-
-# 允许的图片格式
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 ALLOWED_IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'gif', 'webp']
 
-# ========== Django Summernote 配置 ==========
+# Django Summernote配置
 SUMMERNOTE_CONFIG = {
     'summernote': {
-        'width': '200%',
-        'height': '600',  # 增加高度
+        'width': '100%',
+        'height': '400',
         'lang': 'zh-CN',
         'toolbar': [
             ['style', ['style']],
@@ -312,12 +231,8 @@ SUMMERNOTE_CONFIG = {
             ['insert', ['link', 'picture', 'video']],
             ['view', ['fullscreen', 'codeview', 'help']],
         ],
-        'codemirror': {  # 代码高亮配置
-            'theme': 'monokai',
-        },
         'placeholder': '请输入文章内容...',
     },
-    'attachment_model': 'django_summernote.Attachment',
     'attachment_upload_to': 'summernote/',
     'attachment_filesize_limit': 5 * 1024 * 1024,  # 5MB
 }

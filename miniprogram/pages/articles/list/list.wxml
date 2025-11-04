@@ -22,15 +22,9 @@
       data-id="{{item.id}}"
       bindtap="goToDetail"
     >
-      <image 
-        wx:if="{{item.cover_image}}" 
-        class="article-cover" 
-        src="{{item.cover_image}}" 
-        mode="aspectFill"
-      />
       <view class="article-content">
         <text class="article-title">{{item.title}}</text>
-        <text class="article-time">{{formatTime(item.publish_time)}}</text>
+        <text class="article-time">{{formatTime(item.created_at)}}</text>
       </view>
     </view>
 

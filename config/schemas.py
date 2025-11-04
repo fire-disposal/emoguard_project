@@ -3,7 +3,7 @@
 遵循Django-Ninja推荐的Schema设计模式
 """
 from ninja import Schema
-from typing import Any, Optional, List, Generic, TypeVar
+from typing import Any, Optional, List, TypeVar
 from pydantic import Field
 
 

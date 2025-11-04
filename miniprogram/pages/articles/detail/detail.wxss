@@ -27,16 +27,11 @@
   color: #999;
 }
 
-.article-cover {
-  width: 100%;
-  border-radius: 16rpx;
-  margin-bottom: 32rpx;
-}
-
 .article-content {
   font-size: 30rpx;
   line-height: 1.8;
   color: #333;
+  margin-top: 32rpx;
 }
 
 .article-content rich-text {

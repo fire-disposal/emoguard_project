@@ -3,7 +3,6 @@
 使用Django原生验证功能
 """
 import re
-from django.core.validators import validate_email as django_validate_email
 from django.core.exceptions import ValidationError
 
 

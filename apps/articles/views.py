@@ -1,5 +1,4 @@
 from ninja import Router, Query
-from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from .models import Article
@@ -36,8 +35,6 @@ def list_articles(request, filters: ArticleListQuerySchema = Query(...)):
             id=a.id,
             title=a.title,
             content=a.content,
-            cover_image=a.cover_image,
-            publish_time=a.publish_time.isoformat() if a.publish_time else None,
             status=a.status,
             created_at=a.created_at.isoformat(),
             updated_at=a.updated_at.isoformat()
@@ -55,8 +52,6 @@ def get_article(request, article_id: int):
         id=article.id,
         title=article.title,
         content=article.content,
-        cover_image=article.cover_image,
-        publish_time=article.publish_time.isoformat() if article.publish_time else None,
         status=article.status,
         created_at=article.created_at.isoformat(),
         updated_at=article.updated_at.isoformat()
@@ -70,8 +65,6 @@ def create_article(request, data: ArticleCreateSchema):
     article = Article.objects.create(
         title=data.title,
         content=data.content,
-        cover_image=data.cover_image,
-        publish_time=data.publish_time,
         status=data.status
     )
     
@@ -79,8 +72,6 @@ def create_article(request, data: ArticleCreateSchema):
         id=article.id,
         title=article.title,
         content=article.content,
-        cover_image=article.cover_image,
-        publish_time=article.publish_time.isoformat() if article.publish_time else None,
         status=article.status,
         created_at=article.created_at.isoformat(),
         updated_at=article.updated_at.isoformat()
@@ -98,10 +89,6 @@ def update_article(request, article_id: int, data: ArticleUpdateSchema):
         article.title = data.title
     if data.content is not None:
         article.content = data.content
-    if data.cover_image is not None:
-        article.cover_image = data.cover_image
-    if data.publish_time is not None:
-        article.publish_time = data.publish_time
     if data.status is not None:
         article.status = data.status
     
@@ -111,8 +98,6 @@ def update_article(request, article_id: int, data: ArticleUpdateSchema):
         id=article.id,
         title=article.title,
         content=article.content,
-        cover_image=article.cover_image,
-        publish_time=article.publish_time.isoformat() if article.publish_time else None,
         status=article.status,
         created_at=article.created_at.isoformat(),
         updated_at=article.updated_at.isoformat()
@@ -134,9 +119,6 @@ def publish_article(request, article_id: int):
     """
     article = get_object_or_404(Article, id=article_id)
     article.status = 'published'
-    if not article.publish_time:
-        from django.utils import timezone
-        article.publish_time = timezone.now()
     article.save()
     return {"success": True}
 

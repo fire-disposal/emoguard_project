@@ -194,13 +194,13 @@ def create_test_articles():
         except Exception as e:
             print(f"❌ 创建文章失败: {article_data['title']} - {e}")
     
-    print(f"\n=== 创建完成 ===")
+    print("\n=== 创建完成 ===")
     print(f"成功创建 {created_count} 篇测试文章")
     
     # 显示最终统计
     total_published = Article.objects.filter(status='published').count()
     total_draft = Article.objects.filter(status='draft').count()
-    print(f"当前文章统计:")
+    print("当前文章统计:")
     print(f"  已发布: {total_published} 篇")
     print(f"  草稿: {total_draft} 篇")
     print(f"  总计: {total_published + total_draft} 篇")

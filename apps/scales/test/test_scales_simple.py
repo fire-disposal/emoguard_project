@@ -4,7 +4,6 @@
 """
 import requests
 import json
-import uuid
 from datetime import datetime, timedelta
 
 # API基础URL
@@ -72,7 +71,7 @@ def test_get_scale_config_detail(config_id):
 
 def test_create_scale_result_anonymous(config_id):
     """测试匿名创建问卷结果（绕过身份验证）"""
-    print(f"\n=== 测试创建问卷结果 (匿名模式) ===")
+    print("\n=== 测试创建问卷结果 (匿名模式) ===")
     
     # 首先获取问卷配置以了解问题结构
     config_response = requests.get(f"{BASE_URL}/scales/configs/{config_id}")
@@ -129,7 +128,7 @@ def test_create_scale_result_anonymous(config_id):
 
 def test_create_scale_result_with_test_user(config_id):
     """使用测试用户创建问卷结果"""
-    print(f"\n=== 使用测试用户创建问卷结果 ===")
+    print("\n=== 使用测试用户创建问卷结果 ===")
     
     # 首先获取问卷配置
     config_response = requests.get(f"{BASE_URL}/scales/configs/{config_id}")
@@ -176,7 +175,7 @@ def test_create_scale_result_with_test_user(config_id):
 
 def test_get_scale_results():
     """测试获取问卷结果列表"""
-    print(f"\n=== 测试获取问卷结果列表 ===")
+    print("\n=== 测试获取问卷结果列表 ===")
     try:
         params = {
             "page": 1,
