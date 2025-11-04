@@ -20,6 +20,10 @@ jobs:
       SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
       GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
       GHCR_PAT_TOKEN: ${{ secrets.GHCR_PAT_TOKEN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      WECHAT_MINI_PROGRAM_APP_ID: ${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}
+      WECHAT_MINI_PROGRAM_APP_SECRET: ${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
       
     steps:
     - name: Checkout code
@@ -91,10 +95,13 @@ jobs:
           --name emoguard-backend \
           --restart unless-stopped \
           -p 8000:8000 \
-          --env-file /opt/emoguard/.env \
-          -v /opt/emoguard/media:/app/media \
-          -v /opt/emoguard/logs:/app/logs \
-          -v /opt/emoguard/staticfiles:/app/staticfiles \
+          -e DATABASE_URL=${{ env.DATABASE_URL }} \
+          -e WECHAT_MINI_PROGRAM_APP_ID=${{ env.WECHAT_MINI_PROGRAM_APP_ID }} \
+          -e WECHAT_MINI_PROGRAM_APP_SECRET=${{ env.WECHAT_MINI_PROGRAM_APP_SECRET }} \
+          -e SECRET_KEY=${{ env.SECRET_KEY }} \
+          -v /srv/emoguard/media:/app/media \
+          -v /srv/emoguard/logs:/app/logs \
+          -v /srv/emoguard/staticfiles:/app/staticfiles \
           --health-cmd "python -c 'import requests; requests.get(\"http://localhost:8000/health/\", timeout=10)'" \
           --health-interval=30s \
           --health-timeout=10s \
