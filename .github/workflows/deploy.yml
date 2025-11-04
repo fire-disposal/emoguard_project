@@ -75,6 +75,7 @@ jobs:
         echo "🚀 Starting new container..."
         docker run -d \
           --name emoguard-backend \
+          --network backend_net \
           --restart unless-stopped \
           -p 8000:8000 \
           -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
@@ -84,6 +85,8 @@ jobs:
           -v /srv/emoguard/media:/app/media \
           -v /srv/emoguard/logs:/app/logs \
           -v /srv/emoguard/staticfiles:/app/staticfiles \
+          --health-cmd "curl -f http://localhost:8000/health || exit 1" \
+          --health-interval=10s --health-timeout=5s --health-retries=5 \
           $IMAGE
 
         echo "⏳ Waiting for service to come up..."
