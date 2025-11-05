@@ -6,7 +6,11 @@
 const auth = require('./auth');
 
 // API 基础地址
-const BASE_URL = 'http://127.0.0.1:8000';
+
+// 本地调试环境
+// const BASE_URL = 'http://127.0.0.1:8000';
+// 正式环境
+const BASE_URL = 'https://cg.aoxintech.com';
 
 // 是否正在刷新 token
 let isRefreshing = false;
