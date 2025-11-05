@@ -7,9 +7,9 @@
     <!-- 用户信息卡片 -->
     <view class="user-card card">
       <view class="user-header">
-        <view class="user-avatar">{{userInfo.nickname ? userInfo.nickname.charAt(0) : '用'}}</view>
+        <view class="user-avatar">{{userInfo.real_name ? userInfo.real_name.charAt(0) : '用'}}</view>
         <view class="user-info">
-          <text class="user-nickname">{{userInfo.nickname || '用户'}}</text>
+          <text class="user-nickname">{{userInfo.real_name || '用户'}}</text>
           <text class="user-role">{{userInfo.role === 'admin' ? '管理员' : '普通用户'}}</text>
         </view>
         <view class="edit-btn" bindtap="toggleEdit">

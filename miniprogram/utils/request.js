@@ -8,14 +8,16 @@ const auth = require('./auth');
 // API 基础地址
 
 // 本地调试环境
-// const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = 'http://127.0.0.1:8000';
 // 正式环境
-const BASE_URL = 'https://cg.aoxintech.com';
+// const BASE_URL = 'https://cg.aoxintech.com';
 
 // 是否正在刷新 token
 let isRefreshing = false;
 // 刷新 token 期间的请求队列
 let requestQueue = [];
+// 刷新token失败标记，防止无限重试
+let refreshFailed = false;
 
 /**
  * 刷新 Token
@@ -23,9 +25,16 @@ let requestQueue = [];
  */
 function refreshToken() {
   return new Promise((resolve, reject) => {
+    // 如果已经标记为刷新失败，直接拒绝，避免无限循环
+    if (refreshFailed) {
+      reject(new Error('Token refresh already failed'));
+      return;
+    }
+
     const refreshToken = auth.getRefreshToken();
     
     if (!refreshToken) {
+      refreshFailed = true;
       reject(new Error('No refresh token'));
       return;
     }
@@ -36,13 +45,21 @@ function refreshToken() {
       data: { refresh: refreshToken },
       success: (res) => {
         if (res.statusCode === 200 && res.data.access) {
+          // 刷新成功，重置失败标记
+          refreshFailed = false;
           auth.setToken(res.data.access, res.data.refresh || refreshToken);
           resolve(res.data.access);
         } else {
+          // 刷新失败，标记失败状态
+          refreshFailed = true;
           reject(new Error('Refresh token failed'));
         }
       },
-      fail: reject
+      fail: (error) => {
+        // 网络请求失败，标记失败状态
+        refreshFailed = true;
+        reject(error);
+      }
     });
   });
 }
@@ -101,6 +118,13 @@ function request(options) {
         
         // 401 未授权 - 尝试刷新 token
         if (statusCode === 401 && !skipAuth) {
+          // 如果已经标记为刷新失败，直接跳转到登录页，不再重试
+          if (refreshFailed) {
+            auth.navigateToLogin();
+            reject(new Error('Token refresh failed, please login again'));
+            return;
+          }
+
           if (!isRefreshing) {
             isRefreshing = true;
             
@@ -119,7 +143,9 @@ function request(options) {
                 isRefreshing = false;
                 requestQueue = [];
                 
-                // Token 刷新失败，跳转登录
+                // Token 刷新失败，清除本地缓存并跳转登录
+                auth.clearToken();
+                auth.clearUserInfo();
                 auth.navigateToLogin();
                 reject(error);
               });
@@ -230,10 +256,21 @@ function del(url, data, options = {}) {
   });
 }
 
+/**
+ * 重置token刷新状态
+ * 在用户登录成功后调用，清除刷新失败标记
+ */
+function resetRefreshState() {
+  refreshFailed = false;
+  isRefreshing = false;
+  requestQueue = [];
+}
+
 module.exports = {
   request,
   get,
   post,
   put,
-  delete: del
+  delete: del,
+  resetRefreshState
 };

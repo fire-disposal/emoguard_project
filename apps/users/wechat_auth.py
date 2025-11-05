@@ -157,9 +157,6 @@ class WeChatAuthService:
             
             # 更新用户资料（如果提供且相关字段为空）
             if user_info:
-                if not user.nickname and user_info.get('nickName'):
-                    user.nickname = self._clean_nickname(user_info.get('nickName'))
-                    update_fields.append('nickname')
                 if not user.gender and user_info.get('gender'):
                     user.gender = self._convert_gender(user_info.get('gender'))
                     update_fields.append('gender')
@@ -172,11 +169,9 @@ class WeChatAuthService:
             # 创建新用户,使用事务确保数据一致性
             with transaction.atomic():  # type: ignore[misc]
                 # 准备用户资料
-                nickname = ''
-                gender = None
+                gender = ''
                 
                 if user_info:
-                    nickname = self._clean_nickname(user_info.get('nickName', ''))
                     gender = self._convert_gender(user_info.get('gender'))
                 
                 # 创建用户，直接包含资料字段
@@ -185,7 +180,6 @@ class WeChatAuthService:
                     wechat_openid=openid,
                     wechat_unionid=unionid,
                     role='user',
-                    nickname=nickname,
                     gender=gender,
                 )
                 user.set_unusable_password()
@@ -195,30 +189,6 @@ class WeChatAuthService:
                 logger.info(f"创建新微信用户: {openid}")
         
         return user, created
-
-    def _clean_nickname(self, nickname):
-        """
-        清理和验证昵称
-        
-        Args:
-            nickname: 原始昵称
-            
-        Returns:
-            str: 清理后的昵称
-        """
-        # 简单的昵称清理逻辑
-        if not nickname or not nickname.strip():
-            return '微信用户'
-        
-        # 移除特殊字符，保留中文、字母、数字、常用符号
-        import re
-        cleaned = re.sub(r'[^\w\u4e00-\u9fff\s\-_.]', '', nickname)
-        
-        # 限制长度
-        if len(cleaned) > 30:
-            cleaned = cleaned[:30]
-        
-        return cleaned.strip() or '微信用户'
 
     def _convert_gender(self, gender_value):
         """
@@ -235,5 +205,5 @@ class WeChatAuthService:
         elif gender_value == 2:
             return 'female'
         else:
-            return 'other'  # 包括未知和其他情况
+            return ''  # 返回空字符串而不是'other'，避免null值
     

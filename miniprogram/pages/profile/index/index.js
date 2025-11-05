@@ -30,12 +30,13 @@ Page({
         this.setData({
           userInfo: res,
           formData: {
-            nickname: res.nickname || '',
             real_name: res.real_name || '',
             gender: res.gender || '',
-            birthday: res.birthday || '',
-            phone: res.phone || '',
-            address: res.address || ''
+            age: res.age ? String(res.age) : '',
+            education: res.education || '',
+            province: res.province || '',
+            city: res.city || '',
+            phone: res.phone || ''
           }
         });
       })

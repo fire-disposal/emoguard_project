@@ -4,6 +4,7 @@
  */
 
 const storage = require('./storage');
+const request = require('./request');
 
 const TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -34,6 +35,11 @@ function setToken(accessToken, refreshToken) {
   storage.setItem(TOKEN_KEY, accessToken);
   if (refreshToken) {
     storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
+  
+  // 重置token刷新状态，避免之前的失败标记影响新token
+  if (request.resetRefreshState) {
+    request.resetRefreshState();
   }
 }
 

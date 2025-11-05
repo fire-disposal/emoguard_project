@@ -70,14 +70,7 @@ class User(AbstractUser):
         verbose_name='角色'
     )
     
-    # ========== 用户资料字段 ==========
-    nickname = models.CharField(
-        max_length=64,
-        blank=True,
-        default='',
-        verbose_name='昵称'
-    )
-    
+    # ========== 用户基本资料字段 ==========
     real_name = models.CharField(
         max_length=50,
         blank=True,
@@ -85,21 +78,44 @@ class User(AbstractUser):
         verbose_name='真实姓名'
     )
     
-
     gender = models.CharField(
         max_length=10,
-        choices=GENDER_CHOICES,
         blank=True,
-        null=True,
+        default='',
         verbose_name='性别'
     )
     
-    birthday = models.DateField(
+    age = models.IntegerField(
         blank=True,
         null=True,
-        verbose_name='生日'
+        verbose_name='年龄'
     )
     
+    education = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        verbose_name='学历'
+    )
+    
+    province = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name='所在省份'
+    )
+    city = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name='所在城市'
+    )
+    district = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name='所在区县'
+    )
 
     # ========== 联系信息 ==========
     phone = models.CharField(
@@ -113,11 +129,10 @@ class User(AbstractUser):
         verbose_name='手机号'
     )
     
-    address = models.CharField(
-        max_length=200,
-        blank=True,
-        default='',
-        verbose_name='地址'
+    # 用户信息完善状态
+    is_profile_complete = models.BooleanField(
+        default=False,
+        verbose_name='信息已完善'
     )
     
 
@@ -133,8 +148,6 @@ class User(AbstractUser):
     def __str__(self):
         if self.is_wechat_user:
             return f"微信用户({self.wechat_openid[:8]}...)"  # pyright: ignore[reportIndexIssue]
-        if self.nickname:
-            return self.nickname
         if self.real_name:
             return self.real_name
         return self.username
@@ -154,20 +167,13 @@ class User(AbstractUser):
     @property
     def display_name(self):
         """获取显示名称"""
-        return self.nickname or self.real_name or self.username
+        return self.real_name or self.username
     
-    @property
-    def age(self):
-        """计算年龄"""
-        if not self.birthday:
-            return None
-        from datetime import date
-        today = date.today()
-        return today.year - self.birthday.year - (  # pyright: ignore[reportAttributeAccessIssue]
-            (today.month, today.day) < (self.birthday.month, self.birthday.day)  # pyright: ignore[reportAttributeAccessIssue]
-        )
-    
-    @property
-    def is_profile_complete(self):
-        """判断资料是否完善"""
-        return all([self.nickname, self.gender, self.birthday])
+    def update_profile_complete_status(self):
+        """更新信息完善状态"""
+        required_fields = [
+            self.real_name, self.gender, self.age, self.education,
+            self.province, self.city, self.district, self.phone
+        ]
+        self.is_profile_complete = all(field for field in required_fields)
+        return self.is_profile_complete

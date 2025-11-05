@@ -1,16 +1,18 @@
 from ninja import Schema
 from typing import Optional
-from datetime import date
+
 
 
 class UserProfileUpdateSchema(Schema):
     """更新用户资料（现在直接更新User模型）"""
-    nickname: Optional[str] = None
     real_name: Optional[str] = None
     gender: Optional[str] = None
-    birthday: Optional[date] = None
+    age: Optional[int] = None
+    education: Optional[str] = None
+    province: Optional[str] = None
+    city: Optional[str] = None
+    district: Optional[str] = None
     phone: Optional[str] = None
-    address: Optional[str] = None
 
 
 class UserResponseSchema(Schema):
@@ -29,12 +31,15 @@ class UserResponseSchema(Schema):
     is_staff: bool
     
     # 用户资料字段
-    nickname: str
     real_name: str
     gender: Optional[str] = None
-    birthday: Optional[date] = None
+    age: Optional[int] = None
+    education: Optional[str] = None
+    province: Optional[str] = None
+    city: Optional[str] = None
+    district: Optional[str] = None
     phone: Optional[str] = None
-    address: str
+    is_profile_complete: bool
 
 
 class UserCreateSchema(Schema):

@@ -12,6 +12,7 @@
     "pages/reports/list/list",
     "pages/reports/detail/detail",
     "pages/profile/index/index",
+    "pages/profile/complete/complete",
     "pages/tts-test/tts-test"
   ],
   "window": {
@@ -54,9 +55,6 @@
     ]
   },
   "permission": {
-    "scope.userInfo": {
-      "desc": "获取您的用户信息用于登录"
-    }
   },
   "sitemapLocation": "sitemap.json"
 }

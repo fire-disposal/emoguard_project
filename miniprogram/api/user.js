@@ -26,7 +26,7 @@ function getCurrentUser() {
 /**
  * 更新用户资料
  * PUT /api/users/me/profile
- * @param {object} data - { nickname, real_name, gender, birthday, phone, address }
+ * @param {object} data - { real_name, gender, age, education, province, city, phone }
  * @returns {Promise<object>} 更新后的用户信息
  */
 function updateProfile(data) {

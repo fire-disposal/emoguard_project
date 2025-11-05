@@ -84,26 +84,50 @@ Page({
   /**
    * 登录成功后跳转
    */
-  handleLoginSuccess() {
-    const targetUrl = this.data.redirectUrl || '/pages/index/index';
-    console.log('登录成功，跳转到:', targetUrl);
-    
-    setTimeout(() => {
-      if (this.data.redirectUrl) {
-        wx.redirectTo({
-          url: targetUrl,
-          fail: () => {
-            wx.switchTab({
-              url: targetUrl,
-              fail: () => {
-                wx.reLaunch({ url: targetUrl });
-              }
-            });
-          }
+  async handleLoginSuccess() {
+    try {
+      // 获取当前用户信息
+      const userInfo = await userApi.getCurrentUser();
+      console.log('获取用户信息:', userInfo);
+      
+      // 检查信息是否完善
+      if (!userInfo.is_profile_complete) {
+        console.log('用户信息未完善，跳转到信息完善页面');
+        wx.reLaunch({
+          url: '/pages/profile/complete/complete'
         });
-      } else {
-        wx.reLaunch({ url: targetUrl });
+        return;
       }
-    }, 500);
+      
+      // 信息已完善，跳转到目标页面
+      const targetUrl = this.data.redirectUrl || '/pages/index/index';
+      console.log('登录成功，跳转到:', targetUrl);
+      
+      setTimeout(() => {
+        if (this.data.redirectUrl) {
+          wx.redirectTo({
+            url: targetUrl,
+            fail: () => {
+              wx.switchTab({
+                url: targetUrl,
+                fail: () => {
+                  wx.reLaunch({ url: targetUrl });
+                }
+              });
+            }
+          });
+        } else {
+          wx.reLaunch({ url: targetUrl });
+        }
+      }, 500);
+      
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
+      // 如果获取用户信息失败，仍然跳转到首页
+      const targetUrl = this.data.redirectUrl || '/pages/index/index';
+      setTimeout(() => {
+        wx.reLaunch({ url: targetUrl });
+      }, 500);
+    }
   }
 });

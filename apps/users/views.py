@@ -42,12 +42,15 @@ def _user_to_response_schema(user):
         role=user.role,
         is_active=user.is_active,
         is_staff=user.is_staff,
-        nickname=user.nickname,
         real_name=user.real_name,
         gender=user.gender,
-        birthday=user.birthday,
+        age=user.age,
+        education=user.education,
+        province=user.province,
+        city=user.city,
+        district=user.district,
         phone=user.phone,
-        address=user.address,
+        is_profile_complete=user.is_profile_complete,
     )
 
 
@@ -169,13 +172,16 @@ def update_my_profile(request, data: UserProfileUpdateSchema):
     user = request.auth
     
     update_fields = []
-    for field in ['nickname', 'real_name', 'gender', 'birthday', 'phone', 'address']:
+    for field in ['real_name', 'gender', 'age', 'education', 'province', 'city', 'district', 'phone']:
         value = getattr(data, field, None)
         if value is not None:
             setattr(user, field, value)
             update_fields.append(field)
     
     if update_fields:
+        # 更新信息完善状态
+        user.update_profile_complete_status()
+        update_fields.append('is_profile_complete')
         user.save(update_fields=update_fields)
         logger.info(f"用户 {user.username} 更新资料成功: {update_fields}")
     
