@@ -1,0 +1,197 @@
+/* 语音辅助组件样式 */
+
+.voice-assist-container {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* 语音按钮基础样式 */
+.voice-button {
+  position: fixed;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  box-shadow: 0 8rpx 32rpx rgba(24, 144, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+}
+
+/* 按钮位置 */
+.voice-button-bottom-right {
+  bottom: 120rpx;
+  right: 40rpx;
+}
+
+.voice-button-bottom-left {
+  bottom: 120rpx;
+  left: 40rpx;
+}
+
+.voice-button-top-right {
+  top: 120rpx;
+  right: 40rpx;
+}
+
+.voice-button-top-left {
+  top: 120rpx;
+  left: 40rpx;
+}
+
+/* 按钮悬停效果 */
+.voice-button-hover {
+  transform: scale(1.1);
+  box-shadow: 0 12rpx 40rpx rgba(24, 144, 255, 0.6);
+}
+
+/* 禁用状态 */
+.voice-button-disabled {
+  background: #d9d9d9;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 播放中状态 */
+.voice-button-speaking {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  animation: pulse 1.5s infinite;
+}
+
+/* 语音图标 */
+.voice-icon {
+  font-size: 48rpx;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.icon-text {
+  display: inline-block;
+  animation: iconBounce 2s infinite;
+}
+
+/* 语音波纹动画 */
+.voice-wave {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+}
+
+.wave-bar {
+  width: 6rpx;
+  height: 20rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 3rpx;
+  animation: wave 1s infinite ease-in-out;
+}
+
+.wave-bar-1 {
+  animation-delay: 0s;
+}
+
+.wave-bar-2 {
+  animation-delay: 0.2s;
+}
+
+.wave-bar-3 {
+  animation-delay: 0.4s;
+}
+
+/* 语音状态提示 */
+.voice-status-tip {
+  position: fixed;
+  bottom: 260rpx;
+  right: 40rpx;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 16rpx 24rpx;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  pointer-events: auto;
+  animation: fadeIn 0.3s ease;
+}
+
+.status-text {
+  display: block;
+}
+
+/* 动画定义 */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 8rpx 32rpx rgba(24, 144, 255, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 12rpx 40rpx rgba(24, 144, 255, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 8rpx 32rpx rgba(24, 144, 255, 0.4);
+  }
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleY(1.5);
+    opacity: 0.7;
+  }
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4rpx);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 适配不同屏幕尺寸 */
+@media screen and (max-height: 600px) {
+  .voice-button {
+    width: 100rpx;
+    height: 100rpx;
+  }
+  
+  .voice-button-bottom-right,
+  .voice-button-bottom-left {
+    bottom: 80rpx;
+  }
+  
+  .voice-button-top-right,
+  .voice-button-top-left {
+    top: 80rpx;
+  }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .voice-button {
+    box-shadow: 0 8rpx 32rpx rgba(24, 144, 255, 0.6);
+  }
+  
+  .voice-status-tip {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+  }
+}

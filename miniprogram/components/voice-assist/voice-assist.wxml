@@ -1,0 +1,29 @@
+<!-- 语音辅助组件 -->
+<view class="voice-assist-container">
+  <!-- 语音控制按钮 -->
+  <view 
+    wx:if="{{showVoiceIcon && showControl}}"
+    class="{{getVoiceButtonClass()}}"
+    bindtap="toggleVoice"
+    hover-class="voice-button-hover"
+    hover-stay-time="100"
+  >
+    <view class="voice-icon {{getVoiceIconClass()}}">
+      <text wx:if="{{isSpeaking}}" class="icon-text">🔊</text>
+      <text wx:elif="{{isEnabled}}" class="icon-text">🔈</text>
+      <text wx:else class="icon-text">🔇</text>
+    </view>
+    
+    <!-- 语音波纹动画 -->
+    <view wx:if="{{isSpeaking}}" class="voice-wave">
+      <view class="wave-bar wave-bar-1"></view>
+      <view class="wave-bar wave-bar-2"></view>
+      <view class="wave-bar wave-bar-3"></view>
+    </view>
+  </view>
+
+  <!-- 语音状态提示 -->
+  <view wx:if="{{isSpeaking}}" class="voice-status-tip">
+    <text class="status-text">正在播放语音...</text>
+  </view>
+</view>

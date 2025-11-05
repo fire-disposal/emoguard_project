@@ -1,0 +1,367 @@
+/* TTS测试页面样式 */
+
+.tts-test-container {
+  padding: 32rpx;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 48rpx;
+}
+
+.page-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.page-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 状态卡片 */
+.status-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.status-item:last-child {
+  margin-bottom: 0;
+}
+
+.status-label {
+  font-size: 32rpx;
+  color: #666;
+}
+
+.status-value {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.status-enabled {
+  color: #52c41a;
+}
+
+.status-disabled {
+  color: #ff4d4f;
+}
+
+.status-speaking {
+  color: #1890ff;
+  animation: pulse 1.5s infinite;
+}
+
+.status-idle {
+  color: #999;
+}
+
+/* 控制面板 */
+.control-panel {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.panel-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 32rpx;
+  text-align: center;
+}
+
+/* 测试区域 */
+.test-section {
+  margin-bottom: 32rpx;
+}
+
+.test-btn {
+  width: 100%;
+  padding: 28rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-bottom: 16rpx;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #fff;
+  box-shadow: 0 6rpx 20rpx rgba(24, 144, 255, 0.3);
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+  border: 2rpx solid #d9d9d9;
+}
+
+.btn-stop {
+  background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+  color: #fff;
+}
+
+.btn-clear {
+  background: #faad14;
+  color: #fff;
+}
+
+.btn-copy {
+  background: #52c41a;
+  color: #fff;
+}
+
+.test-btn:active {
+  transform: scale(0.98);
+}
+
+.test-btn[disabled] {
+  opacity: 0.6;
+}
+
+/* 自定义文本区域 */
+.custom-text-section {
+  margin-bottom: 32rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 24rpx;
+}
+
+.text-input {
+  width: 100%;
+  min-height: 160rpx;
+  padding: 24rpx;
+  border: 2rpx solid #d9d9d9;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  line-height: 1.5;
+  margin-bottom: 24rpx;
+  background: #fafafa;
+}
+
+/* 语音参数 */
+.voice-params-section {
+  margin-bottom: 32rpx;
+}
+
+.param-item {
+  margin-bottom: 32rpx;
+}
+
+.param-label {
+  display: block;
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.param-slider {
+  width: 100%;
+  height: 8rpx;
+  background: #e8e8e8;
+  border-radius: 4rpx;
+}
+
+/* 高级测试 */
+.advanced-tests {
+  margin-bottom: 32rpx;
+}
+
+/* 控制按钮 */
+.control-buttons {
+  display: flex;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
+.ctrl-btn {
+  flex: 1;
+  min-width: 200rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+/* 结果面板 */
+.results-panel {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.result-count {
+  font-size: 28rpx;
+  color: #999;
+  margin-left: 16rpx;
+}
+
+.test-results {
+  max-height: 600rpx;
+  margin-top: 24rpx;
+}
+
+.result-item {
+  padding: 24rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+  background: #fafafa;
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.result-item:last-child {
+  margin-bottom: 0;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.result-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.result-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.result-content {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.result-status {
+  font-size: 24rpx;
+  font-weight: 700;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.status-success {
+  color: #52c41a;
+  background: rgba(82, 196, 26, 0.1);
+}
+
+.status-error {
+  color: #ff4d4f;
+  background: rgba(255, 77, 79, 0.1);
+}
+
+.status-warning {
+  color: #faad14;
+  background: rgba(250, 173, 20, 0.1);
+}
+
+.status-testing {
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.result-message {
+  font-size: 28rpx;
+  color: #666;
+  flex: 1;
+}
+
+/* 空结果 */
+.empty-results {
+  text-align: center;
+  padding: 80rpx 0;
+}
+
+.empty-text {
+  display: block;
+  font-size: 32rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+}
+
+.empty-hint {
+  display: block;
+  font-size: 28rpx;
+  color: #ccc;
+}
+
+/* 动画 */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 适配不同屏幕 */
+@media screen and (max-width: 375px) {
+  .page-title {
+    font-size: 42rpx;
+  }
+  
+  .test-btn, .ctrl-btn {
+    font-size: 28rpx;
+    padding: 24rpx;
+  }
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  .tts-test-container {
+    background: #1a1a1a;
+  }
+  
+  .status-card,
+  .control-panel,
+  .results-panel {
+    background: #2a2a2a;
+    color: #fff;
+  }
+  
+  .text-input {
+    background: #3a3a3a;
+    border-color: #4a4a4a;
+    color: #fff;
+  }
+  
+  .btn-secondary {
+    background: #3a3a3a;
+    color: #fff;
+    border-color: #4a4a4a;
+  }
+}

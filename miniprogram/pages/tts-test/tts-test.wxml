@@ -1,0 +1,149 @@
+<!-- TTS测试页面 -->
+<view class="tts-test-container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="page-title">语音合成测试</text>
+    <text class="page-subtitle">验证微信TTS功能可行性</text>
+  </view>
+
+  <!-- 状态信息 -->
+  <view class="status-card">
+    <view class="status-item">
+      <text class="status-label">TTS状态：</text>
+      <text class="status-value {{isEnabled ? 'status-enabled' : 'status-disabled'}}">
+        {{isEnabled ? '已开启' : '已关闭'}}
+      </text>
+    </view>
+    <view class="status-item">
+      <text class="status-label">播放状态：</text>
+      <text class="status-value {{isSpeaking ? 'status-speaking' : 'status-idle'}}">
+        {{isSpeaking ? '播放中' : '空闲'}}
+      </text>
+    </view>
+  </view>
+
+  <!-- 测试控制面板 -->
+  <view class="control-panel">
+    <view class="panel-title">测试控制</view>
+    
+    <!-- 基础测试 -->
+    <view class="test-section">
+      <button class="test-btn btn-primary" bindtap="testBasicTTS" disabled="{{currentTest === 'basic'}}">
+        <text wx:if="{{currentTest === 'basic'}}">测试中...</text>
+        <text wx:else>基础TTS测试</text>
+      </button>
+      
+      <button class="test-btn btn-secondary" bindtap="testVoiceControl">
+        语音控制测试
+      </button>
+    </view>
+
+    <!-- 自定义文本测试 -->
+    <view class="custom-text-section">
+      <view class="section-title">自定义文本测试</view>
+      <textarea 
+        class="text-input" 
+        placeholder="请输入要测试的文本..."
+        value="{{customText}}"
+        bindinput="onTextInput"
+        maxlength="200"
+      />
+      <button class="test-btn btn-primary" bindtap="testCustomText" disabled="{{!customText || currentTest === 'custom'}}">
+        <text wx:if="{{currentTest === 'custom'}}">播放中...</text>
+        <text wx:else>测试自定义文本</text>
+      </button>
+    </view>
+
+    <!-- 语音参数调节 -->
+    <view class="voice-params-section">
+      <view class="section-title">语音参数</view>
+      
+      <view class="param-item">
+        <text class="param-label">语速：{{voiceSpeed}}</text>
+        <slider 
+          class="param-slider"
+          min="0.5" 
+          max="1.5" 
+          step="0.1" 
+          value="{{voiceSpeed}}"
+          bindchange="onSpeedChange"
+        />
+      </view>
+      
+      <view class="param-item">
+        <text class="param-label">音调：{{voicePitch}}</text>
+        <slider 
+          class="param-slider"
+          min="0.5" 
+          max="2.0" 
+          step="0.1" 
+          value="{{voicePitch}}"
+          bindchange="onPitchChange"
+        />
+      </view>
+      
+      <view class="param-item">
+        <text class="param-label">音量：{{voiceVolume}}</text>
+        <slider 
+          class="param-slider"
+          min="0.1" 
+          max="1.0" 
+          step="0.1" 
+          value="{{voiceVolume}}"
+          bindchange="onVolumeChange"
+        />
+      </view>
+      
+      <button class="test-btn btn-secondary" bindtap="testVoiceParams" disabled="{{currentTest === 'params'}}">
+        <text wx:if="{{currentTest === 'params'}}">测试中...</text>
+        <text wx:else>测试语音参数</text>
+      </button>
+    </view>
+
+    <!-- 高级测试 -->
+    <view class="advanced-tests">
+      <button class="test-btn btn-secondary" bindtap="testTextFormat">
+        文本格式化测试
+      </button>
+    </view>
+
+    <!-- 控制按钮 -->
+    <view class="control-buttons">
+      <button class="ctrl-btn btn-stop" bindtap="stopAll">
+        停止所有语音
+      </button>
+      <button class="ctrl-btn btn-clear" bindtap="clearResults">
+        清空结果
+      </button>
+      <button class="ctrl-btn btn-copy" bindtap="copyResults">
+        复制结果
+      </button>
+    </view>
+  </view>
+
+  <!-- 测试结果 -->
+  <view class="results-panel">
+    <view class="panel-title">
+      <text>测试结果</text>
+      <text class="result-count">({{testResults.length}}条)</text>
+    </view>
+    
+    <scroll-view class="test-results" scroll-y>
+      <view wx:for="{{testResults}}" wx:key="time" class="result-item">
+        <view class="result-header">
+          <text class="result-name">{{item.name}}</text>
+          <text class="result-time">{{item.time}}</text>
+        </view>
+        <view class="result-content">
+          <text class="result-status status-{{item.status}}">[{{item.status}}]</text>
+          <text class="result-message">{{item.message}}</text>
+        </view>
+      </view>
+      
+      <view wx:if="{{testResults.length === 0}}" class="empty-results">
+        <text class="empty-text">暂无测试结果</text>
+        <text class="empty-hint">点击上方测试按钮开始验证</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>

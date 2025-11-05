@@ -11,7 +11,8 @@
     "pages/assessment/result/result",
     "pages/reports/list/list",
     "pages/reports/detail/detail",
-    "pages/profile/index/index"
+    "pages/profile/index/index",
+    "pages/tts-test/tts-test"
   ],
   "window": {
     "navigationBarTitleText": "情绪守护",
