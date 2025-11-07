@@ -4,7 +4,9 @@ const scaleApi = require('../../../api/scale');
 Page({
   data: {
     scales: [],
-    loading: true
+    loading: true,
+    // 显示流程入口
+    showFlowEntry: true
   },
 
   onLoad() {
@@ -42,6 +44,15 @@ Page({
     const { id } = e.currentTarget.dataset;
     wx.navigateTo({
       url: `/pages/assessment/detail/detail?id=${id}`
+    });
+  },
+
+  /**
+   * 开始认知评估流程
+   */
+  startCognitiveFlow() {
+    wx.navigateTo({
+      url: '/pages/assessment/flow/flow'
     });
   }
 });

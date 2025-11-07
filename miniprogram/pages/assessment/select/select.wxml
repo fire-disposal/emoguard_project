@@ -5,6 +5,16 @@
     <text class="header-subtitle">选择适合您的心理测评量表</text>
   </view>
 
+  <!-- 认知评估流程入口 -->
+  <view wx:if="{{showFlowEntry}}" class="flow-entry-card" bindtap="startCognitiveFlow">
+    <view class="flow-icon">🧠</view>
+    <view class="flow-content">
+      <view class="flow-title">认知功能评估流程</view>
+      <view class="flow-desc">系统引导，按顺序完成 SCD-Q9、MMSE、MoCA 评估</view>
+    </view>
+    <view class="flow-badge">推荐</view>
+  </view>
+
   <view wx:if="{{loading}}" class="loading-state">
     <text class="loading-text">加载中...</text>
   </view>
@@ -15,6 +25,7 @@
   </view>
 
   <view wx:else class="scales-list">
+    <view class="list-title">单独测评</view>
     <view 
       wx:for="{{scales}}" 
       wx:key="id" 

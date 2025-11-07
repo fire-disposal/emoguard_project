@@ -9,12 +9,19 @@ Page({
     selectedOptions: [],
     currentQuestionIndex: 0,
     startTime: 0,
-    loading: true
+    loading: true,
+    // 流程模式
+    flowMode: false,
+    groupId: null
   },
 
   onLoad(options) {
-    const { id } = options;
+    const { id, groupId, flowMode } = options;
     if (id) {
+      this.setData({
+        flowMode: flowMode === 'true',
+        groupId: groupId ? parseInt(groupId) : null
+      });
       this.loadScale(id);
     }
   },
@@ -112,27 +119,60 @@ Page({
     const completedAt = now.toISOString();
     const durationMs = now.getTime() - this.data.startTime;
 
-    scaleApi.createResult({
-      user_id: userInfo.id,
-      scale_config_id: this.data.scaleConfig.id,
-      selected_options: this.data.selectedOptions,
-      duration_ms: durationMs,
-      started_at: startedAt,
-      completed_at: completedAt
-    })
-    .then((res) => {
-      wx.hideLoading();
-      wx.redirectTo({
-        url: `/pages/assessment/result/result?id=${res.id}`
+    // 根据模式选择不同的提交方式
+    if (this.data.flowMode && this.data.groupId) {
+      // 流程模式：提交到评估分组
+      scaleApi.submitGroupedResult(this.data.groupId, {
+        scale_config_id: this.data.scaleConfig.id,
+        selected_options: this.data.selectedOptions,
+        duration_ms: durationMs,
+        started_at: startedAt,
+        completed_at: completedAt
+      })
+      .then((res) => {
+        wx.hideLoading();
+        // 返回流程页面
+        wx.navigateBack({
+          success: () => {
+            wx.showToast({
+              title: '提交成功',
+              icon: 'success'
+            });
+          }
+        });
+      })
+      .catch((error) => {
+        wx.hideLoading();
+        console.error('提交测评失败:', error);
+        wx.showToast({
+          title: error.message || '提交失败',
+          icon: 'none'
+        });
       });
-    })
-    .catch((error) => {
-      wx.hideLoading();
-      console.error('提交测评失败:', error);
-      wx.showToast({
-        title: error.message || '提交失败',
-        icon: 'none'
+    } else {
+      // 普通模式：单独提交
+      scaleApi.createResult({
+        user_id: userInfo.id,
+        scale_config_id: this.data.scaleConfig.id,
+        selected_options: this.data.selectedOptions,
+        duration_ms: durationMs,
+        started_at: startedAt,
+        completed_at: completedAt
+      })
+      .then((res) => {
+        wx.hideLoading();
+        wx.redirectTo({
+          url: `/pages/assessment/result/result?id=${res.id}`
+        });
+      })
+      .catch((error) => {
+        wx.hideLoading();
+        console.error('提交测评失败:', error);
+        wx.showToast({
+          title: error.message || '提交失败',
+          icon: 'none'
+        });
       });
-    });
+    }
   }
 });

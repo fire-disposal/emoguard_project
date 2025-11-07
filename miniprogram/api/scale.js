@@ -54,10 +54,56 @@ function getResult(resultId) {
   return request.get(`/api/scales/results/${resultId}`);
 }
 
+/**
+ * 创建评估分组（开始评估流程）
+ * POST /api/scales/assessment-groups
+ * @param {object} data - { user_id, flow_type }
+ * @returns {Promise<object>} 评估分组信息
+ */
+function createAssessmentGroup(data) {
+  return request.post('/api/scales/assessment-groups', data);
+}
+
+/**
+ * 获取评估分组详情
+ * GET /api/scales/assessment-groups/{group_id}
+ * @param {number} groupId
+ * @returns {Promise<object>} 评估分组详情
+ */
+function getAssessmentGroup(groupId) {
+  return request.get(`/api/scales/assessment-groups/${groupId}`);
+}
+
+/**
+ * 获取下一步需要完成的量表
+ * GET /api/scales/assessment-groups/{group_id}/next-step
+ * @param {number} groupId
+ * @returns {Promise<object>} 下一步信息
+ */
+function getNextStep(groupId) {
+  return request.get(`/api/scales/assessment-groups/${groupId}/next-step`);
+}
+
+/**
+ * 提交分组量表结果（流程化提交）
+ * POST /api/scales/assessment-groups/{group_id}/submit
+ * @param {number} groupId
+ * @param {object} data - { scale_config_id, selected_options, duration_ms, started_at, completed_at }
+ * @returns {Promise<object>} 测评结果
+ */
+function submitGroupedResult(groupId, data) {
+  return request.post(`/api/scales/assessment-groups/${groupId}/submit`, data);
+}
+
 module.exports = {
   listConfigs,
   getConfig,
   createResult,
   listResults,
-  getResult
+  getResult,
+  // 评估流程 API
+  createAssessmentGroup,
+  getAssessmentGroup,
+  getNextStep,
+  submitGroupedResult
 };

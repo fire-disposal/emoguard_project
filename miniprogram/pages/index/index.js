@@ -1,12 +1,25 @@
 // pages/index/index.js
 const auth = require('../../utils/auth');
+const emotionApi = require('../../api/emotiontracker');
 
 Page({
   data: {
     currentDate: '',
     currentTime: '',
     userNickname: '',
-    currentPeriod: '' // 添加当前时段（早间/晚间）
+    currentPeriod: '', // 添加当前时段（早间/晚间）
+    // 认知评估引导
+    showCognitiveGuide: false,
+    hasCompletedAssessment: false,
+    morningFilled: false,
+    eveningFilled: false
+  },
+
+  onShow() {
+    if (!auth.isLogined()) {
+      auth.navigateToLogin();
+      return;
+    }
   },
 
   onLoad() {
@@ -14,11 +27,13 @@ Page({
     this.getCurrentTime();
     this.loadUserInfo();
     this.updatePeriod(); // 更新时段
-    
+    this.loadEmotionStatus();
+
     // 每分钟更新时间
     this.timer = setInterval(() => {
       this.getCurrentTime();
       this.updatePeriod(); // 同时更新时段
+      this.loadEmotionStatus();
     }, 60000);
   },
 
@@ -26,6 +41,18 @@ Page({
     if (this.timer) {
       clearInterval(this.timer);
     }
+  },
+
+  loadEmotionStatus() {
+    // 新接口无需 userId，自动识别当前用户
+    emotionApi.getTodayStatus().then(res => {
+      this.setData({
+        morningFilled: !!res.morning_filled,
+        eveningFilled: !!res.evening_filled
+      });
+    }).catch(() => {
+      this.setData({ morningFilled: false, eveningFilled: false });
+    });
   },
 
   /**
@@ -88,8 +115,15 @@ Page({
    */
   loadUserInfo() {
     const userInfo = auth.getUserInfo();
+    
+    // 检查是否完成认知评估
+    const hasCompleted = userInfo?.has_completed_cognitive_assessment || false;
+    const showGuide = !hasCompleted;
+    
     this.setData({
-      userNickname: userInfo?.nickname || '用户'
+      userNickname: userInfo?.nickname || '用户',
+      hasCompletedAssessment: hasCompleted,
+      showCognitiveGuide: showGuide
     });
   },
 
@@ -124,10 +158,44 @@ Page({
   /**
    * 跳转到情绪测试
    */
-  goToEmotionTest() {
-    const period = this.data.currentPeriod;
+  goToEmotionTest(e) {
+    // e.currentTarget.dataset.period: 'morning' or 'evening'
+    const now = new Date();
+    const hours = now.getHours();
+    let period = '';
+    if (e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.period) {
+      period = e.currentTarget.dataset.period;
+    } else {
+      period = this.data.currentPeriod;
+    }
+    // 早上不允许填写晚间
+    if (period === 'evening' && hours < 14) {
+      wx.showToast({
+        title: '请于14:00后填写晚间记录',
+        icon: 'none'
+      });
+      return;
+    }
     wx.navigateTo({
-      url: `/pages/emotiontest/emotiontest?period=${period}`
+      url: `/pages/emotiontracker/record/record?period=${period}`
+    });
+  },
+
+  /**
+   * 开始认知评估流程
+   */
+  startCognitiveFlow() {
+    wx.navigateTo({
+      url: '/pages/assessment/flow/flow'
+    });
+  },
+
+  /**
+   * 关闭引导卡片
+   */
+  closeCognitiveGuide() {
+    this.setData({
+      showCognitiveGuide: false
     });
   }
 });

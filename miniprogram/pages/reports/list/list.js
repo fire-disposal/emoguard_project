@@ -11,6 +11,13 @@ Page({
     loading: false
   },
 
+  onShow() {
+    if (!auth.isLogined()) {
+      auth.navigateToLogin();
+      return;
+    }
+  },
+
   onLoad() {
     this.loadReports();
   },

@@ -10,14 +10,19 @@ Page({
     loading: true
   },
 
+  onShow() {
+    if (!auth.isLogined()) {
+      auth.navigateToLogin();
+      return;
+    }
+    // 刷新用户信息
+    this.loadUserInfo();
+  },
+
   onLoad() {
     this.loadUserInfo();
   },
 
-  onShow() {
-    // 刷新用户信息
-    this.loadUserInfo();
-  },
 
   /**
    * 加载用户信息

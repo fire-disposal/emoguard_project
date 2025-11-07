@@ -1,0 +1,117 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+
+  <view wx:else class="report-container">
+    <!-- 报告标题 -->
+    <view class="report-header">
+      <text class="header-title">认知功能综合评估报告</text>
+      <text class="header-date">{{group.completed_at}}</text>
+    </view>
+
+    <!-- 总体结论 -->
+    <view class="conclusion-section">
+      <view class="section-title">
+        <text class="title-icon">📋</text>
+        <text>评估结论</text>
+      </view>
+      <view class="conclusion-card">
+        <text class="conclusion-text">{{group.final_conclusion}}</text>
+      </view>
+    </view>
+
+    <!-- 风险等级 -->
+    <view class="risk-section" wx:if="{{comprehensiveAnalysis}}">
+      <view class="section-title">
+        <text class="title-icon">⚠️</text>
+        <text>风险等级</text>
+      </view>
+      <view class="risk-card risk-{{comprehensiveAnalysis.risk_level}}">
+        <text class="risk-label">{{comprehensiveAnalysis.risk_level}}</text>
+      </view>
+    </view>
+
+    <!-- 详细说明 -->
+    <view class="summary-section" wx:if="{{comprehensiveAnalysis}}">
+      <view class="section-title">
+        <text class="title-icon">📊</text>
+        <text>评估详情</text>
+      </view>
+      <view class="summary-card">
+        <text class="summary-text">{{comprehensiveAnalysis.summary}}</text>
+      </view>
+    </view>
+
+    <!-- 各量表详情 -->
+    <view class="details-section" wx:if="{{comprehensiveAnalysis && comprehensiveAnalysis.details}}">
+      <view class="section-title">
+        <text class="title-icon">📝</text>
+        <text>各量表结果</text>
+      </view>
+      
+      <view wx:if="{{comprehensiveAnalysis.details.scd_q9}}" class="detail-card">
+        <view class="detail-header">
+          <text class="detail-name">SCD-Q9 主观认知下降量表</text>
+        </view>
+        <view class="detail-score">
+          <text class="score-label">得分：</text>
+          <text class="score-value">{{comprehensiveAnalysis.details.scd_q9.score}}</text>
+          <text class="score-suffix">分</text>
+        </view>
+        <text class="detail-interp">{{comprehensiveAnalysis.details.scd_q9.interpretation}}</text>
+      </view>
+
+      <view wx:if="{{comprehensiveAnalysis.details.mmse}}" class="detail-card">
+        <view class="detail-header">
+          <text class="detail-name">MMSE 简易精神状态检查</text>
+        </view>
+        <view class="detail-score">
+          <text class="score-label">得分：</text>
+          <text class="score-value">{{comprehensiveAnalysis.details.mmse.score}}</text>
+          <text class="score-suffix">/ 30分</text>
+        </view>
+        <view class="detail-meta">
+          <text>等级：{{comprehensiveAnalysis.details.mmse.level}}</text>
+        </view>
+        <text class="detail-interp">{{comprehensiveAnalysis.details.mmse.interpretation}}</text>
+      </view>
+
+      <view wx:if="{{comprehensiveAnalysis.details.moca}}" class="detail-card">
+        <view class="detail-header">
+          <text class="detail-name">MoCA 蒙特利尔认知评估</text>
+        </view>
+        <view class="detail-score">
+          <text class="score-label">得分：</text>
+          <text class="score-value">{{comprehensiveAnalysis.details.moca.score}}</text>
+          <text class="score-suffix">/ 30分</text>
+        </view>
+        <view wx:if="{{comprehensiveAnalysis.details.moca.education_bonus > 0}}" class="detail-meta">
+          <text>（含教育校正 +{{comprehensiveAnalysis.details.moca.education_bonus}}分）</text>
+        </view>
+        <text class="detail-interp">{{comprehensiveAnalysis.details.moca.interpretation}}</text>
+      </view>
+    </view>
+
+    <!-- 建议 -->
+    <view class="recommendations-section" wx:if="{{comprehensiveAnalysis && comprehensiveAnalysis.recommendations}}">
+      <view class="section-title">
+        <text class="title-icon">💡</text>
+        <text>专业建议</text>
+      </view>
+      <view class="recommendations-list">
+        <view 
+          wx:for="{{comprehensiveAnalysis.recommendations}}" 
+          wx:key="index"
+          class="recommendation-item"
+        >
+          <text class="item-bullet">•</text>
+          <text class="item-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="actions">
+      <button class="btn-primary" bindtap="backToHome">返回首页</button>
+    </view>
+  </view>
+</view>

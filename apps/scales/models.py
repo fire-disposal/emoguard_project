@@ -133,6 +133,41 @@ class ScaleConfig(models.Model):
         verbose_name = "量表配置"
         verbose_name_plural = "量表配置"
 
+class AssessmentResultGroup(models.Model):
+    """评估结果分组 - 保存一次评估流程中的所有量表结果"""
+    STATUS_CHOICES = (
+        ('in_progress', '进行中'),
+        ('completed', '已完成'),
+        ('abandoned', '已放弃'),
+    )
+    
+    id = models.AutoField(primary_key=True)
+    user_id = models.UUIDField(verbose_name='用户ID', db_index=True)
+    flow_type = models.CharField(max_length=64, default='cognitive_assessment', verbose_name='流程类型')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='in_progress', verbose_name='状态')
+    current_step = models.CharField(max_length=64, blank=True, verbose_name='当前步骤')
+    
+    # 综合分析结果
+    comprehensive_analysis = models.JSONField(default=dict, blank=True, verbose_name='综合分析')
+    final_conclusion = models.TextField(blank=True, verbose_name='最终结论')
+    
+    started_at = models.DateTimeField(auto_now_add=True, verbose_name='开始时间')
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name='完成时间')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"评估组-{self.id} 用户:{self.user_id} ({self.get_status_display()})"
+    
+    class Meta:
+        verbose_name = "评估结果分组"
+        verbose_name_plural = "评估结果分组"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user_id', '-created_at']),
+        ]
+
+
 class ScaleResult(models.Model):
     STATUS_CHOICES = (
         ('completed', '已完成'),
@@ -141,11 +176,23 @@ class ScaleResult(models.Model):
     user_id = models.UUIDField()
     scale_config = models.ForeignKey(ScaleConfig, on_delete=models.CASCADE, related_name='results')
     selected_options = models.JSONField(default=list)
+    conclusion = models.TextField(blank=True, verbose_name='结论摘要')  # 结论字段
     duration_ms = models.IntegerField()
     started_at = models.DateTimeField()
     completed_at = models.DateTimeField()
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='completed')
     analysis = models.JSONField(default=dict, blank=True)
+    
+    # 关联到评估组（可选，兼容旧数据）
+    result_group = models.ForeignKey(
+        AssessmentResultGroup, 
+        on_delete=models.CASCADE, 
+        related_name='results',
+        null=True, 
+        blank=True,
+        verbose_name='所属评估组'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -155,3 +202,7 @@ class ScaleResult(models.Model):
     class Meta:
         verbose_name = "量表结果"
         verbose_name_plural = "量表结果"
+        indexes = [
+            models.Index(fields=['user_id', '-created_at']),
+            models.Index(fields=['result_group', 'scale_config']),
+        ]

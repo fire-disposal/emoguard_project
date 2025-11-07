@@ -51,6 +51,7 @@ def _user_to_response_schema(user):
         district=user.district,
         phone=user.phone,
         is_profile_complete=user.is_profile_complete,
+        has_completed_cognitive_assessment=user.has_completed_cognitive_assessment,
     )
 
 

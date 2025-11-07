@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django import forms
-from .models import ScaleConfig, ScaleResult
+from .models import ScaleConfig, ScaleResult, AssessmentResultGroup
 from django.utils.html import format_html
 from import_export.admin import ExportActionModelAdmin
 import json
@@ -84,7 +84,27 @@ class ScaleConfigAdmin(admin.ModelAdmin):
 
 @admin.register(ScaleResult)
 class ScaleResultAdmin(ExportActionModelAdmin):
-    list_display = ('id', 'user_id', 'scale_config', 'status', 'duration_ms', 'started_at', 'completed_at', 'created_at', 'updated_at')
+    list_display = ('id', 'user_id', 'scale_config', 'result_group', 'status', 'duration_ms', 'started_at', 'completed_at', 'created_at', 'updated_at')
     search_fields = ('user_id', 'scale_config__name')
-    list_filter = ('status', 'scale_config')
+    list_filter = ('status', 'scale_config', 'result_group')
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(AssessmentResultGroup)
+class AssessmentResultGroupAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user_id', 'flow_type', 'status', 'current_step', 'started_at', 'completed_at')
+    list_filter = ('status', 'flow_type', 'created_at')
+    search_fields = ('user_id', 'id')
+    readonly_fields = ('started_at', 'created_at', 'updated_at')
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user_id', 'flow_type', 'status', 'current_step')
+        }),
+        ('分析结果', {
+            'fields': ('comprehensive_analysis', 'final_conclusion')
+        }),
+        ('时间信息', {
+            'fields': ('started_at', 'completed_at', 'created_at', 'updated_at')
+        }),
+    )

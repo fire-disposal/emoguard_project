@@ -1,5 +1,6 @@
 // app.js
 const auth = require('./utils/auth');
+const storage = require('./utils/storage');
 const userApi = require('./api/user');
 
 App({
@@ -16,19 +17,25 @@ App({
     // 获取系统信息
     this.globalData.systemInfo = wx.getSystemInfoSync();
     
-    // 从本地存储恢复用户信息和 token
-    const userInfo = auth.getUserInfo();
-    const token = auth.getToken();
-    const refreshToken = auth.getRefreshToken();
-    
-    if (userInfo) {
-      this.globalData.userInfo = userInfo;
+    // 本地恢复流程更健壮，单独捕获每项异常，避免全局阻断
+    let userInfo = null, token = null, refreshToken = null;
+    try {
+      userInfo = auth.getUserInfo();
+      if (userInfo) this.globalData.userInfo = userInfo;
+    } catch (error) {
+      console.warn('恢复用户信息失败:', error);
     }
-    if (token) {
-      this.globalData.token = token;
+    try {
+      token = storage.getToken();
+      if (token) this.globalData.token = token;
+    } catch (error) {
+      console.warn('恢复token失败:', error);
     }
-    if (refreshToken) {
-      this.globalData.refreshToken = refreshToken;
+    try {
+      refreshToken = storage.getRefreshToken();
+      if (refreshToken) this.globalData.refreshToken = refreshToken;
+    } catch (error) {
+      console.warn('恢复refreshToken失败:', error);
     }
     
     console.log('登录状态:', auth.isLogined());
@@ -50,38 +57,34 @@ App({
     }
     this._checkingUserInfo = true;
 
-    const pages = getCurrentPages();
-    if (pages.length === 0) {
-      this._checkingUserInfo = false;
-      return;
-    }
-    
-    const currentPage = pages[pages.length - 1];
-    const route = currentPage.route;
-    
-    // 登录页和信息完善页不需要检查
-    if (route === 'pages/login/login' || route === 'pages/profile/complete/complete') {
-      this._checkingUserInfo = false;
-      return;
-    }
-    
-    // 检查是否登录
-    if (!auth.isLogined()) {
-      console.log('未登录，跳转登录页');
-      auth.navigateToLogin(route);
-      this._checkingUserInfo = false;
-      return;
-    }
-    
-    // 检查信息是否完善
     try {
+      const pages = getCurrentPages();
+      if (pages.length === 0) {
+        return;
+      }
+      
+      const currentPage = pages[pages.length - 1];
+      const route = currentPage.route;
+      
+      // 登录页和信息完善页不需要检查
+      if (route === 'pages/login/login' || route === 'pages/profile/complete/complete') {
+        return;
+      }
+      
+      // 检查是否登录
+      if (!auth.isLogined()) {
+        console.log('未登录，跳转登录页');
+        auth.navigateToLogin(route);
+        return;
+      }
+      
+      // 检查信息是否完善
       const userInfo = this.globalData.userInfo;
       if (userInfo && !userInfo.is_profile_complete) {
         console.log('用户信息未完善，跳转信息完善页面');
         wx.reLaunch({
           url: '/pages/profile/complete/complete'
         });
-        this._checkingUserInfo = false;
         return;
       }
       
@@ -89,6 +92,7 @@ App({
       if (!userInfo || userInfo.is_profile_complete === undefined) {
         const freshUserInfo = await userApi.getCurrentUser();
         this.globalData.userInfo = freshUserInfo;
+        auth.setUserInfo(freshUserInfo);
         
         if (!freshUserInfo.is_profile_complete) {
           console.log('用户信息未完善，跳转信息完善页面');
@@ -99,8 +103,17 @@ App({
       }
     } catch (error) {
       console.error('检查用户信息失败:', error);
-      // 如果检查失败，允许用户继续使用，避免阻塞
+      
+      // 如果是401错误（token失效），跳转登录页
+      if (error.message && error.message.includes('401')) {
+        console.log('Token失效，跳转登录页');
+        const pages = getCurrentPages();
+        const currentPage = pages[pages.length - 1];
+        auth.navigateToLogin(currentPage?.route);
+      }
+      // 其他错误允许继续使用，避免阻塞
+    } finally {
+      this._checkingUserInfo = false;
     }
-    this._checkingUserInfo = false;
   }
 });

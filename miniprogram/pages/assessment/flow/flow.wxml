@@ -1,0 +1,86 @@
+<view class="container">
+  <!-- 加载中 -->
+  <view wx:if="{{flowStatus === 'loading'}}" class="loading-container">
+    <view class="loading-icon"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 评估进行中 -->
+  <view wx:elif="{{flowStatus === 'in_progress'}}" class="flow-container">
+    <!-- 流程说明 -->
+    <view class="flow-intro">
+      <view class="intro-title">认知功能评估流程</view>
+      <view class="intro-desc">
+        本流程将通过多个专业量表对您的认知功能进行综合评估，请按顺序完成。
+      </view>
+    </view>
+
+    <!-- 当前步骤指示 -->
+    <view class="step-indicator">
+      <view class="step-item {{currentStep === 'step1' ? 'active' : ''}}">
+        <view class="step-number">1</view>
+        <view class="step-name">初筛</view>
+      </view>
+      <view class="step-line"></view>
+      <view class="step-item {{currentStep === 'step2' ? 'active' : ''}}">
+        <view class="step-number">2</view>
+        <view class="step-name">深度评估</view>
+      </view>
+      <view class="step-line"></view>
+      <view class="step-item {{currentStep === 'completed' ? 'active' : ''}}">
+        <view class="step-number">3</view>
+        <view class="step-name">完成</view>
+      </view>
+    </view>
+
+    <!-- 待完成量表列表 -->
+    <view class="scales-section">
+      <view class="section-title">请完成以下量表</view>
+      <view class="scales-list">
+        <view 
+          wx:for="{{nextScales}}" 
+          wx:key="*this"
+          class="scale-card"
+          bindtap="startScale"
+          data-code="{{item}}"
+        >
+          <view class="scale-icon">📝</view>
+          <view class="scale-info">
+            <view class="scale-name">{{scaleNames[item] || item}}</view>
+            <view class="scale-status">待完成</view>
+          </view>
+          <view class="scale-arrow">→</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 评估已完成 -->
+  <view wx:elif="{{flowStatus === 'completed'}}" class="completed-container">
+    <view class="success-icon">✓</view>
+    <view class="success-title">评估已完成</view>
+    
+    <view class="conclusion-card">
+      <view class="conclusion-title">评估结论</view>
+      <view class="conclusion-content">{{finalConclusion}}</view>
+    </view>
+
+    <view wx:if="{{comprehensiveAnalysis}}" class="analysis-summary">
+      <view class="summary-item">
+        <text class="summary-label">风险等级：</text>
+        <text class="summary-value risk-{{comprehensiveAnalysis.risk_level}}">
+          {{comprehensiveAnalysis.risk_level}}
+        </text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-label">状态：</text>
+        <text class="summary-value">{{comprehensiveAnalysis.conclusion}}</text>
+      </view>
+    </view>
+
+    <view class="action-buttons">
+      <button class="btn-primary" bindtap="viewReport">查看详细报告</button>
+      <button class="btn-secondary" bindtap="restartAssessment">重新开始评估</button>
+    </view>
+  </view>
+</view>

@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "apps.reports",
     "apps.scales",
     "apps.notifications",
+    "apps.emotiontracker",
 ]
 
 # 中间件

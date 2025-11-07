@@ -3,14 +3,15 @@
  * 统一管理 API 调用，自动添加 Token，处理错误
  */
 
-const auth = require('./auth');
+const storage = require('./storage');
 
-// API 基础地址
+//-------------后端接口地址----------------
 
-// 本地调试环境
 const BASE_URL = 'http://127.0.0.1:8000';
-// 正式环境
+
 // const BASE_URL = 'https://cg.aoxintech.com';
+
+//------------------------------------
 
 // 是否正在刷新 token
 let isRefreshing = false;
@@ -31,7 +32,7 @@ function refreshToken() {
       return;
     }
 
-    const refreshToken = auth.getRefreshToken();
+    const refreshToken = storage.getRefreshToken();
     
     if (!refreshToken) {
       refreshFailed = true;
@@ -47,7 +48,7 @@ function refreshToken() {
         if (res.statusCode === 200 && res.data.access) {
           // 刷新成功，重置失败标记
           refreshFailed = false;
-          auth.setToken(res.data.access, res.data.refresh || refreshToken);
+          storage.setToken(res.data.access, res.data.refresh || refreshToken);
           resolve(res.data.access);
         } else {
           // 刷新失败，标记失败状态
@@ -95,9 +96,17 @@ function request(options) {
     
     // 添加 Authorization 头
     if (!skipAuth) {
-      const token = auth.getToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      try {
+        const token = storage.getToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        } else {
+          console.warn('未获取到本地token，自动跳转登录');
+          const auth = require('./auth');
+          auth.navigateToLogin();
+        }
+      } catch (error) {
+        console.error('Error getting token:', error);
       }
     }
     
@@ -120,6 +129,7 @@ function request(options) {
         if (statusCode === 401 && !skipAuth) {
           // 如果已经标记为刷新失败，直接跳转到登录页，不再重试
           if (refreshFailed) {
+            const auth = require('./auth');
             auth.navigateToLogin();
             reject(new Error('Token refresh failed, please login again'));
             return;
@@ -144,9 +154,14 @@ function request(options) {
                 requestQueue = [];
                 
                 // Token 刷新失败，清除本地缓存并跳转登录
-                auth.clearToken();
+                storage.clearToken();
+                const auth = require('./auth');
                 auth.clearUserInfo();
                 auth.navigateToLogin();
+                wx.showToast({
+                  title: '登录状态失效，请重新登录',
+                  icon: 'none'
+                });
                 reject(error);
               });
           } else {
@@ -198,10 +213,26 @@ function request(options) {
       },
       fail: (error) => {
         console.error('Request failed:', error);
+        
+        // 网络连接失败，显示提示
         wx.showToast({
-          title: '网络超时，请检查网络',
-          icon: 'none'
+          title: '网络连接失败',
+          icon: 'none',
+          duration: 2000
         });
+        
+        // 如果不是登录接口且当前不在登录页，延迟跳转登录页
+        if (!skipAuth) {
+          const pages = getCurrentPages();
+          const currentPage = pages[pages.length - 1];
+          if (currentPage && currentPage.route !== 'pages/login/login') {
+            setTimeout(() => {
+              const auth = require('./auth');
+              auth.navigateToLogin(currentPage.route);
+            }, 2000);
+          }
+        }
+        
         reject(error);
       }
     });

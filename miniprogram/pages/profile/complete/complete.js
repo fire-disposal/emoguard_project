@@ -24,14 +24,19 @@ Page({
   onLoad() {
     // 检查是否已登录
     if (!auth.isLogined()) {
-      wx.redirectTo({
-        url: '/pages/login/login?redirect=' + encodeURIComponent('/pages/profile/complete/complete')
-      });
+      auth.navigateToLogin('/pages/profile/complete/complete');
       return;
     }
 
     // 获取当前用户信息
     this.loadUserInfo();
+  },
+
+  onShow() {
+    if (!auth.isLogined()) {
+      auth.navigateToLogin('/pages/profile/complete/complete');
+      return;
+    }
   },
 
   async loadUserInfo() {

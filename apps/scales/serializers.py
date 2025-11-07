@@ -37,7 +37,6 @@ class ScaleResultCreateSchema(Schema):
     user_id: str
     scale_config_id: int
     selected_options: List[int]
-    conclusion: Optional[str] = None
     duration_ms: int
     started_at: str
     completed_at: str
@@ -52,14 +51,36 @@ class ScaleResultResponseSchema(Schema):
     started_at: str
     completed_at: str
     status: str
-    analysis: Dict  # 分析结果字段，结构灵活
+    analysis: Dict
     created_at: str
     updated_at: str
 
-class ScaleResultListQuerySchema(Schema):
-    user_id: Optional[str] = None
-    scale_config_id: Optional[int] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    page: int = 1
-    page_size: int = 10
+class AssessmentResultGroupCreateSchema(Schema):
+    """创建评估分组"""
+    user_id: str
+    flow_type: str = "cognitive_assessment"
+
+
+class AssessmentResultGroupResponseSchema(Schema):
+    """评估分组响应"""
+    id: int
+    user_id: str
+    flow_type: str
+    status: str
+    current_step: str
+    comprehensive_analysis: Dict
+    final_conclusion: str
+    started_at: str
+    completed_at: Optional[str] = None
+    created_at: str
+    updated_at: str
+
+
+class GroupedResultSubmitSchema(Schema):
+    """分组提交量表结果"""
+    result_group_id: int
+    scale_config_id: int
+    selected_options: List[int]
+    duration_ms: int
+    started_at: str
+    completed_at: str

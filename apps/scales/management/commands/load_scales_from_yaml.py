@@ -30,7 +30,11 @@ class Command(BaseCommand):
                             if 'value' in option:
                                 option['value'] = str(option['value'])
                 
-                # 避免重复导入
+                # 读取原始 YAML 内容
+                with open(fpath, 'r', encoding='utf-8') as f_raw:
+                    yaml_content = f_raw.read()
+
+                # 避免重复导入，并同步 yaml_config 字段
                 obj, created = ScaleConfig.objects.update_or_create(
                     code=data['code'],
                     defaults={
@@ -40,9 +44,10 @@ class Command(BaseCommand):
                         'type': data.get('type', ''),
                         'questions': data['questions'],
                         'status': data.get('status', 'draft'),
+                        'yaml_config': yaml_content,
                     }
                 )
                 if created:
                     self.stdout.write(self.style.SUCCESS(f"导入新量表: {obj.name}"))
                 else:
-                    self.stdout.write(self.style.SUCCESS(f"更新量表: {obj.name}"))
+                    self.stdout.write(self.style.SUCCESS(f"更新量表: {obj.name} 并同步 YAML 配置"))

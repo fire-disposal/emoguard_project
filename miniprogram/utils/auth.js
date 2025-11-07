@@ -6,57 +6,19 @@
 const storage = require('./storage');
 const request = require('./request');
 
-const TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
 const USER_INFO_KEY = 'user_info';
-
-/**
- * 获取 access_token
- * @returns {string|null}
- */
-function getToken() {
-  return storage.getItem(TOKEN_KEY);
-}
-
-/**
- * 获取 refresh_token
- * @returns {string|null}
- */
-function getRefreshToken() {
-  return storage.getItem(REFRESH_TOKEN_KEY);
-}
-
-/**
- * 设置 token
- * @param {string} accessToken - 访问令牌
- * @param {string} refreshToken - 刷新令牌
- */
-function setToken(accessToken, refreshToken) {
-  storage.setItem(TOKEN_KEY, accessToken);
-  if (refreshToken) {
-    storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  }
-  
-  // 重置token刷新状态，避免之前的失败标记影响新token
-  if (request.resetRefreshState) {
-    request.resetRefreshState();
-  }
-}
-
-/**
- * 清除 token
- */
-function clearToken() {
-  storage.removeItem(TOKEN_KEY);
-  storage.removeItem(REFRESH_TOKEN_KEY);
-}
 
 /**
  * 获取用户信息
  * @returns {object|null}
  */
 function getUserInfo() {
-  return storage.getItem(USER_INFO_KEY);
+  try {
+    return storage.getItem(USER_INFO_KEY);
+  } catch (error) {
+    console.error('Auth getUserInfo error:', error);
+    return null;
+  }
 }
 
 /**
@@ -64,8 +26,11 @@ function getUserInfo() {
  * @param {object} userInfo - 用户信息
  */
 function setUserInfo(userInfo) {
-  storage.setItem(USER_INFO_KEY, userInfo);
-  
+  try {
+    storage.setItem(USER_INFO_KEY, userInfo);
+  } catch (error) {
+    console.warn('存储用户信息失败:', error);
+  }
   // 同步到全局数据
   const app = getApp();
   if (app && app.globalData) {
@@ -77,8 +42,11 @@ function setUserInfo(userInfo) {
  * 清除用户信息
  */
 function clearUserInfo() {
-  storage.removeItem(USER_INFO_KEY);
-  
+  try {
+    storage.removeItem(USER_INFO_KEY);
+  } catch (error) {
+    console.warn('清除本地用户信息失败:', error);
+  }
   // 清除全局数据
   const app = getApp();
   if (app && app.globalData) {
@@ -91,8 +59,13 @@ function clearUserInfo() {
  * @returns {boolean}
  */
 function isLogined() {
-  const token = getToken();
-  return !!token;
+  try {
+    const token = storage.getToken();
+    return !!token;
+  } catch (error) {
+    console.error('Auth isLogined error:', error);
+    return false;
+  }
 }
 
 /**
@@ -100,30 +73,39 @@ function isLogined() {
  * @param {string} redirect - 登录成功后跳转的路径
  */
 function navigateToLogin(redirect) {
-  clearToken();
-  clearUserInfo();
-  
-  const url = redirect 
-    ? `/pages/login/login?redirect=${encodeURIComponent(redirect)}`
-    : '/pages/login/login';
-  
-  wx.reLaunch({ url });
+  try {
+    storage.clearToken();
+    clearUserInfo();
+    
+    const url = redirect
+      ? `/pages/login/login?redirect=${encodeURIComponent(redirect)}`
+      : '/pages/login/login';
+    
+    wx.reLaunch({ url });
+  } catch (error) {
+    console.error('Auth navigateToLogin error:', error);
+  }
 }
 
 /**
  * 退出登录
  */
 function logout() {
-  clearToken();
-  clearUserInfo();
-  wx.reLaunch({ url: '/pages/login/login' });
+  try {
+    storage.clearToken();
+    clearUserInfo();
+    wx.reLaunch({ url: '/pages/login/login' });
+  } catch (error) {
+    console.error('Auth logout error:', error);
+  }
 }
 
+// 确保模块正确导出
+/**
+ * 导出接口
+ * resetRequestState 由外部直接 require('utils/request').resetRefreshState 使用，不在此重复导入
+ */
 module.exports = {
-  getToken,
-  getRefreshToken,
-  setToken,
-  clearToken,
   getUserInfo,
   setUserInfo,
   clearUserInfo,

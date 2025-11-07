@@ -19,14 +19,19 @@ Page({
     submitting: false
   },
 
+  onShow() {
+    if (!auth.isLogined()) {
+      auth.navigateToLogin();
+      return;
+    }
+    // 刷新列表
+    this.loadJournals();
+  },
+
   onLoad() {
     this.loadJournals();
   },
 
-  onShow() {
-    // 刷新列表
-    this.loadJournals();
-  },
 
   /**
    * 加载历史记录

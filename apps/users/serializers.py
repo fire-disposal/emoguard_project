@@ -40,6 +40,9 @@ class UserResponseSchema(Schema):
     district: Optional[str] = None
     phone: Optional[str] = None
     is_profile_complete: bool
+    
+    # 评估状态
+    has_completed_cognitive_assessment: bool
 
 
 class UserCreateSchema(Schema):

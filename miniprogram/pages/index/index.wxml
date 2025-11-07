@@ -12,26 +12,75 @@
     </view> -->
       
     <!-- 情绪测试入口 -->
-    <view class="emotion-test-entry" bindtap="goToEmotionTest">
+    <view class="emotion-test-entry"
+      bindtap="goToEmotionTest"
+      data-period="morning"
+      style="opacity:{{morningFilled ? 0.6 : 1}};">
       <view class="entry-content">
         <view class="entry-icon">☀️</view>
         <view class="entry-info">
-          <text class="entry-title">早间情绪测试</text> 
+          <text class="entry-title">早间情绪测试</text>
         </view>
         <view class="entry-status">
-          <text class="status-text">未测试</text>
+          <text class="status-text" style="color:{{morningFilled ? '#bfbfbf' : '#fff'}}">
+            {{morningFilled ? '已完成' : '未测试'}}
+          </text>
         </view>
       </view>
     </view>
-        <view class="emotion-test-entry-ninght" bindtap="goToEmotionTest">
+    <view class="emotion-test-entry-ninght"
+      bindtap="goToEmotionTest"
+      data-period="evening"
+      style="opacity:{{eveningFilled ? 0.6 : 1}};">
       <view class="entry-content">
         <view class="entry-icon">🌙</view>
         <view class="entry-info">
           <text class="entry-title">晚间情绪测试</text>
         </view>
         <view class="entry-status">
-          <text class="status-text">未测试</text>
+          <text class="status-text" style="color:{{eveningFilled ? '#bfbfbf' : '#fff'}}">
+            {{eveningFilled ? '已完成' : '未测试'}}
+          </text>
         </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 认知评估引导卡片 -->
+  <view wx:if="{{showCognitiveGuide}}" class="cognitive-guide-card">
+    <view class="guide-header">
+      <view class="guide-title-area">
+        <text class="guide-icon">🧠</text>
+        <view class="guide-text">
+          <text class="guide-title">首次认知评估</text>
+          <text class="guide-subtitle">建议您完成系统认知功能评估</text>
+        </view>
+      </view>
+      <view class="close-btn" catchtap="closeCognitiveGuide">
+        <text>×</text>
+      </view>
+    </view>
+    <view class="guide-content">
+      <view class="guide-steps">
+        <view class="guide-step">
+          <text class="step-num">1</text>
+          <text class="step-text">SCD-Q9 初筛</text>
+        </view>
+        <view class="step-arrow">→</view>
+        <view class="guide-step">
+          <text class="step-num">2</text>
+          <text class="step-text">MMSE/MoCA</text>
+        </view>
+        <view class="step-arrow">→</view>
+        <view class="guide-step">
+          <text class="step-num">3</text>
+          <text class="step-text">综合分析</text>
+        </view>
+      </view>
+      <view class="guide-actions">
+        <button class="guide-btn" bindtap="startCognitiveFlow">
+          立即开始
+        </button>
       </view>
     </view>
   </view>

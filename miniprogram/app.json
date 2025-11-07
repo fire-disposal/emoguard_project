@@ -3,12 +3,14 @@
     "pages/login/login",
     "pages/index/index",
     "pages/mood/record/record",
-    "pages/trends/index/index",
+    "pages/trends/index",
     "pages/articles/list/list",
     "pages/articles/detail/detail",
     "pages/assessment/select/select",
+    "pages/assessment/flow/flow",
     "pages/assessment/detail/detail",
     "pages/assessment/result/result",
+    "pages/assessment/flow-result/flow-result",
     "pages/reports/list/list",
     "pages/reports/detail/detail",
     "pages/profile/index/index",
@@ -41,7 +43,7 @@
         "selectedIconPath": "assets/tabbar/mood-active.png"
       },
       {
-        "pagePath": "pages/trends/index/index",
+        "pagePath": "pages/trends/index",
         "text": "心变化",
         "iconPath": "assets/tabbar/change.png",
         "selectedIconPath": "assets/tabbar/change-active.png"

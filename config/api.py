@@ -7,6 +7,7 @@ from apps.journals.views import journals_router
 from apps.reports.views import reports_router
 from apps.scales.views import scales_router
 from apps.notifications.views import notifications_router
+from apps.emotiontracker.views import emotion_router
 
 # 使用NinjaExtraAPI替代普通的NinjaAPI以支持django-ninja-jwt
 # Django Ninja 框架已经内置了完善的异常处理机制，无需自定义异常处理器
@@ -33,6 +34,7 @@ api.add_router("/journals", journals_router)
 api.add_router("/reports", reports_router)
 api.add_router("/scales", scales_router)
 api.add_router("/notifications", notifications_router)
+api.add_router("/emotiontracker", emotion_router)
 
 urlpatterns = [
     path("", api.urls),

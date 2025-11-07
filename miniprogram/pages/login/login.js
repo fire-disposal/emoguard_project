@@ -18,9 +18,20 @@ Page({
       });
     }
     
-    // 如果已登录，直接跳转
+    // 如果已登录，验证 token 有效性
     if (auth.isLogined()) {
-      this.handleLoginSuccess();
+      console.log('已检测到登录状态，验证 token 有效性');
+      // 简单验证 token 是否有效
+      userApi.getCurrentUser()
+        .then(() => {
+          console.log('Token 有效，直接跳转');
+          this.handleLoginSuccess();
+        })
+        .catch((error) => {
+          console.log('Token 无效，清除登录状态:', error);
+          auth.clearToken();
+          auth.clearUserInfo();
+        });
     }
   },
 
@@ -41,22 +52,43 @@ Page({
         })
         .then((res) => {
           console.log('登录成功:', res);
-          
+
           // 保存 token 和用户信息
-          auth.setToken(res.access_token, res.refresh_token);
-          auth.setUserInfo(res.user);
+          const userInfo = res.user || res;
           
+          // 使用 storage 模块直接保存 token，并检查是否成功
+          const storage = require('../../utils/storage');
+          const saveTokenResult = storage.setToken(res.access_token, res.refresh_token);
+          
+          if (!saveTokenResult) {
+            wx.showToast({
+              title: '本地存储失败，请重试',
+              icon: 'none'
+            });
+            this.setData({ loading: false });
+            return;
+          }
+          
+          // 保存用户信息
+          auth.setUserInfo(userInfo);
+
           // 更新全局数据
           const app = getApp();
-          app.globalData.userInfo = res.user;
-          app.globalData.token = res.access_token;
-          app.globalData.refreshToken = res.refresh_token;
-          
+          if (app && app.globalData) {
+            app.globalData.userInfo = userInfo;
+            app.globalData.token = res.access_token;
+            app.globalData.refreshToken = res.refresh_token;
+          }
+
+          // 重置 request 刷新状态
+          const request = require('../../utils/request');
+          request.resetRefreshState();
+
           wx.showToast({
             title: '登录成功',
             icon: 'success'
           });
-          
+
           this.handleLoginSuccess();
         })
         .catch((error) => {

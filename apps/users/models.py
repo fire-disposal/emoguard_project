@@ -135,6 +135,12 @@ class User(AbstractUser):
         verbose_name='信息已完善'
     )
     
+    # 认知评估完成状态
+    has_completed_cognitive_assessment = models.BooleanField(
+        default=False,
+        verbose_name='已完成初次认知评估'
+    )
+    
 
     class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         verbose_name = '用户'
