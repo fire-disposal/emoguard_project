@@ -7,8 +7,7 @@ Page({
     currentDate: '',
     currentTime: '',
     userNickname: '',
-    currentPeriod: '', // 添加当前时段（早间/晚间）
-    // 认知评估引导
+    currentPeriod: '', 
     showCognitiveGuide: false,
     hasCompletedAssessment: false,
     morningFilled: false,
@@ -44,14 +43,29 @@ Page({
   },
 
   loadEmotionStatus() {
-    // 新接口无需 userId，自动识别当前用户
     emotionApi.getTodayStatus().then(res => {
+      console.log('获取今日状态成功:', res);
+
       this.setData({
         morningFilled: !!res.morning_filled,
         eveningFilled: !!res.evening_filled
       });
-    }).catch(() => {
-      this.setData({ morningFilled: false, eveningFilled: false });
+
+
+
+    }).catch((error) => {
+      console.error('获取今日状态失败:', error);
+      console.error('错误详情:', error.message);
+
+      this.setData({
+        morningFilled: false,
+        eveningFilled: false
+      });
+
+      // 只在首次加载时显示错误提示
+      if (!this.data.morningFilled && !this.data.eveningFilled) {
+        console.log('使用默认状态: 均未完成');
+      }
     });
   },
 
@@ -65,7 +79,7 @@ Page({
     const day = now.getDate();
     const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
     const weekday = weekdays[now.getDay()];
-    
+
     this.setData({
       currentDate: `${year}年${month}月${day}日 ${weekday}`
     });
@@ -78,7 +92,7 @@ Page({
     const now = new Date();
     const hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, '0');
-    
+
     this.setData({
       currentTime: `${hours}:${minutes}`
     });
@@ -92,7 +106,7 @@ Page({
     const hours = now.getHours();
     let period = '';
     let periodText = '';
-    
+
     if (hours >= 5 && hours < 12) {
       period = 'morning';
       periodText = '早间';
@@ -103,7 +117,7 @@ Page({
       period = 'evening';
       periodText = '晚间';
     }
-    
+
     this.setData({
       currentPeriod: period,
       currentPeriodText: periodText
@@ -115,11 +129,11 @@ Page({
    */
   loadUserInfo() {
     const userInfo = auth.getUserInfo();
-    
+
     // 检查是否完成认知评估
     const hasCompleted = userInfo?.has_completed_cognitive_assessment || false;
     const showGuide = !hasCompleted;
-    
+
     this.setData({
       userNickname: userInfo?.nickname || '用户',
       hasCompletedAssessment: hasCompleted,
@@ -131,7 +145,7 @@ Page({
    * 跳转到情绪记录
    */
   goToMoodRecord() {
-    wx.switchTab({ url: '/pages/mood/record/record' });
+    wx.switchTab({ url: '/pages/mood/journal/journal' });
   },
 
   /**
@@ -159,26 +173,40 @@ Page({
    * 跳转到情绪测试
    */
   goToEmotionTest(e) {
-    // e.currentTarget.dataset.period: 'morning' or 'evening'
+    const period = e?.currentTarget?.dataset?.period || this.data.currentPeriod;
+    const isMorning = period === 'morning';
+    const isEvening = period === 'evening';
     const now = new Date();
     const hours = now.getHours();
-    let period = '';
-    if (e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.period) {
-      period = e.currentTarget.dataset.period;
-    } else {
-      period = this.data.currentPeriod;
-    }
+
     // 早上不允许填写晚间
-    if (period === 'evening' && hours < 14) {
+    if (isEvening && hours < 14) {
       wx.showToast({
         title: '请于14:00后填写晚间记录',
         icon: 'none'
       });
       return;
     }
-    wx.navigateTo({
-      url: `/pages/emotiontracker/record/record?period=${period}`
-    });
+
+    const isFilled = (isMorning && this.data.morningFilled) || (isEvening && this.data.eveningFilled);
+
+    if (isFilled) {
+      wx.showModal({
+        title: '提示',
+        content: '您已经完成了今天的情绪测试，是否重新测试？',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({
+              url: `/pages/mood/moodtest/moodtest?period=${period}`
+            });
+          }
+        }
+      });
+    } else {
+      wx.navigateTo({
+        url: `/pages/mood/moodtest/moodtest?period=${period}`
+      });
+    }
   },
 
   /**

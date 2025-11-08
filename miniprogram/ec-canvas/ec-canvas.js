@@ -78,7 +78,14 @@ Component({
 
   methods: {
     init: function (callback) {
-      const version = wx.getSystemInfoSync().SDKVersion
+      // 使用新的API获取系统信息，避免弃用警告
+      let version;
+      try {
+        const systemInfo = wx.getSystemInfoSync ? wx.getSystemInfoSync() : {};
+        version = systemInfo.SDKVersion || '2.0.0';
+      } catch (e) {
+        version = '2.0.0';
+      }
 
       const canUseNewCanvas = compareVersion(version, '2.9.0') >= 0;
       const forceUseOldCanvas = this.data.forceUseOldCanvas;
@@ -150,7 +157,14 @@ Component({
           const canvasNode = res[0].node
           this.canvasNode = canvasNode
 
-          const canvasDpr = wx.getSystemInfoSync().pixelRatio
+          // 使用新的API获取设备像素比
+          let canvasDpr = 1;
+          try {
+            const systemInfo = wx.getSystemInfoSync ? wx.getSystemInfoSync() : {};
+            canvasDpr = systemInfo.pixelRatio || 1;
+          } catch (e) {
+            canvasDpr = 1;
+          }
           const canvasWidth = res[0].width
           const canvasHeight = res[0].height
 

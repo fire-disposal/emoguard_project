@@ -1,4 +1,4 @@
-// pages/mood/record/record.js
+// pages/mood/journal/journal.js
 const journalApi = require('../../../api/journal');
 const auth = require('../../../utils/auth');
 

@@ -48,38 +48,60 @@
   opacity: 0.85;
 }
 
-/* 情绪测试入口 */
-.emotion-test-entry {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-  border-radius: 20rpx;
-  padding: 24rpx;
+/* 情绪测试入口 - 和谐统一设计 */
+.emotion-test-day {
+  background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 50%, #ee5a52 100%);
+  border-radius: 24rpx;
+  padding: 28rpx;
   margin-top: 24rpx;
-  box-shadow: 0 6rpx 20rpx rgba(255, 107, 107, 0.3);
-  transition: all 0.3s;
+  box-shadow: 0 8rpx 28rpx rgba(255, 107, 107, 0.35);
+  transition: all 0.3s ease;
+  border: none;
+  position: relative;
+  overflow: hidden;
 }
 
-.emotion-test-entry-ninght {
-  background: linear-gradient(135deg, #8617f4 0%, #093a89 100%);
-  border-radius: 20rpx;
-  padding: 24rpx;
-  margin-top: 24rpx;  
-  box-shadow: 0 6rpx 20rpx rgba(255, 107, 107, 0.3);
-  transition: all 0.3s;
+.emotion-test-night {
+  background: linear-gradient(135deg, #a855f7 0%, #8617f4 50%, #093a89 100%);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin-top: 24rpx;
+  box-shadow: 0 8rpx 28rpx rgba(134, 23, 244, 0.35);
+  transition: all 0.3s ease;
+  border: none;
+  position: relative;
+  overflow: hidden;
 }
 
+.emotion-test-day::before,
+.emotion-test-night::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 24rpx;
+}
 
-.emotion-test-entry:active {
+.emotion-test-day:active,
+.emotion-test-night:active {
   transform: scale(0.98);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
 }
 
 .entry-content {
   display: flex;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .entry-icon {
-  font-size: 48rpx;
-  margin-right: 20rpx;
+  font-size: 52rpx;
+  margin-right: 24rpx;
+  filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.2));
 }
 
 .entry-info {
@@ -88,28 +110,53 @@
 
 .entry-title {
   display: block;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: white;
-  margin-bottom: 4rpx;
+  margin-bottom: 6rpx;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
 }
 
-.entry-desc {
+.entry-subtitle {
   display: block;
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
 }
 
 .entry-status {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 16rpx;
-  padding: 8rpx 16rpx;  
+  padding: 5rpx 5rpx;
+  backdrop-filter: blur(8rpx);
+  position: relative;
+  z-index: 1;
 }
 
-.status-text {
-  font-size: 22rpx;
+.status-badge {
+  transition: all 0.3s ease;
+  padding: 12rpx 18rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
   color: white;
-  font-weight: 500;
+  font-weight: 600;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+}
+
+.status-badge.completed {
+  background: rgba(82, 196, 26, 0.8); /* 调整颜色和透明度 */
+  box-shadow: 0 2rpx 8rpx rgba(82, 196, 26, 0.4); /* 调整阴影 */
+}
+
+.status-badge.pending {
+  background: rgba(250, 173, 20, 0.8); /* 调整颜色和透明度 */
+  box-shadow: 0 2rpx 8rpx rgba(250, 173, 20, 0.4); /* 调整阴影 */
+}
+
+
+.status-text {
+  font-size: 30rpx;
+  color: white;
+  font-weight: 600;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
 }
 
 /* 认知评估引导卡片 */

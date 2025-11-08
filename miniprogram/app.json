@@ -2,8 +2,9 @@
   "pages": [
     "pages/login/login",
     "pages/index/index",
-    "pages/mood/record/record",
-    "pages/trends/index",
+    "pages/mood/journal/journal",
+    "pages/mood/moodtest/moodtest",
+    "pages/mood/trend/trend",
     "pages/articles/list/list",
     "pages/articles/detail/detail",
     "pages/assessment/select/select",
@@ -37,13 +38,13 @@
         "selectedIconPath": "assets/tabbar/home-active.png"
       },
       {
-        "pagePath": "pages/mood/record/record",
+        "pagePath": "pages/mood/journal/journal",
         "text": "心情日志",
         "iconPath": "assets/tabbar/mood.png",
         "selectedIconPath": "assets/tabbar/mood-active.png"
       },
       {
-        "pagePath": "pages/trends/index",
+        "pagePath": "pages/mood/trend/trend",
         "text": "心变化",
         "iconPath": "assets/tabbar/change.png",
         "selectedIconPath": "assets/tabbar/change-active.png"

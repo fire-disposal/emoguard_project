@@ -61,28 +61,35 @@ def get_emotion_trend(request, days: int = Query(90)):
         sleep=sleep
     )
 
-@emotion_router.get("/status", auth=None)
+@emotion_router.get("/status", auth=jwt_auth)
 def get_today_status(request):
     """
     返回今日早间/晚间是否已填写（自动识别当前用户）
     早晚分界线为14:00
     """
-    user = getattr(request, "user", None)
-    if not user or not getattr(user, "is_authenticated", False):
+    # 使用JWT认证获取当前用户
+    current_user = request.auth
+    if not current_user:
         return {"morning_filled": False, "evening_filled": False}
+    
     now = timezone.localtime()
     today = now.date()
     morning_end = datetime.combine(today, time(14, 0, 0, tzinfo=now.tzinfo))
+    
+    # 查询早间记录 (00:00-14:00)
     morning_record = EmotionRecord.objects.filter(
-        user_id=user.id,
+        user_id=current_user.id,
         created_at__gte=datetime.combine(today, time(0, 0, 0, tzinfo=now.tzinfo)),
         created_at__lt=morning_end
     ).exists()
+    
+    # 查询晚间记录 (14:00-次日00:00)
     evening_record = EmotionRecord.objects.filter(
-        user_id=user.id,
+        user_id=current_user.id,
         created_at__gte=morning_end,
         created_at__lt=datetime.combine(today + timedelta(days=1), time(0, 0, 0, tzinfo=now.tzinfo))
     ).exists()
+    
     return {
         "morning_filled": morning_record,
         "evening_filled": evening_record

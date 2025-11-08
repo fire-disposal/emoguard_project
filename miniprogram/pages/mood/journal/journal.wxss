@@ -1,4 +1,4 @@
-/* pages/mood/record/record.wxss */
+/* pages/mood/journal/journal.wxss */
 .mood-container {
   min-height: 100vh;
   padding: 32rpx;

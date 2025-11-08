@@ -1,4 +1,4 @@
-<!--pages/mood/record/record.wxml-->
+<!--pages/mood/journal/journal.wxml-->
 <view class="mood-container gradient-bg">
   <!-- 心情记录模块 -->
   <view class="mood-record-section card">

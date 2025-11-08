@@ -1,4 +1,4 @@
-<!--pages/index/index.wxml-->
+<!-- pages/index/index.wxml -->
 <view class="home-container gradient-bg">
   <!-- 顶部欢迎区 -->
   <view class="welcome-section">
@@ -10,42 +10,36 @@
       <text class="greeting">你好，{{userNickname}}</text>
       <text class="subtitle">愿你每天都有好心情 ☀️</text>
     </view> -->
-      
-    <!-- 情绪测试入口 -->
-    <view class="emotion-test-entry"
-      bindtap="goToEmotionTest"
-      data-period="morning"
-      style="opacity:{{morningFilled ? 0.6 : 1}};">
+    <!-- 情绪测试入口 - 优化版本 -->
+    <view class="emotion-test-day" bindtap="goToEmotionTest" data-period="morning">
       <view class="entry-content">
         <view class="entry-icon">☀️</view>
         <view class="entry-info">
           <text class="entry-title">早间情绪测试</text>
+          <text class="entry-subtitle">05:00 - 14:00</text>
         </view>
         <view class="entry-status">
-          <text class="status-text" style="color:{{morningFilled ? '#bfbfbf' : '#fff'}}">
-            {{morningFilled ? '已完成' : '未测试'}}
-          </text>
+          <view class="status-badge {{morningFilled ? 'completed' : 'pending'}}">
+            <text class="status-text">{{morningFilled ? '✓ 已完成' : '○ 未测试'}}</text>
+          </view>
         </view>
       </view>
     </view>
-    <view class="emotion-test-entry-ninght"
-      bindtap="goToEmotionTest"
-      data-period="evening"
-      style="opacity:{{eveningFilled ? 0.6 : 1}};">
+    <view class="emotion-test-night" bindtap="goToEmotionTest" data-period="evening">
       <view class="entry-content">
         <view class="entry-icon">🌙</view>
         <view class="entry-info">
           <text class="entry-title">晚间情绪测试</text>
+          <text class="entry-subtitle">14:00 - 次日05:00</text>
         </view>
         <view class="entry-status">
-          <text class="status-text" style="color:{{eveningFilled ? '#bfbfbf' : '#fff'}}">
-            {{eveningFilled ? '已完成' : '未测试'}}
-          </text>
+          <view class="status-badge {{eveningFilled ? 'completed' : 'pending'}}">
+            <text class="status-text">{{eveningFilled ? '✓ 已完成' : '○ 未测试'}}</text>
+          </view>
         </view>
       </view>
     </view>
   </view>
-
   <!-- 认知评估引导卡片 -->
   <view wx:if="{{showCognitiveGuide}}" class="cognitive-guide-card">
     <view class="guide-header">
@@ -78,13 +72,10 @@
         </view>
       </view>
       <view class="guide-actions">
-        <button class="guide-btn" bindtap="startCognitiveFlow">
-          立即开始
-        </button>
+        <button class="guide-btn" bindtap="startCognitiveFlow">立即开始</button>
       </view>
     </view>
   </view>
-
   <!-- 快捷功能区 -->
   <view class="quick-actions">
     <view class="action-item" bindtap="goToAssessment">
@@ -100,11 +91,9 @@
       <text class="action-text">健康科普</text>
     </view>
   </view>
-
   <!-- 功能卡片区 -->
   <view class="features-section">
     <view class="section-title">主要功能</view>
-
     <!-- 健康测评 -->
     <view class="feature-card" bindtap="goToAssessment">
       <view class="feature-icon">🏥</view>
@@ -114,7 +103,6 @@
       </view>
       <view class="feature-arrow">→</view>
     </view>
-
     <!-- 健康报告 -->
     <view class="feature-card" bindtap="goToReports">
       <view class="feature-icon">📊</view>
@@ -124,7 +112,6 @@
       </view>
       <view class="feature-arrow">→</view>
     </view>
-
     <!-- 健康科普 -->
     <view class="feature-card" bindtap="goToArticles">
       <view class="feature-icon">📚</view>

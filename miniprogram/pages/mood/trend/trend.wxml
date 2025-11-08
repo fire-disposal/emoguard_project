@@ -1,0 +1,85 @@
+<!-- 情绪趋势分析页面 -->
+<view class="page">
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <text class="page-title">情绪趋势分析</text>
+    <text class="page-subtitle">了解您的情绪变化规律</text>
+  </view>
+
+  <!-- 控制面板 -->
+  <view class="control-panel">
+    <!-- 时间范围选择 -->
+    <view class="time-range-selector">
+      <text class="selector-label">时间范围：</text>
+      <view class="range-buttons">
+        <block wx:for="{{timeRanges}}" wx:key="value" wx:for-item="range">
+          <button class="range-btn {{timeRange === range.value ? 'active' : ''}}"
+                  data-range="{{range.value}}"
+                  bindtap="onTimeRangeChange">{{range.label}}</button>
+        </block>
+      </view>
+    </view>
+
+    <!-- 指标选择 -->
+    <view class="metric-selector">
+      <text class="selector-label">显示指标：</text>
+      <view class="metric-buttons">
+        <block wx:for="{{metricOptions}}" wx:key="value" wx:for-item="metric">
+          <button class="metric-btn {{selectedMetric === metric.value ? 'active' : ''}}"
+                  data-metric="{{metric.value}}"
+                  bindtap="onMetricSelect">{{metric.label}}</button>
+        </block>
+      </view>
+    </view>
+  </view>
+
+  <!-- 图表容器 -->
+  <view class="chart-container">
+    <view class="chart-header">
+      <text class="chart-title">趋势图表</text>
+      <view class="chart-actions">
+        <button class="action-btn" bindtap="onRefresh">
+          <text class="icon">↻</text>
+          刷新
+        </button>
+        <button class="action-btn" bindtap="showAdvice">
+          <text class="icon">💡</text>
+          建议
+        </button>
+      </view>
+    </view>
+    
+    <view class="chart-wrapper">
+      <ec-canvas id="mychart-dom-line" canvas-id="mychart-line" ec="{{ec}}"></ec-canvas>
+    </view>
+  </view>
+
+  <!-- 数据说明 -->
+  <view class="data-info">
+    <text class="info-title">数据说明</text>
+    <view class="info-items">
+      <view class="info-item">
+        <text class="info-label">抑郁水平：</text>
+        <text class="info-value">0-3分，分数越高表示抑郁程度越严重</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">焦虑水平：</text>
+        <text class="info-value">0-10分，分数越高表示焦虑程度越严重</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">精力水平：</text>
+        <text class="info-value">0-3分，分数越高表示疲劳程度越严重</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">睡眠质量：</text>
+        <text class="info-value">0-4分，分数越高表示睡眠质量越差</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">正在加载数据...</text>
+  </view>
+</view>

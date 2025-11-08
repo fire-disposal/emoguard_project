@@ -1,0 +1,266 @@
+/* 情绪四维度记录页面样式 - 简洁高可读性设计 */
+.page {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 0;
+}
+
+/* 进度条容器 */
+.progress-container {
+  background: #fff;
+  padding: 20rpx 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  border-bottom: 1rpx solid #e9ecef;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8rpx;
+  background: #e9ecef;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #007aff;
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  color: #6c757d;
+  font-size: 24rpx;
+  font-weight: 500;
+  min-width: 60rpx;
+  text-align: right;
+}
+
+/* 步骤指示器 */
+.step-indicators {
+  display: flex;
+  justify-content: space-around;
+  padding: 30rpx 20rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #e9ecef;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.step-item.active {
+  opacity: 1;
+}
+
+.step-item.completed {
+  opacity: 0.8;
+}
+
+.step-circle {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  font-size: 24rpx;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.step-item.active .step-circle {
+  background: #007aff;
+  color: #fff;
+}
+
+.step-item.completed .step-circle {
+  background: #28a745;
+  color: #fff;
+}
+
+.step-title {
+  color: #495057;
+  font-size: 22rpx;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* 内容区域 */
+.content-area {
+  flex: 1;
+  padding: 40rpx 30rpx;
+}
+
+.question-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.question-header {
+  margin-bottom: 32rpx;
+}
+
+.question-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 16rpx;
+  line-height: 1.4;
+}
+
+.question-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+/* 单选题样式 */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s ease;
+}
+
+.radio-option.selected {
+  background: #e7f3ff;
+  border-color: #007aff;
+}
+
+.radio-option .wx-radio {
+  margin-right: 20rpx;
+  transform: scale(1.2);
+}
+
+.option-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.option-text {
+  font-size: 28rpx;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #212529;
+}
+
+.option-desc {
+  font-size: 24rpx;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+/* 滑块题样式 */
+.scale-container {
+  padding: 20rpx 0;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.scale-min-text,
+.scale-max-text {
+  font-size: 24rpx;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.scale-slider {
+  width: 100%;
+  margin: 30rpx 0;
+}
+
+.scale-desc {
+  display: block;
+  text-align: center;
+  font-size: 24rpx;
+  color: #6c757d;
+  margin-top: 20rpx;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+  padding: 30rpx;
+  background: #fff;
+  border-top: 1rpx solid #e9ecef;
+}
+
+.btn {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+}
+
+.btn-primary {
+  background: #007aff;
+  color: #fff;
+}
+
+.btn-primary:active {
+  opacity: 0.8;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: #fff;
+}
+
+.btn-secondary:active {
+  opacity: 0.8;
+}
+
+.btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 响应式设计 */
+@media (max-height: 800rpx) {
+  .content-area {
+    padding: 20rpx 30rpx;
+  }
+  
+  .question-card {
+    padding: 30rpx;
+  }
+  
+  .radio-option {
+    padding: 20rpx;
+  }
+}

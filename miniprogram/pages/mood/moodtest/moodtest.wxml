@@ -1,0 +1,85 @@
+<!-- 情绪四维度测评页面 - 修复版本 -->
+<view class="page">
+  <!-- 进度条 -->
+  <view class="progress-container" wx:if="{{questions.length > 0}}">
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{currentStep < questions.length ? ((currentStep + 1) * 100 / questions.length) : 100}}%"></view>
+    </view>
+    <text class="progress-text">{{currentStep + 1}}/{{questions.length}}</text>
+  </view>
+
+  <!-- 步骤指示器 -->
+  <view class="step-indicators" wx:if="{{questions.length > 0}}">
+    <block wx:for="{{questions}}" wx:key="key" wx:for-index="index">
+      <view class="step-item {{currentStep === index ? 'active' : ''}} {{(index === 0 ? (depression !== null) : (index === 1 ? (anxiety !== null) : (index === 2 ? (energy !== null) : (sleep !== null)))) ? 'completed' : ''}}" 
+            bindtap="goToStep" data-step="{{index}}">
+        <view class="step-circle">{{index + 1}}</view>
+        <text class="step-title">{{item.title}}</text>
+      </view>
+    </block>
+  </view>
+
+  <!-- 主要内容区域 -->
+  <view class="content-area" wx:if="{{questions.length > 0 && currentStep < questions.length}}">
+    <!-- 当前问题 -->
+    <view class="question-card">
+      <view class="question-header">
+        <text class="question-title">{{questions[currentStep].title}}</text>
+        <text class="question-subtitle">{{questions[currentStep].question}}</text>
+      </view>
+
+      <!-- 单选题 -->
+      <block wx:if="{{questions[currentStep].type === 'radio'}}">
+        <view class="question-content">
+          <radio-group class="radio-group" data-key="{{questions[currentStep].key}}" bindchange="handleRadioChange">
+            <block wx:for="{{questions[currentStep].options}}" wx:key="value" wx:for-item="item">
+              <label class="radio-option {{(currentStep === 0 ? (depression === item.value) : (currentStep === 1 ? (anxiety === item.value) : (currentStep === 2 ? (energy === item.value) : (sleep === item.value)))) ? 'selected' : ''}}">
+                <radio value="{{item.value}}" checked="{{(currentStep === 0 ? (depression === item.value) : (currentStep === 1 ? (anxiety === item.value) : (currentStep === 2 ? (energy === item.value) : (sleep === item.value))))}}" />
+                <view class="option-content">
+                  <text class="option-text">{{item.text}}</text>
+                  <text class="option-desc">{{item.desc}}</text>
+                </view>
+              </label>
+            </block>
+          </radio-group>
+        </view>
+      </block>
+
+      <!-- 滑块题 -->
+      <block wx:if="{{questions[currentStep].type === 'scale'}}">
+        <view class="question-content">
+          <view class="scale-container">
+            <view class="scale-labels">
+              <text class="scale-min-text">{{questions[currentStep].minText}}</text>
+              <text class="scale-max-text">{{questions[currentStep].maxText}}</text>
+            </view>
+            <slider class="scale-slider" 
+                    min="{{questions[currentStep].min}}" 
+                    max="{{questions[currentStep].max}}"
+                    value="{{anxiety || 0}}"
+                    show-value="{{true}}"
+                    data-key="{{questions[currentStep].key}}"
+                    bindchange="handleSliderChange" />
+            <text class="scale-desc">{{questions[currentStep].desc}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons" wx:if="{{questions.length > 0}}">
+    <button class="btn btn-secondary {{currentStep === 0 ? 'disabled' : ''}}" 
+            bindtap="prevStep" 
+            disabled="{{currentStep === 0}}">
+      上一步
+    </button>
+    
+    <button class="btn btn-primary" 
+            bindtap="{{currentStep === questions.length - 1 ? 'handleSubmit' : 'nextStep'}}"
+            loading="{{submitting}}"
+            disabled="{{submitting}}">
+      {{currentStep === questions.length - 1 ? '提交测评' : '下一步'}}
+    </button>
+  </view>
+</view>
