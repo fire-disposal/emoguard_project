@@ -7,6 +7,7 @@ class MoodJournalCreateSchema(Schema):
     mood_emoji: str
     text: str
     record_date: Optional[str] = None
+    # 移除user_id字段，从JWT获取
 
 class MoodJournalUpdateSchema(Schema):
     mood_score: Optional[int] = None
@@ -27,12 +28,12 @@ class MoodJournalResponseSchema(Schema):
     updated_at: str
 
 class MoodJournalListQuerySchema(Schema):
-    user_id: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     mood_name: Optional[str] = None
     page: int = 1
     page_size: int = 10
+    # 移除user_id字段，从JWT获取
 
 class MoodStatisticsSchema(Schema):
     date: str

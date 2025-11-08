@@ -10,7 +10,8 @@ from .phq9_calculator import PHQ9Calculator
 from .gad7_calculator import GAD7Calculator
 from .adl_calculator import ADLCalculator
 from .sus_calculator import SUSCalculator
-from .emotiontest_calculator import EmotionTestCalculator
+from .flow_step_calculator import FlowStepCalculator
+from .conclusion_calculator import ConclusionCalculator
 
 __all__ = [
     'BaseScoreCalculator',
@@ -21,7 +22,8 @@ __all__ = [
     'GAD7Calculator',
     'ADLCalculator',
     'SUSCalculator',
-    'EmotionTestCalculator',
+    'FlowStepCalculator',
+    'ConclusionCalculator',
     'get_calculator',
 ]
 
@@ -45,7 +47,6 @@ def get_calculator(scale_config, user_profile=None):
         'gad7': GAD7Calculator,
         'adl': ADLCalculator,
         'sus': SUSCalculator,
-        'emotiontest': EmotionTestCalculator,
     }
 
     scale_code = scale_config.code.lower()

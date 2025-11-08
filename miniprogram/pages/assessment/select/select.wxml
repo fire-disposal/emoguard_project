@@ -1,56 +1,39 @@
-<!--pages/assessment/select/select.wxml-->
-<view class="select-container gradient-bg">
-  <view class="select-header">
-    <text class="header-title">选择量表</text>
-    <text class="header-subtitle">选择适合您的心理测评量表</text>
+<!-- 测评选择页面 - 支持智能测评和单问卷模式 -->
+
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="header">
+    <text class="title">认知功能评估</text>
+    <text class="subtitle">科学评估，关爱认知健康</text>
   </view>
 
-  <!-- 认知评估流程入口 -->
-  <view wx:if="{{showFlowEntry}}" class="flow-entry-card" bindtap="startCognitiveFlow">
-    <view class="flow-icon">🧠</view>
-    <view class="flow-content">
-      <view class="flow-title">认知功能评估流程</view>
-      <view class="flow-desc">系统引导，按顺序完成 SCD-Q9、MMSE、MoCA 评估</view>
+  <!-- 智能测评入口 -->
+  <view class="smart-section">
+    <button class="smart-btn" bindtap="startSmartAssessment">
+      <text class="smart-title">🧠 智能测评</text>
+      <text class="smart-desc">AI智能推荐，个性化评估方案</text>
+    </button>
+  </view>
+
+  <!-- 单问卷模式 -->
+  <view class="scales-section">
+    <text class="section-title">单独测评</text>
+    
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
     </view>
-    <view class="flow-badge">推荐</view>
-  </view>
-
-  <view wx:if="{{loading}}" class="loading-state">
-    <text class="loading-text">加载中...</text>
-  </view>
-
-  <view wx:elif="{{scales.length === 0}}" class="empty-state">
-    <text class="empty-icon">📝</text>
-    <text class="empty-text">暂无可用量表</text>
-  </view>
-
-  <view wx:else class="scales-list">
-    <view class="list-title">单独测评</view>
-    <view 
-      wx:for="{{scales}}" 
-      wx:key="id" 
-      class="scale-card card"
-      data-id="{{item.id}}"
-      bindtap="startAssessment"
-    >
-      <view class="scale-header">
-        <text class="scale-name">{{item.name}}</text>
-        <text class="scale-code">{{item.code}}</text>
-      </view>
-      <text class="scale-desc">{{item.description || '专业心理健康评估量表'}}</text>
-      <view class="scale-footer">
+    
+    <view wx:elif="{{scales.length === 0}}" class="empty">
+      <text>暂无量表可用</text>
+    </view>
+    
+    <view wx:else class="scales-list">
+      <view class="scale-item" wx:for="{{scales}}" wx:key="id">
         <view class="scale-info">
-          <text class="info-label">题目数量</text>
-          <text class="info-value">{{item.questions.length}}题</text>
+          <text class="scale-name">{{item.name}}</text>
+          <text class="scale-desc">{{item.description}}</text>
         </view>
-        <view class="scale-info">
-          <text class="info-label">类型</text>
-          <text class="info-value">{{item.type}}</text>
-        </view>
-      </view>
-      <view class="start-btn">
-        <text class="btn-text">开始测评</text>
-        <text class="btn-arrow">→</text>
+        <button class="scale-btn" data-id="{{item.id}}" data-name="{{item.name}}" bindtap="startSingleScale">开始</button>
       </view>
     </view>
   </view>

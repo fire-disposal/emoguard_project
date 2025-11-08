@@ -145,3 +145,18 @@
   color: #fff;
   box-shadow: 0 6rpx 20rpx rgba(24, 144, 255, 0.3);
 }
+
+/* 空状态样式 */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 32rpx;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+  line-height: 1.6;
+}

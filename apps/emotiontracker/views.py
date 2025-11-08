@@ -5,13 +5,15 @@ from .models import EmotionRecord
 from .serializers import (
     EmotionRecordCreateSchema, EmotionRecordResponseSchema, EmotionTrendSchema
 )
+from config.jwt_auth_adapter import jwt_auth
 
 emotion_router = Router()
 
-@emotion_router.post("/", response=EmotionRecordResponseSchema)
+@emotion_router.post("/", response=EmotionRecordResponseSchema, auth=jwt_auth)
 def create_emotion_record(request, data: EmotionRecordCreateSchema):
+    current_user = request.auth
     record = EmotionRecord.objects.create(
-        user_id=data.user_id,
+        user_id=current_user.id,
         depression=data.depression,
         anxiety=data.anxiety,
         energy=data.energy,
@@ -27,12 +29,13 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
         created_at=record.created_at.isoformat()
     )
 
-@emotion_router.get("/trend/{user_id}", response=EmotionTrendSchema)
-def get_emotion_trend(request, user_id: str, days: int = Query(90)):
+@emotion_router.get("/trend", response=EmotionTrendSchema, auth=jwt_auth)
+def get_emotion_trend(request, days: int = Query(90)):
+    current_user = request.auth
     end_date = timezone.now()
     start_date = end_date - timedelta(days=days)
     records = EmotionRecord.objects.filter(
-        user_id=user_id,
+        user_id=current_user.id,
         created_at__gte=start_date,
         created_at__lte=end_date
     ).order_by('created_at')

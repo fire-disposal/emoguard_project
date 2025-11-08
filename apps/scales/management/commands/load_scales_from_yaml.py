@@ -47,7 +47,8 @@ class Command(BaseCommand):
                         'yaml_config': yaml_content,
                     }
                 )
+                question_count = len(data['questions'])
                 if created:
-                    self.stdout.write(self.style.SUCCESS(f"导入新量表: {obj.name}"))
+                    self.stdout.write(self.style.SUCCESS(f"导入新量表: {obj.name} ({question_count} 题)"))
                 else:
-                    self.stdout.write(self.style.SUCCESS(f"更新量表: {obj.name} 并同步 YAML 配置"))
+                    self.stdout.write(self.style.SUCCESS(f"更新量表: {obj.name} ({question_count} 题) 并同步 YAML 配置"))

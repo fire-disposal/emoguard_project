@@ -1,97 +1,217 @@
-name: MMSE
-code: MMSE-simple
+name: 简易智能状态检查量表 (MMSE)
+code: MMSE
 version: "1.0"
-description: MMSE简化版
+description: 全面认知功能评估量表，包含定向力、记忆力、注意力、计算力、语言能力和视空间能力
 type: MMSE
 status: active
 questions:
   - id: 1
-    question: "记忆力是否减退？"
+    question: "现在是哪一年？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "轻微"
+      - text: "正确"
         value: 1
-      - text: "严重"
+      - text: "错误"
         value: 0
   - id: 2
-    question: "是否经常忘记约定或重要事件？"
+    question: "现在是哪一季？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "偶尔"
+      - text: "正确"
         value: 1
-      - text: "经常"
+      - text: "错误"
         value: 0
   - id: 3
-    question: "是否会忘记熟悉的人的名字？"
+    question: "现在是几月份？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "偶尔"
+      - text: "正确"
         value: 1
-      - text: "经常"
+      - text: "错误"
         value: 0
   - id: 4
-    question: "是否会迷路或走错地方？"
+    question: "今天是几号？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "偶尔"
+      - text: "正确"
         value: 1
-      - text: "经常"
+      - text: "错误"
         value: 0
   - id: 5
-    question: "是否难以完成日常事务？"
+    question: "今天是星期几？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "偶尔"
+      - text: "正确"
         value: 1
-      - text: "经常"
+      - text: "错误"
         value: 0
   - id: 6
-    question: "是否难以理解或表达语言？"
+    question: "我们在哪个省（市）？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "偶尔"
+      - text: "正确"
         value: 1
-      - text: "经常"
+      - text: "错误"
         value: 0
   - id: 7
-    question: "是否出现判断力下降？"
+    question: "我们在哪个县（区）？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "偶尔"
+      - text: "正确"
         value: 1
-      - text: "经常"
+      - text: "错误"
         value: 0
   - id: 8
-    question: "是否出现情绪或行为异常？"
+    question: "我们在哪个乡（镇、街道）？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "偶尔"
+      - text: "正确"
         value: 1
-      - text: "经常"
+      - text: "错误"
         value: 0
   - id: 9
-    question: "是否需要他人协助生活？"
+    question: "我们在几楼？"
     options:
-      - text: "不需要"
-        value: 2
-      - text: "偶尔需要"
+      - text: "正确"
         value: 1
-      - text: "经常需要"
+      - text: "错误"
         value: 0
   - id: 10
-    question: "是否有家族痴呆史？"
+    question: "这里是什么地方？"
     options:
-      - text: "没有"
-        value: 2
-      - text: "不清楚"
+      - text: "正确"
+        value: 1
+      - text: "错误"
         value: 0
-      - text: "有"
+  - id: 11
+    question: "复述：皮球"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 12
+    question: "复述：国旗"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 13
+    question: "复述：树木"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 14
+    question: "100减7等于多少？"
+    options:
+      - text: "正确（93）"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 15
+    question: "93减7等于多少？"
+    options:
+      - text: "正确（86）"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 16
+    question: "86减7等于多少？"
+    options:
+      - text: "正确（79）"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 17
+    question: "79减7等于多少？"
+    options:
+      - text: "正确（72）"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 18
+    question: "72减7等于多少？"
+    options:
+      - text: "正确（65）"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 19
+    question: "回忆：皮球"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 20
+    question: "回忆：国旗"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 21
+    question: "回忆：树木"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 22
+    question: "命名：手表"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 23
+    question: "命名：铅笔"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 24
+    question: "复述：四十四只石狮子"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 25
+    question: "执行指令：用右手拿纸"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 26
+    question: "执行指令：将纸对折"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 27
+    question: "执行指令：放在大腿上"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 28
+    question: "阅读并执行：闭上您的眼睛"
+    options:
+      - text: "正确"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 29
+    question: "写一句完整的句子"
+    options:
+      - text: "正确（有主语、谓语，有意义）"
+        value: 1
+      - text: "错误"
+        value: 0
+  - id: 30
+    question: "复制图案"
+    options:
+      - text: "正确（画出完整图形）"
+        value: 1
+      - text: "错误"
         value: 0

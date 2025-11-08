@@ -2,11 +2,11 @@ from ninja import Schema
 from typing import List
 
 class EmotionRecordCreateSchema(Schema):
-    user_id: str
     depression: int
     anxiety: int
     energy: int
     sleep: int
+    # 移除user_id字段，从JWT获取
 
 class EmotionRecordResponseSchema(Schema):
     id: int

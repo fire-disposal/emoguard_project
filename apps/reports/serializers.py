@@ -2,7 +2,6 @@ from ninja import Schema
 from typing import Optional, List, Dict
 
 class HealthReportCreateSchema(Schema):
-    user_id: str
     assessment_id: int
     report_type: str
     overall_risk: str
@@ -11,6 +10,7 @@ class HealthReportCreateSchema(Schema):
     professional_advice: str
     trend_analysis: str
     trend_data: Dict
+    # 移除user_id字段，从JWT获取或系统自动分配
 
 class HealthReportUpdateSchema(Schema):
     overall_risk: Optional[str] = None
@@ -35,13 +35,13 @@ class HealthReportResponseSchema(Schema):
     updated_at: str
 
 class HealthReportListQuerySchema(Schema):
-    user_id: Optional[str] = None
     report_type: Optional[str] = None
     overall_risk: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     page: int = 1
     page_size: int = 10
+    # 移除user_id字段，从JWT获取
 
 class HealthReportSummarySchema(Schema):
     total_reports: int

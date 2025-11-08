@@ -39,10 +39,33 @@ class ScaleConfig(models.Model):
                 raise ValidationError("YAML 配置不能为空")
             
             # 验证必填字段
-            if 'code' not in data:
-                raise ValidationError("YAML 配置必须包含 'code' 字段")
-            if 'questions' not in data or not data['questions']:
+            required_fields = ['code', 'questions']
+            for field in required_fields:
+                if field not in data:
+                    raise ValidationError(f"YAML 配置必须包含 '{field}' 字段")
+            
+            if not data['questions'] or not isinstance(data['questions'], list):
                 raise ValidationError("YAML 配置必须包含非空的 'questions' 字段")
+            
+            # 验证问题结构
+            for i, question in enumerate(data['questions']):
+                if not isinstance(question, dict):
+                    raise ValidationError(f"问题 {i+1} 必须是字典格式")
+                if 'id' not in question:
+                    raise ValidationError(f"问题 {i+1} 必须包含 'id' 字段")
+                if 'question' not in question:
+                    raise ValidationError(f"问题 {i+1} 必须包含 'question' 字段")
+                if 'options' not in question or not isinstance(question['options'], list):
+                    raise ValidationError(f"问题 {i+1} 必须包含 'options' 列表")
+                
+                # 验证选项结构
+                for j, option in enumerate(question['options']):
+                    if not isinstance(option, dict):
+                        raise ValidationError(f"问题 {i+1} 的选项 {j+1} 必须是字典格式")
+                    if 'text' not in option:
+                        raise ValidationError(f"问题 {i+1} 的选项 {j+1} 必须包含 'text' 字段")
+                    if 'value' not in option:
+                        raise ValidationError(f"问题 {i+1} 的选项 {j+1} 必须包含 'value' 字段")
             
             # 将 value 字段转换为字符串
             for question in data['questions']:
@@ -62,6 +85,8 @@ class ScaleConfig(models.Model):
             
         except yaml.YAMLError as e:
             raise ValidationError(f"YAML 格式错误: {str(e)}")
+        except ValidationError:
+            raise
         except Exception as e:
             raise ValidationError(f"解析 YAML 配置失败: {str(e)}")
 
@@ -87,44 +112,58 @@ class ScaleConfig(models.Model):
 
     def clean(self):
         """验证模型数据"""
-        super().clean()
-        
-        # 检测 YAML 是否被修改
-        yaml_modified = self.yaml_config != self._original_yaml
-        
-        # 检测基础字段是否被修改（排除新建情况）
-        if self.pk:
-            try:
-                old_instance = ScaleConfig.objects.get(pk=self.pk)
-                self._fields_modified = (
-                    old_instance.name != self.name or
-                    old_instance.code != self.code or
-                    old_instance.version != self.version or
-                    old_instance.description != self.description or
-                    old_instance.type != self.type or
-                    old_instance.status != self.status or
-                    old_instance.questions != self.questions
-                )
-            except ScaleConfig.DoesNotExist:
-                self._fields_modified = False
-        
-        # 优先级：YAML 修改 > 基础字段修改
-        if yaml_modified:
-            # YAML 被修改，解析并更新基础字段
-            self._parse_yaml_to_fields()
-        elif self._fields_modified:
-            # 基础字段被修改，反向同步到 YAML
-            self._sync_fields_to_yaml()
-        elif not self.yaml_config and self.questions:
-            # 初次创建或 YAML 为空但有 questions，生成 YAML
-            self._sync_fields_to_yaml()
+        try:
+            super().clean()
+            
+            # 检测 YAML 是否被修改
+            yaml_modified = self.yaml_config != self._original_yaml
+            
+            # 检测基础字段是否被修改（排除新建情况）
+            if self.pk:
+                try:
+                    old_instance = ScaleConfig.objects.get(pk=self.pk)
+                    self._fields_modified = (
+                        old_instance.name != self.name or
+                        old_instance.code != self.code or
+                        old_instance.version != self.version or
+                        old_instance.description != self.description or
+                        old_instance.type != self.type or
+                        old_instance.status != self.status or
+                        old_instance.questions != self.questions
+                    )
+                except ScaleConfig.DoesNotExist:
+                    self._fields_modified = False
+            
+            # 优先级：YAML 修改 > 基础字段修改
+            if yaml_modified:
+                # YAML 被修改，解析并更新基础字段
+                self._parse_yaml_to_fields()
+            elif self._fields_modified:
+                # 基础字段被修改，反向同步到 YAML
+                self._sync_fields_to_yaml()
+            elif not self.yaml_config and self.questions:
+                # 初次创建或 YAML 为空但有 questions，生成 YAML
+                self._sync_fields_to_yaml()
+                
+        except Exception as e:
+            # 增强错误处理，避免静默失败
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"ScaleConfig 验证失败: {str(e)}")
+            raise
 
     def save(self, *args, **kwargs):
         """保存前执行验证和同步"""
-        self.full_clean()  # 触发 clean 方法
-        super().save(*args, **kwargs)
-        # 保存后更新原始 YAML 值
-        self._original_yaml = self.yaml_config
+        try:
+            self.full_clean()  # 触发 clean 方法
+            super().save(*args, **kwargs)
+            # 保存后更新原始 YAML 值
+            self._original_yaml = self.yaml_config
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"ScaleConfig 保存失败: {str(e)}")
+            raise
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -133,38 +172,50 @@ class ScaleConfig(models.Model):
         verbose_name = "量表配置"
         verbose_name_plural = "量表配置"
 
-class AssessmentResultGroup(models.Model):
-    """评估结果分组 - 保存一次评估流程中的所有量表结果"""
+
+class SmartAssessmentRecord(models.Model):
+    """智能测评记录 - 后端主导的测评流程"""
     STATUS_CHOICES = (
         ('in_progress', '进行中'),
         ('completed', '已完成'),
         ('abandoned', '已放弃'),
     )
     
+    STRATEGY_CHOICES = (
+        ('cognitive_screening', '认知筛查'),
+        ('cognitive_deep', '认知深度评估'),
+    )
+    
     id = models.AutoField(primary_key=True)
     user_id = models.UUIDField(verbose_name='用户ID', db_index=True)
-    flow_type = models.CharField(max_length=64, default='cognitive_assessment', verbose_name='流程类型')
+    strategy = models.CharField(max_length=32, choices=STRATEGY_CHOICES, verbose_name='测评策略')
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='in_progress', verbose_name='状态')
-    current_step = models.CharField(max_length=64, blank=True, verbose_name='当前步骤')
+    current_scale_index = models.IntegerField(default=0, verbose_name='当前量表索引')
     
-    # 综合分析结果
-    comprehensive_analysis = models.JSONField(default=dict, blank=True, verbose_name='综合分析')
-    final_conclusion = models.TextField(blank=True, verbose_name='最终结论')
+    # 最终结果
+    final_result = models.JSONField(default=dict, blank=True, verbose_name='最终结果')
     
     started_at = models.DateTimeField(auto_now_add=True, verbose_name='开始时间')
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name='完成时间')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    def get_total_duration(self):
+        """获取总耗时（毫秒）"""
+        if self.completed_at:
+            return int((self.completed_at - self.started_at).total_seconds() * 1000)
+        return 0
+    
     def __str__(self):
-        return f"评估组-{self.id} 用户:{self.user_id} ({self.get_status_display()})"
+        return f"智能测评-{self.id} 用户:{self.user_id} ({self.get_status_display()})"
     
     class Meta:
-        verbose_name = "评估结果分组"
-        verbose_name_plural = "评估结果分组"
+        verbose_name = "智能测评记录"
+        verbose_name_plural = "智能测评记录"
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['user_id', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
         ]
 
 
@@ -176,21 +227,21 @@ class ScaleResult(models.Model):
     user_id = models.UUIDField()
     scale_config = models.ForeignKey(ScaleConfig, on_delete=models.CASCADE, related_name='results')
     selected_options = models.JSONField(default=list)
-    conclusion = models.TextField(blank=True, verbose_name='结论摘要')  # 结论字段
+    conclusion = models.TextField(blank=True, verbose_name='结论摘要')
     duration_ms = models.IntegerField()
     started_at = models.DateTimeField()
     completed_at = models.DateTimeField()
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='completed')
     analysis = models.JSONField(default=dict, blank=True)
     
-    # 关联到评估组（可选，兼容旧数据）
-    result_group = models.ForeignKey(
-        AssessmentResultGroup, 
+    # 关联到智能测评（可选，兼容单量表模式）
+    smart_assessment = models.ForeignKey(
+        SmartAssessmentRecord, 
         on_delete=models.CASCADE, 
-        related_name='results',
+        related_name='scale_results',
         null=True, 
         blank=True,
-        verbose_name='所属评估组'
+        verbose_name='所属智能测评'
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -204,5 +255,5 @@ class ScaleResult(models.Model):
         verbose_name_plural = "量表结果"
         indexes = [
             models.Index(fields=['user_id', '-created_at']),
-            models.Index(fields=['result_group', 'scale_config']),
+            models.Index(fields=['smart_assessment', 'scale_config']),
         ]

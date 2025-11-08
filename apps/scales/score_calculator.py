@@ -1,7 +1,6 @@
 """
 量表评分计算器
 模块化设计：针对不同量表类型提供专用计分器
-支持认知评估流程的条件判定
 """
 from typing import Dict, Any, List, Optional
 from .calculators import get_calculator

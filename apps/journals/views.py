@@ -13,16 +13,16 @@ from config.jwt_auth_adapter import jwt_auth
 
 journals_router = Router()
 
-@journals_router.get("/", response=list[MoodJournalResponseSchema])
+@journals_router.get("/", response=list[MoodJournalResponseSchema], auth=jwt_auth)
 def list_journals(request, filters: MoodJournalListQuerySchema = Query(...)):
     """
     获取情绪日记列表，支持多种过滤条件和分页
     """
+    current_user = request.auth
     queryset = MoodJournal.objects.select_related('user')
     
-    # 用户过滤
-    if filters.user_id:
-        queryset = queryset.filter(user_id=filters.user_id)
+    # 只显示当前用户的日记
+    queryset = queryset.filter(user_id=current_user.id)
     
     # 日期范围过滤
     if filters.start_date:
@@ -161,17 +161,18 @@ def delete_journal(request, journal_id: int):
     journal.delete()
     return {"success": True}
 
-@journals_router.get("/statistics/daily", response=list[MoodStatisticsSchema])
-def get_daily_statistics(request, user_id: str, days: int = Query(30)):
+@journals_router.get("/statistics/daily", response=list[MoodStatisticsSchema], auth=jwt_auth)
+def get_daily_statistics(request, days: int = Query(30)):
     """
-    获取用户的日情绪统计
+    获取当前用户的日情绪统计
     """
+    current_user = request.auth
     end_date = timezone.now().date()
     start_date = end_date - timedelta(days=days)
     
     # 按日期分组统计
     statistics = MoodJournal.objects.filter(
-        user_id=user_id,
+        user_id=current_user.id,
         record_date__date__gte=start_date,
         record_date__date__lte=end_date
     ).values('record_date__date').annotate(
@@ -185,7 +186,7 @@ def get_daily_statistics(request, user_id: str, days: int = Query(30)):
     for stat in statistics:
         # 获取该日期的主要情绪
         dominant_mood = MoodJournal.objects.filter(
-            user_id=user_id,
+            user_id=current_user.id,
             record_date__date=stat['record_date__date']
         ).values('mood_name').annotate(
             count=Count('id')
@@ -200,16 +201,17 @@ def get_daily_statistics(request, user_id: str, days: int = Query(30)):
     
     return result
 
-@journals_router.get("/trends/score", response=dict)
-def get_mood_trends(request, user_id: str, days: int = Query(30)):
+@journals_router.get("/trends/score", response=dict, auth=jwt_auth)
+def get_mood_trends(request, days: int = Query(30)):
     """
-    获取用户情绪分数趋势
+    获取当前用户情绪分数趋势
     """
+    current_user = request.auth
     end_date = timezone.now()
     start_date = end_date - timedelta(days=days)
     
     journals = MoodJournal.objects.filter(
-        user_id=user_id,
+        user_id=current_user.id,
         record_date__gte=start_date,
         record_date__lte=end_date
     ).order_by('record_date')

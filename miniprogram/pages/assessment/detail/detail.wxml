@@ -5,28 +5,40 @@
   </view>
 
   <view wx:elif="{{scaleConfig}}" class="assessment-content">
+    
+    <!-- 调试信息 -->
+    <view style="padding: 20rpx; background: #f0f0f0; font-size: 24rpx; color: #666; margin-bottom: 20rpx;">
+      <text>调试: 问题数={{questions.length}}, 当前索引={{currentQuestionIndex}}</text>
+      <text wx:if="{{questions.length > 0}}">, 当前问题={{questions[currentQuestionIndex].question}}</text>
+    </view>
+    
     <!-- 顶栏 - 问卷名称 -->
     <view class="header-bar">
       <text class="header-title">{{scaleConfig.name}}</text>
     </view>
 
+    <!-- 空状态提示 -->
+    <view wx:if="{{questions.length === 0}}" class="empty-state">
+      <text class="empty-text">暂无题目</text>
+    </view>
+
     <!-- 进度条 -->
-    <view class="progress-bar">
+    <view class="progress-bar" wx:if="{{questions.length > 0}}">
       <view class="progress-fill" style="width: {{(currentQuestionIndex + 1) / questions.length * 100}}%"></view>
     </view>
-    <view class="progress-text">
+    <view class="progress-text" wx:if="{{questions.length > 0}}">
       <text>{{currentQuestionIndex + 1}}/{{questions.length}}</text>
     </view>
 
     <!-- 当前题目 -->
-    <view class="question-section card">
+    <view class="question-section card" wx:if="{{questions.length > 0 && questions[currentQuestionIndex]}}">
       <view class="question-number">第 {{currentQuestionIndex + 1}} 题</view>
       <text class="question-text">{{questions[currentQuestionIndex].question}}</text>
 
       <!-- 选项 -->
-      <view class="options-list">
-        <view 
-          wx:for="{{questions[currentQuestionIndex].options}}" 
+      <view class="options-list" wx:if="{{questions[currentQuestionIndex].options}}">
+        <view
+          wx:for="{{questions[currentQuestionIndex].options}}"
           wx:key="index"
           class="option-item {{selectedOptions[currentQuestionIndex] === index ? 'selected' : ''}}"
           data-index="{{index}}"
@@ -41,15 +53,15 @@
     </view>
 
     <!-- 操作按钮 -->
-    <view class="action-buttons">
-      <view 
-        class="btn-secondary {{currentQuestionIndex === 0 ? 'btn-disabled' : ''}}" 
+    <view class="action-buttons" wx:if="{{questions.length > 0}}">
+      <view
+        class="btn-secondary {{currentQuestionIndex === 0 ? 'btn-disabled' : ''}}"
         bindtap="prevQuestion"
       >
         <text>上一题</text>
       </view>
 
-      <view 
+      <view
         wx:if="{{currentQuestionIndex < questions.length - 1}}"
         class="btn-primary"
         bindtap="nextQuestion"
@@ -57,12 +69,12 @@
         <text>下一题</text>
       </view>
 
-      <view 
-        wx:else
+      <view
+        wx:elif="{{currentQuestionIndex === questions.length - 1}}"
         class="btn-primary"
         bindtap="submitAssessment"
       >
-        <text>提交答题</text>
+        <text>提交问卷</text>
       </view>
     </view>
   </view>

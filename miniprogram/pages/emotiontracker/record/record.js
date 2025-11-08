@@ -9,7 +9,6 @@ Page({
     energy: null,
     sleep: null,
     submitting: false,
-    userId: null,
     q1Options: [
       { text: '没有', value: 0 },
       { text: '轻微', value: 1 },
@@ -36,16 +35,7 @@ Page({
   },
 
   onLoad() {
-    this.initUser();
-  },
-
-  async initUser() {
-    try {
-      const res = await userApi.getCurrentUser();
-      this.setData({ userId: res.id });
-    } catch (e) {
-      wx.showToast({ title: '获取用户信息失败', icon: 'none' });
-    }
+    // 无需初始化用户，后端通过JWT识别
   },
 
   handleRadioChange(e) {
@@ -55,10 +45,7 @@ Page({
   },
 
   async handleSubmit() {
-    if (this.data.userId == null) {
-      wx.showToast({ title: '用户未登录', icon: 'none' });
-      return;
-    }
+    // 无需检查userId，后端通过JWT识别用户
     // 校验必填
     if (
       this.data.depression === null ||
@@ -71,9 +58,8 @@ Page({
     }
     this.setData({ submitting: true });
     try {
-      // 直接传分数，不传问题
+      // 直接传分数，不传user_id，后端通过JWT识别
       await emotionApi.upsertEmotionRecord({
-        user_id: this.data.userId,
         depression: this.data.depression,
         anxiety: this.data.anxiety,
         energy: this.data.energy,

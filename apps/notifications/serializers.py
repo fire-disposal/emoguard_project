@@ -21,12 +21,12 @@ class NotificationSchema(Schema):
 
 class NotificationCreateSchema(Schema):
     """创建通知Schema（管理员使用）"""
-    user_id: str  # UUID string
     title: str
     content: str
     notification_type: str = 'system'
     related_id: Optional[int] = None
     related_type: Optional[str] = None
+    # 注意：管理员创建通知时，user_id应该从请求参数或路由参数获取，而不是从JWT
 
 
 class UnreadCountSchema(Schema):

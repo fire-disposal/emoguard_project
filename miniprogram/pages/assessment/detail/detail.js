@@ -1,4 +1,4 @@
-// pages/assessment/detail/detail.js
+// 答题详情页面 - 支持单问卷、流程、智能测评模式
 const scaleApi = require('../../../api/scale');
 const auth = require('../../../utils/auth');
 
@@ -10,65 +10,75 @@ Page({
     currentQuestionIndex: 0,
     startTime: 0,
     loading: true,
-    // 流程模式
-    flowMode: false,
-    groupId: null
+    mode: 'single', // 'single', 'flow', 'smart'
+    groupId: null,
+    assessmentId: null
   },
 
   onLoad(options) {
-    const { id, groupId, flowMode } = options;
-    if (id) {
+    const { id, groupId, assessmentId, mode } = options;
+    
+    if (!id) {
+      wx.showToast({ title: '缺少参数', icon: 'none' });
+      wx.navigateBack();
+      return;
+    }
+
+    this.setData({
+      mode: mode || 'single',
+      groupId: groupId ? parseInt(groupId) : null,
+      assessmentId: assessmentId ? parseInt(assessmentId) : null
+    });
+    
+    this.loadScale(id);
+  },
+
+  // 加载量表
+  async loadScale(id) {
+    try {
+      console.log('开始加载量表，ID:', id);
+      const res = await scaleApi.getConfig(id);
+      
+      console.log('量表配置原始数据:', res);
+      console.log('问题数据:', res.questions);
+      console.log('问题数量:', res.questions ? res.questions.length : 0);
+      
+      // 确保问题数据存在且为数组
+      const questions = res.questions || [];
+      const selectedOptions = new Array(questions.length).fill(-1);
+      
+      console.log('处理后的问题数量:', questions.length);
+      console.log('第一个问题:', questions[0]);
+      
       this.setData({
-        flowMode: flowMode === 'true',
-        groupId: groupId ? parseInt(groupId) : null
+        scaleConfig: res,
+        questions: questions,
+        selectedOptions: selectedOptions,
+        startTime: Date.now(),
+        loading: false
       });
-      this.loadScale(id);
+      
+      console.log('页面数据设置完成，当前问题索引:', 0);
+    } catch (error) {
+      console.error('加载失败:', error);
+      wx.showToast({ title: '加载失败', icon: 'none' });
+      this.setData({ loading: false });
     }
   },
 
-  /**
-   * 加载量表详情
-   */
-  loadScale(id) {
-    this.setData({ loading: true });
-
-    scaleApi.getConfig(id)
-      .then((res) => {
-        const selectedOptions = new Array(res.questions.length).fill(-1);
-        
-        this.setData({
-          scaleConfig: res,
-          questions: res.questions,
-          selectedOptions,
-          startTime: Date.now()
-        });
-      })
-      .catch((error) => {
-        console.error('加载量表详情失败:', error);
-        wx.showToast({
-          title: error.message || '加载失败',
-          icon: 'none'
-        });
-      })
-      .finally(() => {
-        this.setData({ loading: false });
-      });
-  },
-
-  /**
-   * 选择答案
-   */
+  // 选择答案
   selectOption(e) {
     const { index } = e.currentTarget.dataset;
     const selectedOptions = [...this.data.selectedOptions];
-    selectedOptions[this.data.currentQuestionIndex] = index;
     
-    this.setData({ selectedOptions });
+    // 确保当前题目索引有效
+    if (this.data.currentQuestionIndex >= 0 && this.data.currentQuestionIndex < selectedOptions.length) {
+      selectedOptions[this.data.currentQuestionIndex] = index;
+      this.setData({ selectedOptions });
+    }
   },
 
-  /**
-   * 上一题
-   */
+  // 上一题
   prevQuestion() {
     if (this.data.currentQuestionIndex > 0) {
       this.setData({
@@ -77,15 +87,17 @@ Page({
     }
   },
 
-  /**
-   * 下一题
-   */
+  // 下一题
   nextQuestion() {
+    // 检查是否有题目
+    if (this.data.questions.length === 0) {
+      wx.showToast({ title: '没有题目', icon: 'none' });
+      return;
+    }
+    
+    // 检查是否已选择答案
     if (this.data.selectedOptions[this.data.currentQuestionIndex] === -1) {
-      wx.showToast({
-        title: '请选择答案',
-        icon: 'none'
-      });
+      wx.showToast({ title: '请选择答案', icon: 'none' });
       return;
     }
 
@@ -96,83 +108,105 @@ Page({
     }
   },
 
-  /**
-   * 提交答题
-   */
-  submitAssessment() {
-    // 检查是否全部答完
+  // 提交
+  async submitAssessment() {
     if (this.data.selectedOptions.includes(-1)) {
-      wx.showToast({
-        title: '请完成所有题目',
-        icon: 'none'
-      });
+      wx.showToast({ title: '请完成所有题目', icon: 'none' });
       return;
     }
 
     const userInfo = auth.getUserInfo();
-    if (!userInfo) return;
+    if (!userInfo) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
 
     wx.showLoading({ title: '提交中...' });
 
-    const now = new Date();
-    const startedAt = new Date(this.data.startTime).toISOString();
-    const completedAt = now.toISOString();
-    const durationMs = now.getTime() - this.data.startTime;
+    try {
+      const now = new Date();
+      const data = {
+        scale_config_id: this.data.scaleConfig.id,
+        selected_options: this.data.selectedOptions,
+        duration_ms: now.getTime() - this.data.startTime,
+        started_at: new Date(this.data.startTime).toISOString(),
+        completed_at: now.toISOString()
+      };
 
-    // 根据模式选择不同的提交方式
-    if (this.data.flowMode && this.data.groupId) {
-      // 流程模式：提交到评估分组
-      scaleApi.submitGroupedResult(this.data.groupId, {
-        scale_config_id: this.data.scaleConfig.id,
-        selected_options: this.data.selectedOptions,
-        duration_ms: durationMs,
-        started_at: startedAt,
-        completed_at: completedAt
-      })
-      .then((res) => {
+      let result;
+      
+      if (this.data.mode === 'smart' && this.data.assessmentId) {
+        // 智能测评模式
+        result = await scaleApi.submitSmartAnswer(
+          this.data.assessmentId,
+          this.data.scaleConfig.id,
+          data
+        );
+        
         wx.hideLoading();
-        // 返回流程页面
-        wx.navigateBack({
-          success: () => {
-            wx.showToast({
-              title: '提交成功',
-              icon: 'success'
+        
+        if (result.success) {
+          if (result.completed) {
+            // 测评完成，跳转到结果页面
+            wx.redirectTo({
+              url: `/pages/assessment/smart-result/smart-result?assessmentId=${this.data.assessmentId}`
             });
+          } else if (result.next_scale) {
+            // 还有下一个量表，继续答题
+            this.setData({
+              currentQuestionIndex: 0,
+              selectedOptions: new Array(result.next_scale.questions.length).fill(-1),
+              startTime: Date.now(),
+              scaleConfig: result.next_scale,
+              questions: result.next_scale.questions
+            });
+            wx.showToast({ title: '继续下一个量表', icon: 'success' });
           }
-        });
-      })
-      .catch((error) => {
+        } else {
+          throw new Error(result.error || '提交失败');
+        }
+      } else if (this.data.mode === 'flow' && this.data.groupId) {
+        // 流程模式（兼容旧版）
+        result = await scaleApi.submitFlowScaleResult(
+          this.data.groupId,
+          this.data.scaleConfig.id,
+          data
+        );
+        
         wx.hideLoading();
-        console.error('提交测评失败:', error);
-        wx.showToast({
-          title: error.message || '提交失败',
-          icon: 'none'
+        
+        if (result.success) {
+          // 返回流程页面
+          wx.navigateBack({
+            success: () => {
+              wx.showToast({ title: '提交成功', icon: 'success' });
+            }
+          });
+        } else {
+          throw new Error(result.error || '提交失败');
+        }
+      } else {
+        // 单问卷模式
+        result = await scaleApi.createResult({
+          ...data,
+          user_id: userInfo.id
         });
-      });
-    } else {
-      // 普通模式：单独提交
-      scaleApi.createResult({
-        user_id: userInfo.id,
-        scale_config_id: this.data.scaleConfig.id,
-        selected_options: this.data.selectedOptions,
-        duration_ms: durationMs,
-        started_at: startedAt,
-        completed_at: completedAt
-      })
-      .then((res) => {
+        
         wx.hideLoading();
-        wx.redirectTo({
-          url: `/pages/assessment/result/result?id=${res.id}`
-        });
-      })
-      .catch((error) => {
-        wx.hideLoading();
-        console.error('提交测评失败:', error);
-        wx.showToast({
-          title: error.message || '提交失败',
-          icon: 'none'
-        });
-      });
+        
+        if (result.success) {
+          // 跳转到结果页面
+          wx.redirectTo({
+            url: `/pages/assessment/result/result?id=${result.id}`
+          });
+        } else {
+          throw new Error(result.error || '提交失败');
+        }
+      }
+    } catch (error) {
+      wx.hideLoading();
+      console.error('提交失败:', error);
+      wx.showToast({ title: '提交失败', icon: 'none' });
     }
   }
 });

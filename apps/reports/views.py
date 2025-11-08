@@ -8,19 +8,17 @@ from .serializers import (
     HealthReportCreateSchema, HealthReportUpdateSchema, HealthReportResponseSchema,
     HealthReportListQuerySchema, HealthReportSummarySchema, HealthTrendSchema
 )
+from config.jwt_auth_adapter import jwt_auth
 
 reports_router = Router()
 
-@reports_router.get("/", response=list[HealthReportResponseSchema])
+@reports_router.get("/", response=list[HealthReportResponseSchema], auth=jwt_auth)
 def list_reports(request, filters: HealthReportListQuerySchema = Query(...)):
     """
-    获取健康报告列表，支持多种过滤条件和分页
+    获取当前用户的健康报告列表，支持多种过滤条件和分页
     """
-    queryset = HealthReport.objects.all()
-    
-    # 用户过滤
-    if filters.user_id:
-        queryset = queryset.filter(user_id=filters.user_id)
+    current_user = request.auth
+    queryset = HealthReport.objects.filter(user_id=current_user.id)
     
     # 报告类型过滤
     if filters.report_type:
@@ -83,13 +81,14 @@ def get_report(request, report_id: int):
         updated_at=report.updated_at.isoformat()
     )
 
-@reports_router.post("/", response=HealthReportResponseSchema)
+@reports_router.post("/", response=HealthReportResponseSchema, auth=jwt_auth)
 def create_report(request, data: HealthReportCreateSchema):
     """
     创建健康报告
     """
+    current_user = request.auth
     report = HealthReport.objects.create(
-        user_id=data.user_id,
+        user_id=current_user.id,
         assessment_id=data.assessment_id,
         report_type=data.report_type,
         overall_risk=data.overall_risk,
@@ -162,12 +161,13 @@ def delete_report(request, report_id: int):
     report.delete()
     return {"success": True}
 
-@reports_router.get("/summary/{user_id}", response=HealthReportSummarySchema)
-def get_user_report_summary(request, user_id: str):
+@reports_router.get("/summary", response=HealthReportSummarySchema, auth=jwt_auth)
+def get_user_report_summary(request):
     """
-    获取用户的健康报告摘要
+    获取当前用户的健康报告摘要
     """
-    user_reports = HealthReport.objects.filter(user_id=user_id)
+    current_user = request.auth
+    user_reports = HealthReport.objects.filter(user_id=current_user.id)
     total_reports = user_reports.count()
     
     # 风险等级分布
@@ -221,16 +221,17 @@ def get_user_report_summary(request, user_id: str):
         average_risk_score=round(average_risk_score, 2)
     )
 
-@reports_router.get("/trends/{user_id}", response=list[HealthTrendSchema])
-def get_health_trends(request, user_id: str, days: int = Query(90)):
+@reports_router.get("/trends", response=list[HealthTrendSchema], auth=jwt_auth)
+def get_health_trends(request, days: int = Query(90)):
     """
-    获取用户健康趋势
+    获取当前用户健康趋势
     """
+    current_user = request.auth
     end_date = timezone.now().date()
     start_date = end_date - timedelta(days=days)
     
     reports = HealthReport.objects.filter(
-        user_id=user_id,
+        user_id=current_user.id,
         created_at__date__gte=start_date,
         created_at__date__lte=end_date
     ).order_by('created_at')

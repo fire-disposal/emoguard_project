@@ -182,11 +182,11 @@ Page({
   },
 
   /**
-   * 开始认知评估流程
+   * 开始认知评估流程 - 直接跳转到智能测评
    */
   startCognitiveFlow() {
     wx.navigateTo({
-      url: '/pages/assessment/flow/flow'
+      url: '/pages/assessment/smart/smart'
     });
   },
 
