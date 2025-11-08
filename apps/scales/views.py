@@ -3,12 +3,11 @@
 """
 from ninja import Router, Query
 from typing import List, Optional, Dict, Any
-from django.utils import timezone
 from apps.scales.assessment_core import SmartAssessmentService, SingleScaleService
-from apps.scales.models import ScaleConfig, ScaleResult
+from apps.scales.models import ScaleConfig
 from apps.scales.serializers import (
     ScaleConfigResponseSchema, ScaleResultCreateSchema, ScaleResultResponseSchema,
-    SmartAssessmentStartSchema, SmartAssessmentStartResponseSchema,
+    SmartAssessmentStartResponseSchema,
     SmartAssessmentAnswerSchema, SmartAssessmentAnswerResponseSchema,
     SmartAssessmentResultSchema
 )
@@ -142,7 +141,6 @@ def start_smart_assessment(request):
             'assessment_id': assessment['id'],
             'next_scale': assessment['next_scale'],
             'total_scales': assessment['total_scales'],
-            'strategy': assessment['strategy'],
             'message': '智能测评已开始'
         }
         
@@ -156,12 +154,13 @@ def get_smart_assessment_result(request, assessment_id: int):
     try:
         result = SmartAssessmentService.get_assessment_result(assessment_id)
         if result:
-            # 移除前端不需要的字段
+            # 构建响应数据
             filtered_result = {
                 'id': result['id'],
                 'user_id': result['user_id'],
                 'status': result['status'],
-                'strategy': result['strategy'],
+                'scale_responses': result['scale_responses'],
+                'scale_scores': result['scale_scores'],
                 'results': result['results'],
                 'final_result': result['final_result'],
                 'total_duration': result['total_duration']

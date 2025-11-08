@@ -129,7 +129,12 @@
 }
 
 .submit-mood-btn {
-  width: 100%;
+  width: 90%; /* 将宽度改为90% */
+  /* 新增：设置外边距为 auto，配合块级元素(display: flex 也会使其表现类似块级) 实现水平居中 */
+  margin-left: auto;
+  margin-right: auto; 
+  
+  /* 其他样式保持不变 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,7 +148,7 @@
   box-shadow: 0 6rpx 20rpx rgba(24, 144, 255, 0.3);
   transition: all 0.3s;
 }
-
+/* :active 样式不变 */
 .submit-mood-btn:active:not(.btn-disabled) {
   transform: scale(0.98);
 }

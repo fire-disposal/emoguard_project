@@ -59,38 +59,6 @@ class ResponseService:
         }
     
     @staticmethod
-    def build_assessment_group_response(group) -> Dict[str, Any]:
-        """
-        构建评估分组响应 - 增强版本，包含相关结果
-        
-        Args:
-            group: AssessmentResultGroup实例
-            
-        Returns:
-            评估分组响应数据字典
-        """
-        # 获取相关的量表结果
-        results = []
-        if hasattr(group, 'results') and group.results.exists():
-            for result in group.results.all().select_related('scale_config'):
-                results.append(ResponseService.build_scale_result_response(result))
-        
-        return {
-            'id': group.id,
-            'user_id': str(group.user_id),
-            'flow_type': group.flow_type,
-            'status': group.status,
-            'current_step': group.current_step or '',
-            'comprehensive_analysis': group.comprehensive_analysis or {},
-            'final_conclusion': group.final_conclusion or '',
-            'results': results,  # 添加相关结果
-            'started_at': group.started_at.isoformat(),
-            'completed_at': group.completed_at.isoformat() if group.completed_at else None,
-            'created_at': group.created_at.isoformat(),
-            'updated_at': group.updated_at.isoformat()
-        }
-    
-    @staticmethod
     def build_next_step_response(next_step_info: Dict[str, Any]) -> Dict[str, Any]:
         """
         构建下一步步骤响应

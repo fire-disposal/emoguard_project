@@ -1,6 +1,5 @@
 from ninja import Schema
-from typing import Optional, List, Dict, Union
-from datetime import datetime
+from typing import Optional, List, Dict
 
 class QuestionOptionSchema(Schema):
     text: str
@@ -39,11 +38,6 @@ class ScaleResultResponseSchema(Schema):
     completed_at: str
     status: str
     analysis: Dict
-    # 移除created_at和updated_at，前端不需要这些字段
-
-class SmartAssessmentStartSchema(Schema):
-    """开始智能测评"""
-    # 移除user_id字段，从JWT获取
 
 class SmartAssessmentStartResponseSchema(Schema):
     """智能测评开始响应"""
@@ -51,7 +45,6 @@ class SmartAssessmentStartResponseSchema(Schema):
     assessment_id: int
     next_scale: Optional[Dict]
     total_scales: int
-    strategy: str
     message: str
 
 class SmartAssessmentAnswerSchema(Schema):
@@ -74,8 +67,8 @@ class SmartAssessmentResultSchema(Schema):
     id: int
     user_id: str
     status: str
-    strategy: str
+    scale_responses: List[Dict]
+    scale_scores: List[Dict]
     results: List[Dict]
     final_result: Dict
     total_duration: int
-    # 移除started_at和completed_at，前端不需要这些字段

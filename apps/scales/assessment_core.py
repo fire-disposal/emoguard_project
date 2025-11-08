@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class SmartAssessmentService:
-    """智能测评服务 - 完全后端控制"""
+    """智能测评服务"""
     
     @staticmethod
     def start_assessment(user_id: str) -> Dict[str, Any]:
@@ -29,9 +29,10 @@ class SmartAssessmentService:
             # 创建测评记录
             assessment = SmartAssessmentRecord.objects.create(
                 user_id=user_id,
-                strategy='smart_selection',
                 status='in_progress',
-                current_scale_index=0
+                current_scale_index=0,
+                scale_responses=[],
+                scale_scores=[]
             )
             
             # 获取第一个量表
@@ -40,8 +41,7 @@ class SmartAssessmentService:
             return {
                 'id': assessment.id,
                 'next_scale': next_scale,
-                'total_scales': len(scale_configs),
-                'strategy': 'smart_selection'
+                'total_scales': len(scale_configs)
             }
             
         except User.DoesNotExist:
@@ -61,15 +61,87 @@ class SmartAssessmentService:
             
             # 验证测评归属
             if str(assessment.user_id) != user_id:
-                return {'success': False, 'error': '无权操作此测评'}
+                return {
+                    'success': False,
+                    'completed': False,
+                    'next_scale': None,
+                    'final_result': None,
+                    'message': '无权操作此测评',
+                    'error': '无权操作此测评'
+                }
             
             if assessment.status != 'in_progress':
-                return {'success': False, 'error': '测评已结束'}
+                return {
+                    'success': False,
+                    'completed': False,
+                    'next_scale': None,
+                    'final_result': None,
+                    'message': '测评已结束',
+                    'error': '测评已结束'
+                }
             
             # 验证量表配置是否存在且有效
             scale_config = ScaleConfig.objects.get(id=scale_config_id)
             if scale_config.status != 'active':
-                return {'success': False, 'error': '量表配置不可用'}
+                return {
+                    'success': False,
+                    'completed': False,
+                    'next_scale': None,
+                    'final_result': None,
+                    'message': '量表配置不可用',
+                    'error': '量表配置不可用'
+                }
+            
+            # 检查是否已经回答过这个量表
+            existing_response = assessment.get_scale_response(scale_config_id)
+            if existing_response:
+                return {
+                    'success': False,
+                    'completed': False,
+                    'next_scale': None,
+                    'final_result': None,
+                    'message': '该量表已经回答过',
+                    'error': '该量表已经回答过'
+                }
+            
+            # 创建量表结果并计算得分
+            from apps.scales.services.scale_result_service import ScaleResultService
+            from apps.scales.services.user_service import UserService
+            
+            # 获取用户资料用于计算
+            user_profile = UserService.get_user_profile(user_id)
+            
+            # 创建量表结果（关联到智能测评）
+            scale_result = ScaleResultService.create_scale_result(
+                user_id=user_id,
+                scale_config_id=scale_config_id,
+                selected_options=selected_options,
+                duration_ms=duration_ms,
+                started_at=started_at,
+                completed_at=completed_at,
+                user_profile=user_profile
+            )
+            
+            if not scale_result:
+                return {
+                    'success': False,
+                    'completed': False,
+                    'next_scale': None,
+                    'final_result': None,
+                    'message': '量表结果创建失败',
+                    'error': '量表结果创建失败'
+                }
+            
+            # 关联到智能测评记录
+            scale_result.smart_assessment = assessment
+            scale_result.save()
+            
+            # 将子量表数据添加到智能测评记录中（添加错误处理）
+            try:
+                assessment.add_scale_response(scale_config_id, selected_options, scale_result.analysis)
+            except Exception as e:
+                logger.warning(f"添加子量表数据到智能测评记录失败: {str(e)}，但量表结果已创建")
+                # 继续流程，不影响主要功能
             
             # 更新测评进度
             assessment.current_scale_index += 1
@@ -77,7 +149,7 @@ class SmartAssessmentService:
             
             # 获取用户的量表配置列表
             user = User.objects.get(id=assessment.user_id)
-            scale_configs = SmartAssessmentService._select_scales_for_user(user)
+            scale_configs = SmartAssessmentService._select_scales_for_user(user, assessment)
             
             # 检查是否完成
             if assessment.current_scale_index >= len(scale_configs):
@@ -90,26 +162,62 @@ class SmartAssessmentService:
                 return {
                     'success': True,
                     'completed': True,
+                    'next_scale': None,
                     'final_result': assessment.final_result,
                     'message': '测评已完成'
                 }
             else:
                 # 获取下一个量表
                 next_scale = SmartAssessmentService._get_next_scale(assessment, scale_configs)
+                # 若无下一个量表，直接完成测评
+                if not next_scale:
+                    assessment.status = 'completed'
+                    assessment.completed_at = timezone.now()
+                    assessment.final_result = SmartAssessmentService._generate_final_result(assessment)
+                    assessment.save()
+                    return {
+                        'success': True,
+                        'completed': True,
+                        'next_scale': None,
+                        'final_result': assessment.final_result,
+                        'message': '测评已完成'
+                    }
                 return {
                     'success': True,
                     'completed': False,
                     'next_scale': next_scale,
+                    'final_result': None,
                     'message': '继续下一个量表'
                 }
                 
         except SmartAssessmentRecord.DoesNotExist:
-            return {'success': False, 'error': '测评不存在'}
+            return {
+                'success': False,
+                'completed': False,
+                'next_scale': None,
+                'final_result': None,
+                'message': '测评不存在',
+                'error': '测评不存在'
+            }
         except ScaleConfig.DoesNotExist:
-            return {'success': False, 'error': '量表配置不存在'}
+            return {
+                'success': False,
+                'completed': False,
+                'next_scale': None,
+                'final_result': None,
+                'message': '量表配置不存在',
+                'error': '量表配置不存在'
+            }
         except Exception as e:
             logger.error(f"提交智能测评答案失败: {str(e)}")
-            return {'success': False, 'error': str(e)}
+            return {
+                'success': False,
+                'completed': False,
+                'next_scale': None,
+                'final_result': None,
+                'message': str(e),
+                'error': str(e)
+            }
     
     @staticmethod
     def get_assessment_result(assessment_id: int) -> Optional[Dict[str, Any]]:
@@ -138,9 +246,10 @@ class SmartAssessmentService:
                 'id': assessment.id,
                 'user_id': str(assessment.user_id),  # 将UUID转换为字符串
                 'status': assessment.status,
-                'strategy': assessment.strategy,
                 'started_at': assessment.started_at.isoformat(),
                 'completed_at': assessment.completed_at.isoformat() if assessment.completed_at else None,
+                'scale_responses': assessment.scale_responses,
+                'scale_scores': assessment.scale_scores,
                 'results': results_data,
                 'final_result': assessment.final_result or {},
                 'total_duration': assessment.get_total_duration()
@@ -153,42 +262,49 @@ class SmartAssessmentService:
             return None
     
     @staticmethod
-    def _select_scales_for_user(user: User) -> List[ScaleConfig]:
-        """为用户智能选择量表配置"""
-        # 获取所有激活的量表配置，按版本和创建时间排序
+    def _select_scales_for_user(user: User, assessment=None) -> List[ScaleConfig]:
+        """
+        为用户智能选择量表配置（支持分数动态判断）
+        - 第一步只推送 SCD
+        - SCD 完成后，根据分数决定是否推送 MMSE/MoCA
+        """
         all_configs = ScaleConfig.objects.filter(
             status='active'
         ).order_by('type', '-version', '-created_at')
-        
+
         # 按type分组，每个type只取最新版本
         selected_configs = []
         seen_types = set()
-        
         for config in all_configs:
             if config.type not in seen_types:
                 selected_configs.append(config)
                 seen_types.add(config.type)
-        
-        # 根据用户特征筛选量表
-        filtered_configs = []
-        
-        for config in selected_configs:
-            # 基础筛查量表 - 所有用户都做
-            if config.type in ['scd_q9']:
-                filtered_configs.append(config)
-            
-            # 深度评估量表 - 根据年龄决定
-            elif config.type in ['mmse', 'moca']:
-                if user.age and user.age >= 65:
-                    filtered_configs.append(config)
-            
-            # 其他量表 - 根据类型决定
-            elif config.type in ['gad7', 'phq9', 'sus', 'adl']:
-                filtered_configs.append(config)
-                # 可以根据用户历史或其他条件决定
-                filtered_configs.append(config)
-        
-        return filtered_configs
+
+        # 动态流程
+        if assessment is None or not assessment.scale_responses:
+            # 初始：只推送 SCD
+            return [c for c in selected_configs if c.type == 'SCD']
+
+        # 已有 SCD 响应，判断分数
+        scd_response = None
+        for resp in assessment.scale_responses:
+            sc_id = resp.get('scale_config_id')
+            sc_cfg = next((c for c in selected_configs if c.id == sc_id), None)
+            if sc_cfg and sc_cfg.type == 'SCD':
+                scd_response = resp
+                break
+
+        if scd_response and 'analysis' in scd_response:
+            scd_score = scd_response['analysis'].get('score', 0)
+            if scd_score > 5:
+                # SCD 异常，推送 MMSE、MoCA
+                return [c for c in selected_configs if c.type in ('MMSE', 'MoCA')]
+            else:
+                # SCD 正常，不再推送
+                return []
+
+        # 默认只推送 SCD
+        return [c for c in selected_configs if c.type == 'SCD']
     
     @staticmethod
     def _get_next_scale(assessment, scale_configs: List[ScaleConfig]) -> Optional[Dict[str, Any]]:
@@ -199,6 +315,7 @@ class SmartAssessmentService:
         config = scale_configs[assessment.current_scale_index]
         
         return {
+            'id': config.id,  # 新增，确保前端 scaleConfig.id 可用
             'config_id': config.id,
             'name': config.name,
             'description': config.description,
@@ -234,16 +351,6 @@ class SmartAssessmentService:
                 'level': level,
                 'is_abnormal': is_abnormal
             })
-            
-            if is_abnormal:
-                abnormal_count += 1
-            
-            total_score += score
-            
-            # 收集建议
-            recs = analysis.get('recommendations', [])
-            if recs and isinstance(recs, list):
-                recommendations.extend(recs)
             
             if is_abnormal:
                 abnormal_count += 1

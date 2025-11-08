@@ -102,14 +102,12 @@ Page({
     wx.showLoading({ title: '记录中...' });
 
     const now = new Date();
-    const recordDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const recordDate = now.toISOString();
 
     journalApi.createJournal({
       mood_score: moodConfig.score,
       mood_name: moodConfig.name,
-      mood_emoji: moodConfig.emoji,
-      text: this.data.moodReason.trim() || '',
-      record_date: recordDate
+      text: this.data.moodReason.trim() || ''
     })
     .then(() => {
       wx.showToast({

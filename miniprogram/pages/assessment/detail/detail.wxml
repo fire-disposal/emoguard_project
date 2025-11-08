@@ -7,10 +7,10 @@
   <view wx:elif="{{scaleConfig}}" class="assessment-content">
     
     <!-- 调试信息 -->
-    <view style="padding: 20rpx; background: #f0f0f0; font-size: 24rpx; color: #666; margin-bottom: 20rpx;">
+    <!-- <view style="padding: 20rpx; background: #f0f0f0; font-size: 24rpx; color: #666; margin-bottom: 20rpx;">
       <text>调试: 问题数={{questions.length}}, 当前索引={{currentQuestionIndex}}</text>
       <text wx:if="{{questions.length > 0}}">, 当前问题={{questions[currentQuestionIndex].question}}</text>
-    </view>
+    </view> -->
     
     <!-- 顶栏 - 问卷名称 -->
     <view class="header-bar">

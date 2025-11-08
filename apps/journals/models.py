@@ -13,6 +13,12 @@ class MoodJournal(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         default=5
     )
+    mood_name = models.CharField(
+        max_length=32,
+        verbose_name='情绪名称',
+        help_text='如开心、难过等',
+        default=''
+    )
     text = models.TextField(
         max_length=1000,
         blank=True,
@@ -20,7 +26,7 @@ class MoodJournal(models.Model):
         verbose_name='日记内容',
         help_text='用户自评内容，最多1000字'
     )
-    record_date = models.DateTimeField(verbose_name='记录日期')
+    record_date = models.DateTimeField(verbose_name='记录日期', auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
@@ -34,4 +40,4 @@ class MoodJournal(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user.display_name} - 分数{self.mood_score} - {self.record_date.strftime('%Y-%m-%d')}"
+        return f"{self.user.display_name} - {self.mood_name} - 分数{self.mood_score} - {self.record_date.strftime('%Y-%m-%d')}"

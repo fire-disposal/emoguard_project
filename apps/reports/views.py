@@ -132,7 +132,7 @@ def update_report(request, report_id: int, data: HealthReportUpdateSchema):
         report.professional_advice = data.professional_advice
     if data.trend_analysis is not None:
         report.trend_analysis = data.trend_analysis
-    if data.trend_data is not None:
+    if data.trend_data is not None: 
         report.trend_data = data.trend_data
     
     report.save()

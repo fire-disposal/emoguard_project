@@ -3,7 +3,7 @@
   <!-- 顶部欢迎区 -->
   <view class="welcome-section">
     <view class="welcome-time">
-      <text class="time-text">{{currentTime}}</text>
+      <text class="title-text">智情守护</text>
       <text class="date-text">{{currentDate}}</text>
     </view>
     <!-- <view class="welcome-message">

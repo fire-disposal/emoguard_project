@@ -181,16 +181,16 @@ class SmartAssessmentRecord(models.Model):
         ('abandoned', '已放弃'),
     )
     
-    STRATEGY_CHOICES = (
-        ('cognitive_screening', '认知筛查'),
-        ('cognitive_deep', '认知深度评估'),
-    )
-    
     id = models.AutoField(primary_key=True)
     user_id = models.UUIDField(verbose_name='用户ID', db_index=True)
-    strategy = models.CharField(max_length=32, choices=STRATEGY_CHOICES, verbose_name='测评策略')
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='in_progress', verbose_name='状态')
     current_scale_index = models.IntegerField(default=0, verbose_name='当前量表索引')
+    
+    # 子量表回答选项数组 - 存储每个子量表的用户回答选项
+    scale_responses = models.JSONField(default=list, blank=True, verbose_name='子量表回答选项')
+    
+    # 子量表得分与评估数组 - 存储每个子量表的计算后得分与评估
+    scale_scores = models.JSONField(default=list, blank=True, verbose_name='子量表得分与评估')
     
     # 最终结果
     final_result = models.JSONField(default=dict, blank=True, verbose_name='最终结果')
@@ -205,6 +205,129 @@ class SmartAssessmentRecord(models.Model):
         if self.completed_at:
             return int((self.completed_at - self.started_at).total_seconds() * 1000)
         return 0
+    
+    def add_scale_response(self, scale_config_id: int, selected_options: list, analysis: dict):
+        """添加子量表回答和得分评估"""
+        # 验证数据完整性
+        if not isinstance(selected_options, list):
+            raise ValueError("selected_options 必须是列表")
+        
+        if not isinstance(analysis, dict):
+            raise ValueError("analysis 必须是字典")
+        
+        # 使用当前时间而不是依赖updated_at
+        from django.utils import timezone
+        current_time = timezone.now().isoformat()
+        
+        # 添加回答选项（修正：带上 analysis 字段，便于流程判断）
+        self.scale_responses.append({
+            'scale_config_id': scale_config_id,
+            'selected_options': selected_options,
+            'created_at': current_time,
+            'analysis': analysis  # 新增，确保流程判断可用
+        })
+        
+        # 添加得分评估
+        self.scale_scores.append({
+            'scale_config_id': scale_config_id,
+            'score': analysis.get('score'),
+            'level': analysis.get('level'),
+            'is_abnormal': analysis.get('is_abnormal', False),
+            'recommendations': analysis.get('recommendations', []),
+            'scale_name': analysis.get('scale_name', ''),
+            'scale_code': analysis.get('scale_code', ''),
+            'created_at': current_time
+        })
+    
+    def get_scale_response(self, scale_config_id: int) -> dict:
+        """获取指定子量表的回答选项"""
+        for response in self.scale_responses:
+            if response.get('scale_config_id') == scale_config_id:
+                return response
+        return {}
+    
+    def get_scale_score(self, scale_config_id: int) -> dict:
+        """获取指定子量表的得分评估"""
+        for score in self.scale_scores:
+            if score.get('scale_config_id') == scale_config_id:
+                return score
+        return {}
+    
+    def validate_data_consistency(self):
+        """验证数据一致性（容错版本）"""
+        errors = []
+        
+        try:
+            # 确保数据是列表类型
+            if not isinstance(self.scale_responses, list):
+                self.scale_responses = []
+            if not isinstance(self.scale_scores, list):
+                self.scale_scores = []
+            
+            # 验证scale_responses和scale_scores数量一致性
+            if len(self.scale_responses) != len(self.scale_scores):
+                errors.append(f"回答选项数量({len(self.scale_responses)})与得分评估数量({len(self.scale_scores)})不一致")
+            
+            # 验证scale_config_id一致性
+            response_ids = set()
+            score_ids = set()
+            
+            try:
+                for resp in self.scale_responses:
+                    if isinstance(resp, dict) and 'scale_config_id' in resp:
+                        response_ids.add(resp.get('scale_config_id'))
+            except Exception:
+                pass  # 忽略格式错误
+            
+            try:
+                for score in self.scale_scores:
+                    if isinstance(score, dict) and 'scale_config_id' in score:
+                        score_ids.add(score.get('scale_config_id'))
+            except Exception:
+                pass  # 忽略格式错误
+            
+            if response_ids != score_ids:
+                missing_in_scores = response_ids - score_ids
+                missing_in_responses = score_ids - response_ids
+                if missing_in_scores:
+                    errors.append(f"以下量表ID有回答选项但无得分评估: {missing_in_scores}")
+                if missing_in_responses:
+                    errors.append(f"以下量表ID有得分评估但无回答选项: {missing_in_responses}")
+            
+            # 验证状态一致性
+            if self.status == 'completed':
+                if not self.completed_at:
+                    errors.append("已完成状态的测评缺少完成时间")
+                if not self.final_result:
+                    errors.append("已完成状态的测评缺少最终结果")
+                if len(self.scale_scores) == 0:
+                    errors.append("已完成状态的测评缺少量表得分数据")
+            
+            # 验证进度一致性
+            expected_progress = len(self.scale_responses)
+            if self.current_scale_index != expected_progress:
+                errors.append(f"当前进度索引({self.current_scale_index})与实际回答数量({expected_progress})不一致")
+                
+        except Exception as e:
+            errors.append(f"数据一致性验证过程中发生错误: {str(e)}")
+        
+        return errors
+    
+    def clean(self):
+        """模型验证（简化版本，避免阻塞正常流程）"""
+        super().clean()
+        
+        # 只在admin操作或特定情况下进行严格的数据一致性验证
+        # 正常保存时不进行严格检查，避免阻塞流程
+        if self.status == 'completed':
+            # 只检查关键字段是否存在
+            if not self.completed_at:
+                from django.core.exceptions import ValidationError
+                raise ValidationError("已完成状态的测评必须设置完成时间")
+            
+            if not self.final_result:
+                from django.core.exceptions import ValidationError
+                raise ValidationError("已完成状态的测评必须设置最终结果")
     
     def __str__(self):
         return f"智能测评-{self.id} 用户:{self.user_id} ({self.get_status_display()})"

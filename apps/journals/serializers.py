@@ -4,24 +4,18 @@ from typing import Optional
 class MoodJournalCreateSchema(Schema):
     mood_score: int
     mood_name: str
-    mood_emoji: str
     text: str
-    record_date: Optional[str] = None
-    # 移除user_id字段，从JWT获取
 
 class MoodJournalUpdateSchema(Schema):
     mood_score: Optional[int] = None
     mood_name: Optional[str] = None
-    mood_emoji: Optional[str] = None
     text: Optional[str] = None
-    record_date: Optional[str] = None
 
 class MoodJournalResponseSchema(Schema):
     id: int
     user_id: str
     mood_score: int
     mood_name: str
-    mood_emoji: str
     text: str
     record_date: str
     created_at: str
@@ -33,7 +27,6 @@ class MoodJournalListQuerySchema(Schema):
     mood_name: Optional[str] = None
     page: int = 1
     page_size: int = 10
-    # 移除user_id字段，从JWT获取
 
 class MoodStatisticsSchema(Schema):
     date: str

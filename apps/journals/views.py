@@ -48,7 +48,6 @@ def list_journals(request, filters: MoodJournalListQuerySchema = Query(...)):
             user_id=str(j.user_id),
             mood_score=j.mood_score,
             mood_name=j.mood_name,
-            mood_emoji=j.mood_emoji,
             text=j.text,
             record_date=j.record_date.isoformat(),
             created_at=j.created_at.isoformat(),
@@ -68,7 +67,6 @@ def get_journal(request, journal_id: int):
         user_id=str(journal.user_id),
         mood_score=journal.mood_score,
         mood_name=journal.mood_name,
-        mood_emoji=journal.mood_emoji,
         text=journal.text,
         record_date=journal.record_date.isoformat(),
         created_at=journal.created_at.isoformat(),
@@ -82,18 +80,13 @@ def create_journal(request, data: MoodJournalCreateSchema):
     """
     current_user = request.auth
     
-    # 如果没有指定记录日期，使用当前时间
-    record_date = data.record_date if data.record_date else timezone.now()
-    if isinstance(record_date, str):
-        record_date = datetime.fromisoformat(record_date)
-    
+    # 记录日期由模型自动生成，无需处理
+
     journal = MoodJournal.objects.create(
         user_id=current_user.id,
         mood_score=data.mood_score,
         mood_name=data.mood_name,
-        mood_emoji=data.mood_emoji,
-        text=data.text,
-        record_date=record_date
+        text=data.text
     )
     
     return MoodJournalResponseSchema(
@@ -101,7 +94,6 @@ def create_journal(request, data: MoodJournalCreateSchema):
         user_id=str(journal.user_id),
         mood_score=journal.mood_score,
         mood_name=journal.mood_name,
-        mood_emoji=journal.mood_emoji,
         text=journal.text,
         record_date=journal.record_date.isoformat(),
         created_at=journal.created_at.isoformat(),
@@ -125,12 +117,8 @@ def update_journal(request, journal_id: int, data: MoodJournalUpdateSchema):
         journal.mood_score = data.mood_score
     if data.mood_name is not None:
         journal.mood_name = data.mood_name
-    if data.mood_emoji is not None:
-        journal.mood_emoji = data.mood_emoji
     if data.text is not None:
         journal.text = data.text
-    if data.record_date is not None:
-        journal.record_date = datetime.fromisoformat(data.record_date)
     
     journal.save()
     
@@ -139,7 +127,6 @@ def update_journal(request, journal_id: int, data: MoodJournalUpdateSchema):
         user_id=str(journal.user_id),
         mood_score=journal.mood_score,
         mood_name=journal.mood_name,
-        mood_emoji=journal.mood_emoji,
         text=journal.text,
         record_date=journal.record_date.isoformat(),
         created_at=journal.created_at.isoformat(),

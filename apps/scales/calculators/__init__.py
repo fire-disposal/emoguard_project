@@ -40,10 +40,11 @@ def get_calculator(scale_config, user_profile=None):
         计分器实例
     """
     calculator_map = {
-        'scd_q9': SCDCalculator,
+        'scd-q9': SCDCalculator,
         'mmse': MMSECalculator,
         'moca': MoCACalculator,
-        'phq9': PHQ9Calculator,
+        'phq-9': PHQ9Calculator,
+        'gad-7': GAD7Calculator,
         'gad7': GAD7Calculator,
         'adl': ADLCalculator,
         'sus': SUSCalculator,

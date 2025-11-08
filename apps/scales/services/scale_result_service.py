@@ -1,19 +1,95 @@
 """
 量表结果服务 - 处理量表结果相关业务逻辑
 """
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from django.shortcuts import get_object_or_404
 from apps.scales.models import ScaleResult, ScaleConfig
-from apps.scales.score_calculator import calculate_score_by_instance
 from apps.scales.services.user_service import UserService
+from apps.scales.calculators import get_calculator
 import logging
 
 logger = logging.getLogger(__name__)
 
-
 class ScaleResultService:
     """量表结果服务类 - 处理量表结果的创建和计算"""
+
+    @staticmethod
+    def _validate_assessment(questions: List[Dict], selected_options: List[int], started_at, completed_at) -> Dict[str, Any]:
+        """
+        验证评估有效性
+        Args:
+            questions: 题目列表
+            selected_options: 用户选择
+            started_at: 开始时间
+            completed_at: 完成时间
+        Returns:
+            验证结果
+        """
+        warnings = []
+        is_valid = True
+
+        # 检查答题完整性
+        if len(selected_options) != len(questions):
+            warnings.append(f"答题不完整：应答{len(questions)}题，实际答{len(selected_options)}题")
+            is_valid = False
+
+        # 检查答题时长
+        duration = (completed_at - started_at).total_seconds()
+        min_duration = len(questions) * 2  # 每题至少2秒
+
+        if duration < min_duration:
+            warnings.append(f"答题时间过短：{duration:.0f}秒，可能影响结果准确性")
+
+        # 检查选项有效性
+        for idx, selected_idx in enumerate(selected_options):
+            if idx < len(questions):
+                options_count = len(questions[idx].get("options", []))
+                if selected_idx >= options_count or selected_idx < 0:
+                    warnings.append(f"题目{idx+1}的选项索引{selected_idx}无效")
+                    is_valid = False
+
+        return {
+            "is_valid": is_valid,
+            "warnings": warnings
+        }
+
+    @staticmethod
+    def _calculate_score_by_instance(scale_config, scale_result, user_profile: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        根据量表配置和结果计算分数（模块化版本）
+        Args:
+            scale_config: ScaleConfig实例
+            scale_result: ScaleResult实例
+            user_profile: 用户资料字典（可选）
+        Returns:
+            分析结果JSON
+        """
+        selected_options = scale_result.selected_options
+
+        # 验证有效性
+        validation = ScaleResultService._validate_assessment(
+            scale_config.questions,
+            selected_options,
+            scale_result.started_at,
+            scale_result.completed_at
+        )
+
+        # 使用模块化计分器
+        calculator = get_calculator(scale_config, user_profile)
+        analysis = calculator.calculate(selected_options)
+
+        # 添加验证结果和元数据
+        analysis["validation"] = validation
+        analysis["scale_code"] = scale_config.code
+        analysis["scale_name"] = scale_config.name
+
+        logger.info(f"量表{scale_config.code}评分完成: 总分{analysis['score']}/{analysis.get('max_score', 'N/A')}, 等级{analysis['level']}")
+
+        return analysis
+
+
+# 其余内容保持不变
     
     @staticmethod
     def create_scale_result(
@@ -70,9 +146,9 @@ class ScaleResultService:
             )
             
             # 计算分数和分析
-            analysis = calculate_score_by_instance(
-                scale_config, 
-                temp_result, 
+            analysis = ScaleResultService._calculate_score_by_instance(
+                scale_config,
+                temp_result,
                 user_profile
             )
             
@@ -97,91 +173,6 @@ class ScaleResultService:
             
         except Exception as e:
             logger.error(f"创建量表结果失败: {str(e)}")
-            return None
-    
-    @staticmethod
-    def create_grouped_scale_result(
-        group,
-        scale_config_id: int,
-        selected_options: list,
-        duration_ms: int,
-        started_at: str,
-        completed_at: str,
-        user_profile: Optional[Dict] = None
-    ) -> Optional[ScaleResult]:
-        """
-        创建分组量表结果
-        
-        Args:
-            group: 评估结果分组
-            scale_config_id: 量表配置ID
-            selected_options: 选择的选项
-            duration_ms: 用时（毫秒）
-            started_at: 开始时间
-            completed_at: 完成时间
-            user_profile: 用户资料
-            
-        Returns:
-            量表结果实例或None
-        """
-        try:
-            # 获取量表配置
-            scale_config = get_object_or_404(ScaleConfig, id=scale_config_id)
-            
-            # 如果未提供用户资料，尝试获取
-            if user_profile is None:
-                user_profile = UserService.get_user_profile(group.user_id)
-            
-            # 标准化时间格式
-            started_dt = datetime.fromisoformat(started_at)
-            completed_dt = datetime.fromisoformat(completed_at)
-            
-            # 验证和修正时长
-            calculated_duration = int((completed_dt - started_dt).total_seconds() * 1000)
-            if calculated_duration != duration_ms:
-                logger.info(f"修正答题时长: {duration_ms}ms -> {calculated_duration}ms")
-                duration_ms = calculated_duration
-            
-            # 创建临时对象用于计算
-            temp_result = ScaleResult(
-                user_id=group.user_id,
-                scale_config=scale_config,
-                selected_options=selected_options,
-                duration_ms=duration_ms,
-                started_at=started_dt,
-                completed_at=completed_dt,
-                status='completed'
-            )
-            
-            # 计算分数和分析
-            analysis = calculate_score_by_instance(
-                scale_config, 
-                temp_result, 
-                user_profile
-            )
-            
-            # 构建结论摘要
-            conclusion = ScaleResultService._build_conclusion(analysis)
-            
-            # 创建量表结果并关联到分组
-            result = ScaleResult.objects.create(
-                user_id=group.user_id,
-                scale_config=scale_config,
-                result_group=group,
-                selected_options=selected_options,
-                conclusion=conclusion,
-                duration_ms=duration_ms,
-                started_at=started_dt,
-                completed_at=completed_dt,
-                status='completed',
-                analysis=analysis
-            )
-            
-            logger.info(f"分组量表结果创建成功: 分组{group.id}, 量表{scale_config.code}, 分数{analysis.get('score', 'N/A')}")
-            return result
-            
-        except Exception as e:
-            logger.error(f"创建分组量表结果失败: {str(e)}")
             return None
     
     @staticmethod

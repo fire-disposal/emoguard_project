@@ -36,8 +36,7 @@ Page({
       // 获取测评结果
       const result = await scaleApi.getSmartAssessmentResult(this.data.assessmentId);
       
-      if (!result) {
-        throw new Error('测评结果不存在');
+      if (!result) {throw new Error('测评结果不存在');
       }
       
       // 验证用户权限
@@ -57,7 +56,7 @@ Page({
           success: (res) => {
             if (res.confirm) {
               wx.redirectTo({
-                url: `/pages/assessment/smart/smart?assessmentId=${this.data.assessmentId}`
+                url: `/pages/assessment/smart/smart`
               });
             } else {
               wx.navigateBack();
@@ -89,6 +88,29 @@ Page({
         url: `/pages/assessment/result/result?id=${resultId}`
       });
     }
+  },
+  
+  // 格式化时间显示
+  formatDateTime(dateString) {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  },
+  
+  // 获取量表名称
+  getScaleName(scaleScore) {
+    return scaleScore.scale_name || '未知量表';
   },
 
   // 重新测评
@@ -133,8 +155,14 @@ Page({
       };
     }
     
+    // 格式化分享标题
+    const startedAt = this.data.assessmentResult.started_at;
+    const finalResult = this.data.assessmentResult.final_result || {};
+    const riskLevel = finalResult.risk_level || '未知';
+    const conclusion = finalResult.conclusion || '测评完成';
+    
     return {
-      title: `智能测评报告 - ${this.data.assessmentResult.started_at}`,
+      title: `智能测评报告 - ${riskLevel} - ${conclusion}`,
       path: `/pages/assessment/smart-result/smart-result?assessmentId=${this.data.assessmentId}`,
       imageUrl: '/images/share-report.jpg'
     };

@@ -10,8 +10,7 @@ Page({
     currentQuestionIndex: 0,
     startTime: 0,
     loading: true,
-    mode: 'single', // 'single', 'flow', 'smart'
-    groupId: null,
+    mode: 'single', // 'single', 'smart'
     assessmentId: null
   },
 
@@ -26,7 +25,6 @@ Page({
 
     this.setData({
       mode: mode || 'single',
-      groupId: groupId ? parseInt(groupId) : null,
       assessmentId: assessmentId ? parseInt(assessmentId) : null
     });
     
@@ -46,9 +44,7 @@ Page({
       // 确保问题数据存在且为数组
       const questions = res.questions || [];
       const selectedOptions = new Array(questions.length).fill(-1);
-      
-      console.log('处理后的问题数量:', questions.length);
-      console.log('第一个问题:', questions[0]);
+
       
       this.setData({
         scaleConfig: res,
@@ -115,6 +111,11 @@ Page({
       return;
     }
 
+    if (!this.data.scaleConfig || !this.data.scaleConfig.id) {
+      wx.showToast({ title: '量表ID异常', icon: 'none' });
+      return;
+    }
+
     const userInfo = auth.getUserInfo();
     if (!userInfo) {
       wx.showToast({ title: '请先登录', icon: 'none' });
@@ -153,35 +154,24 @@ Page({
             });
           } else if (result.next_scale) {
             // 还有下一个量表，继续答题
+            // 兼容后端返回 id/config_id 字段
+            const nextScaleId = result.next_scale.id || result.next_scale.config_id;
             this.setData({
               currentQuestionIndex: 0,
               selectedOptions: new Array(result.next_scale.questions.length).fill(-1),
               startTime: Date.now(),
-              scaleConfig: result.next_scale,
+              scaleConfig: { ...result.next_scale, id: nextScaleId },
               questions: result.next_scale.questions
+            }, () => {
+              // 回调中校验新量表ID，确保健壮
+              if (!this.data.scaleConfig || !this.data.scaleConfig.id) {
+                wx.showToast({ title: '量表ID异常', icon: 'none' });
+              }
+              // 打印页面数据设置完成
+              console.log('页面数据设置完成，当前问题索引:', this.data.currentQuestionIndex);
             });
             wx.showToast({ title: '继续下一个量表', icon: 'success' });
           }
-        } else {
-          throw new Error(result.error || '提交失败');
-        }
-      } else if (this.data.mode === 'flow' && this.data.groupId) {
-        // 流程模式（兼容旧版）
-        result = await scaleApi.submitFlowScaleResult(
-          this.data.groupId,
-          this.data.scaleConfig.id,
-          data
-        );
-        
-        wx.hideLoading();
-        
-        if (result.success) {
-          // 返回流程页面
-          wx.navigateBack({
-            success: () => {
-              wx.showToast({ title: '提交成功', icon: 'success' });
-            }
-          });
         } else {
           throw new Error(result.error || '提交失败');
         }
