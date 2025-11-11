@@ -17,19 +17,19 @@ class Command(BaseCommand):
         parser.add_argument(
             '--username',
             type=str,
-            default=os.environ.get('DEFAULT_ADMIN_USERNAME', 'admin'),
+            default=os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin'),
             help='管理员用户名 (默认: admin)'
         )
         parser.add_argument(
             '--email',
             type=str,
-            default=os.environ.get('DEFAULT_ADMIN_EMAIL', 'admin@emoguard.com'),
+            default=os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@emoguard.com'),
             help='管理员邮箱 (默认: admin@emoguard.com)'
         )
         parser.add_argument(
             '--password',
             type=str,
-            default=os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123456'),
+            default=os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123456'),
             help='管理员密码 (默认: admin123456)'
         )
         parser.add_argument(

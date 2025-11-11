@@ -82,6 +82,9 @@ jobs:
           -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
           -e WECHAT_MINI_PROGRAM_APP_ID="${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}" \
           -e WECHAT_MINI_PROGRAM_APP_SECRET="${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}" \
+          -e DJANGO_SUPERUSER_USERNAME="${{ secrets.DJANGO_SUPERUSER_USERNAME }}" \
+          -e DJANGO_SUPERUSER_EMAIL="${{ secrets.DJANGO_SUPERUSER_EMAIL }}" \
+          -e DJANGO_SUPERUSER_PASSWORD="${{ secrets.DJANGO_SUPERUSER_PASSWORD }}" \
           -v /srv/emoguard/media:/app/media \
           -v /srv/emoguard/logs:/app/logs \
           -v /srv/emoguard/staticfiles:/app/staticfiles \
