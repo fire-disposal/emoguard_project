@@ -17,8 +17,9 @@
     "pages/reports/list/list",
     "pages/reports/detail/detail",
     "pages/profile/index/index",
-    "pages/profile/complete/complete"
-
+    "pages/profile/complete/complete",
+    "pages/feedback/feedback",
+    "pages/profile/userinfo/userinfo"
   ],
   "window": {
     "navigationBarTitleText": "情绪守护",

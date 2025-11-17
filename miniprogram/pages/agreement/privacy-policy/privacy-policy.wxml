@@ -1,92 +1,152 @@
 <view class="agreement-page">
   <scroll-view scroll-y="true" class="agreement-content">
     <view class="agreement-section">
-      <text class="section-title">一、政策概述</text>
+      <text class="section-title">智情守护隐私政策</text>
+      <text class="section-content">更新时间：2025年11月17日</text>
+    </view>
+
+    <view class="agreement-section">
       <text class="section-content">
-        智情守护（以下简称"我们"）深知个人信息对您的重要性，并会尽全力保护您的个人信息安全可靠。我们致力于维持您对我们的信任，恪守以下原则，保护您的个人信息：权责一致原则、目的明确原则、选择同意原则、最少够用原则、确保安全原则、主体参与原则、公开透明原则等。
+        欢迎使用“智情守护”小程序（以下简称“本产品”）。我们深知个人信息对您的重要性，承诺以安全、可靠的方式保护您的个人信息。本隐私政策将帮助您了解我们如何收集、使用、存储、共享和保护您的个人信息及您的相关权利。
+      </text>
+      <text class="section-content">
+        请在使用本产品前，仔细阅读并充分理解本政策的全部内容。本政策适用于您使用“智情守护”小程序以及我们提供的其他相关功能与服务。
       </text>
     </view>
 
     <view class="agreement-section">
-      <text class="section-title">二、信息收集</text>
+      <text class="section-title">一、我们如何收集和使用您的个人信息</text>
       <text class="section-content">
-        为了向您提供更好的服务，我们可能会收集以下信息：\n\n
-        1. 基本信息：包括您的微信昵称、头像、性别、地区等公开信息。\n
-        2. 健康信息：包括您主动填写的认知评估结果、情绪记录、睡眠情况等健康相关数据。\n
-        3. 使用信息：包括您使用本小程序的时间、频率、功能偏好等使用行为数据。\n
-        4. 设备信息：包括您的设备型号、操作系统版本、微信版本等技术信息。
+        我们仅会出于本政策所述的以下目的，收集和使用您的个人信息：
+      </text>
+      <text class="section-subtitle">1.1 注册与登录</text>
+      <text class="section-content">
+        为创建您的使用账号，我们可能会收集以下信息：手机号（用于账号注册、登录与身份验证）、验证码信息。
+      </text>
+      <text class="section-subtitle">1.2 个人档案信息</text>
+      <text class="section-content">
+        为了为您生成个性化健康报告与评估，我们可能会收集姓名、性别、年龄、学历、职业、所在城市/省份及其他您主动填写的个人资料。您可在个人档案中查看和修改上述信息。
+      </text>
+      <text class="section-subtitle">1.3 情绪与健康相关信息（敏感个人信息）</text>
+      <text class="section-content">
+        为实现情绪监测、认知测评及健康分析功能，我们需收集您主动提交或测评产生的每日情绪测评结果、心情日志记录（文字/表情）、心情历史记录、认知测评量表答题数据、自动生成的健康报告。<text style="font-weight:bold;">这些信息属于敏感个人信息。您可自主选择是否进行相关测评或填写内容。</text>
+      </text>
+      <text class="section-subtitle">1.4 系统服务与安全保障</text>
+      <text class="section-content">
+        为确保系统安全运行，我们可能会收集日志信息（如设备型号、访问时间、操作记录、IP地址）、系统崩溃日志。我们不会将这些信息用于识别您个人。
+      </text>
+      <text class="section-subtitle">1.5 消息推送功能</text>
+      <text class="section-content">
+        为了向您发送测评提醒、周报推送或系统公告，我们会使用设备通知权限、您的账号关联信息。
+      </text>
+      <text class="section-subtitle">1.6 客户服务与意见反馈</text>
+      <text class="section-content">
+        当您主动向我们提交反馈、咨询、投诉时，我们可能会收集您的联系方式、您提交的文字描述、截图或其他材料。
       </text>
     </view>
 
     <view class="agreement-section">
-      <text class="section-title">三、信息使用</text>
+      <text class="section-title">二、我们如何使用 Cookies 或同类技术</text>
       <text class="section-content">
-        我们收集您的个人信息主要用于以下目的：\n\n
-        1. 提供和改进我们的服务，包括认知评估、情绪记录、健康建议等核心功能。\n
-        2. 为您提供个性化的健康建议和服务推荐。\n
-        3. 进行数据分析和研究，以改善我们的产品和服务质量。\n
-        4. 与您进行沟通，包括发送重要通知、服务更新等信息。\n
-        5. 遵守适用的法律法规和监管要求。
+        为提升您的使用体验，我们可能使用 Cookies 或类似技术，用于记住登录状态、统计访问情况、帮助分析系统性能。这些技术不会用于识别您个人身份，您可在设备设置中关闭，但可能影响部分功能使用。
       </text>
     </view>
 
     <view class="agreement-section">
-      <text class="section-title">四、信息保护</text>
+      <text class="section-title">三、我们如何共享、转移、公开披露您的个人信息</text>
       <text class="section-content">
-        1. 我们采用符合业界标准的安全防护措施保护您的个人信息，包括数据加密、访问控制、安全审计等。\n
-        2. 我们只允许有必要知晓这些信息的员工访问您的个人信息，并对此进行严格记录。\n
-        3. 我们不会在未经您明确同意的情况下，向任何第三方披露您的个人信息，但法律法规另有规定或司法机关、行政机关依法要求的情况除外。\n
-        4. 我们会采取一切合理可行的措施，确保无关的个人信息不被收集。
+        我们不会向任何无关第三方共享您的个人信息，除以下情况外：
+      </text>
+      <text class="section-subtitle">3.1 共享（仅限必要功能）</text>
+      <text class="section-content">
+        在您的授权同意下，我们可能与云存储服务提供方、安全风控服务商、短信/消息推送平台等合作方共享必要数据。我们会确保合作方承担相应的保密义务。
+      </text>
+      <text class="section-subtitle">3.2 转移</text>
+      <text class="section-content">
+        如发生收购、兼并、资产转移等情况，我们会要求接收方继续受本政策约束，否则将重新征得您的同意。
+      </text>
+      <text class="section-subtitle">3.3 公开披露</text>
+      <text class="section-content">
+        除非取得您的明确同意，我们不会公开披露您的个人信息。
       </text>
     </view>
 
     <view class="agreement-section">
-      <text class="section-title">五、信息存储</text>
+      <text class="section-title">四、依法免除征得授权同意的情形</text>
       <text class="section-content">
-        1. 您的个人信息将存储在中华人民共和国境内。\n
-        2. 我们只会在达成本政策所述目的所需的期限内保留您的个人信息，除非需要延长保留期或受到法律的允许。\n
-        3. 在超出保留期间后，我们会根据适用法律的要求删除您的个人信息，或进行匿名化处理。
+        以下情形中，我们处理个人信息无需事先征得您的同意：
+        1. 与国家安全、国防安全有关的
+        2. 与公共安全、公共卫生、重大公共利益有关的
+        3. 与刑事侦查、起诉、审判和执行判决有关的
+        4. 为保护您或他人生命、财产等重大合法权益但难以取得本人同意的
+        5. 您自行向社会公众公开的信息
+        6. 从合法公开渠道收集的信息
+        7. 为履行法定职责、义务或响应监管要求所必需的
       </text>
     </view>
 
     <view class="agreement-section">
-      <text class="section-title">六、您的权利</text>
+      <text class="section-title">五、您如何管理您的个人信息</text>
+      <text class="section-subtitle">5.1 查阅、更正与补充</text>
       <text class="section-content">
-        按照中国相关的法律、法规、标准，我们保障您对自己的个人信息行使以下权利：\n\n
-        1. 访问权：您有权访问您的个人信息，法律法规规定的例外情况除外。\n
-        2. 更正权：如您发现我们处理的关于您的个人信息有错误，您有权要求我们作出更正。\n
-        3. 删除权：在符合法律法规规定的情况下，您有权要求我们删除您的个人信息。\n
-        4. 撤销同意权：基于您的同意而进行的个人信息处理活动，您有权撤回同意。\n
-        5. 投诉权：您有权对个人信息处理活动进行投诉或举报。
+        您可在小程序的个人档案页面查看、修改您的个人资料。如需协助，可通过邮箱：2023112026049@stu.hznu.edu.cn 联系我们。
+      </text>
+      <text class="section-subtitle">5.2 复制您的个人信息</text>
+      <text class="section-content">
+        您可通过客服邮箱提出复制数据的申请，我们将在合理期限内处理。
+      </text>
+      <text class="section-subtitle">5.3 删除您的个人信息</text>
+      <text class="section-content">
+        在以下情形中，您可申请删除：我们处理信息违反法律法规、未征得您明确同意却收集信息、处理方式严重违约。情绪测评与认知测评结果为研究数据，不支持用户自行修改或删除，但可提出注销账号申请，由我们按法律要求处理。
+      </text>
+      <text class="section-subtitle">5.4 撤回授权</text>
+      <text class="section-content">
+        您可通过系统设置关闭部分权限，如通知权限。撤回授权不会影响此前基于授权的处理行为。
+      </text>
+      <text class="section-subtitle">5.5 注销账号</text>
+      <text class="section-content">
+        您可通过客服邮箱联系我们。注销后我们将删除或匿名化您的个人信息（法律另有规定除外）。
+      </text>
+      <text class="section-subtitle">5.6 身份验证</text>
+      <text class="section-content">
+        基于安全原则，我们可能要求您提供身份验证材料以处理上述请求。
+      </text>
+    </view>
+
+    <view class="agreement-section">
+      <text class="section-title">六、我们如何保护和保存您的个人信息</text>
+      <text class="section-content">
+        我们采用多重安全措施保护信息，包括但不限于：数据加密存储、访问控制机制、安全审计、员工隐私培训。我们仅会在实现功能所需时间内保存您的数据。时间届满后将删除或匿名化。尽管我们已采取严格措施，仍无法完全避免安全风险，请妥善保管您的账号和密码。
+      </text>
+      <text class="section-content">
+        若不幸发生信息泄露等事件，我们将按照法律要求及时通知您，说明事件影响、措施与建议，并按监管要求上报事件处理情况。
+      </text>
+      <text class="section-content">
+        服务停止运营时，我们将停止继续收集您的信息，通知您停止运营，并删除或匿名化处理所持有信息。
+      </text>
+      <text class="section-content">
+        数据存储在中国境内，如需跨境传输，我们将单独征求您的授权。
       </text>
     </view>
 
     <view class="agreement-section">
       <text class="section-title">七、未成年人保护</text>
       <text class="section-content">
-        我们非常重视对未成年人个人信息的保护。若您是18周岁以下的未成年人，在使用我们的服务前，应事先取得您的家长或法定监护人的同意。
+        本产品主要面向成年人。如您为未成年人，请在监护人同意后使用。若监护人发现我们未取得同意即收集未成年人信息，可通过邮箱联系我们，我们将在核实后删除相关信息。
       </text>
     </view>
 
     <view class="agreement-section">
-      <text class="section-title">八、政策更新</text>
+      <text class="section-title">八、本政策的更新</text>
       <text class="section-content">
-        我们的隐私政策可能变更。未经您明确同意，我们不会削减您按照本隐私政策所应享有的权利。我们会在本页面上发布对本政策所做的任何变更，对于重大变更，我们还会提供更为显著的通知。
+        我们可能适时更新本政策，并以小程序内弹窗、通知或邮件等方式说明更新内容。涉及重大变更时，我们将在获得您的明确同意后继续提供服务。
       </text>
     </view>
 
     <view class="agreement-section">
-      <text class="section-title">九、联系我们</text>
+      <text class="section-title">九、如何联系我们</text>
       <text class="section-content">
-        如果您对本隐私政策有任何疑问、意见或建议，您可以通过小程序内的反馈功能与我们联系，我们将尽快回复您的请求。\n\n
-        一般情况下，我们将在收到您的请求后15个工作日内回复。
-      </text>
-    </view>
-
-    <view class="agreement-section">
-      <text class="section-content footer-text">
-        本隐私政策最终解释权归智情守护所有。\n
-        最后更新时间：2025年1月
+        如您对隐私政策有任何问题、建议或投诉，请通过邮箱：2023112026049@stu.hznu.edu.cn 联系我们，我们将在 15 日内回复。
       </text>
     </view>
   </scroll-view>

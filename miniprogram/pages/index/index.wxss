@@ -35,19 +35,6 @@
   opacity: 0.9;
 }
 
-.welcome-message .greeting {
-  display: block;
-  font-size: 36rpx;
-  font-weight: 700;
-  margin-bottom: 12rpx;
-}
-
-.welcome-message .subtitle {
-  display: block;
-  font-size: 26rpx;
-  opacity: 0.85;
-}
-
 /* 情绪测试入口 - 和谐统一设计 */
 .emotion-test-day {
   background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 50%, #ee5a52 100%);
@@ -340,7 +327,7 @@
   color: #333;
   margin-bottom: 20rpx;
   padding-left: 12rpx;
-  border-left: 6rpx solid #1890ff;
+  border-left: 6rpx solid #0084ff;
 }
 
 .feature-card {

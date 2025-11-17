@@ -8,38 +8,41 @@
     <!-- 真实姓名 -->
     <view class="form-item">
       <text class="label required">真实姓名</text>
-      <input 
-        class="input" 
-        placeholder="请输入您的真实姓名" 
+      <input
+        class="input"
+        placeholder="请输入您的真实姓名"
         value="{{formData.real_name}}"
         bindinput="onInputChange"
         data-field="real_name"
         maxlength="50"
+        disabled="{{readonly}}"
       />
     </view>
 
     <!-- 年龄 -->
     <view class="form-item">
       <text class="label required">年龄</text>
-      <input 
-        class="input" 
+      <input
+        class="input"
         type="number"
-        placeholder="请输入您的年龄" 
+        placeholder="请输入您的年龄"
         value="{{formData.age}}"
         bindinput="onInputChange"
         data-field="age"
         maxlength="3"
+        disabled="{{readonly}}"
       />
     </view>
 
     <!-- 性别 -->
     <view class="form-item">
       <text class="label required">性别</text>
-      <picker 
-        mode="selector" 
+      <picker
+        mode="selector"
         range="{{genderOptions}}"
         value="{{genderIndex}}"
         bindchange="onGenderChange"
+        disabled="{{readonly}}"
       >
         <view class="picker {{formData.gender ? '' : 'placeholder'}}">
           {{formData.gender || '请选择性别'}}
@@ -51,11 +54,12 @@
     <!-- 学历 -->
     <view class="form-item">
       <text class="label required">学历</text>
-      <picker 
-        mode="selector" 
+      <picker
+        mode="selector"
         range="{{educationOptions}}"
         value="{{educationIndex}}"
         bindchange="onEducationChange"
+        disabled="{{readonly}}"
       >
         <view class="picker {{formData.education ? '' : 'placeholder'}}">
           {{formData.education || '请选择学历'}}
@@ -71,6 +75,7 @@
         mode="region"
         value="{{region}}"
         bindchange="onRegionChange"
+        disabled="{{readonly}}"
       >
         <view class="picker {{formData.region ? '' : 'placeholder'}}">
           {{formData.region || '请选择所在地区'}}
@@ -82,25 +87,26 @@
     <!-- 手机号 -->
     <view class="form-item">
       <text class="label required">手机号</text>
-      <input 
-        class="input" 
+      <input
+        class="input"
         type="number"
-        placeholder="请输入您的手机号" 
+        placeholder="请输入您的手机号"
         value="{{formData.phone}}"
         bindinput="onInputChange"
         data-field="phone"
         maxlength="11"
+        disabled="{{readonly}}"
       />
     </view>
   </form>
 
   <view class="footer">
-    <button 
-      class="submit-btn {{isFormValid ? '' : 'disabled'}}" 
+    <button
+      class="submit-btn {{isFormValid && !readonly ? '' : 'disabled'}}"
       bindtap="submitForm"
-      disabled="{{!isFormValid || submitting}}"
+      disabled="{{!isFormValid || submitting || readonly}}"
     >
-      {{submitting ? '提交中...' : '提交信息'}}
+      {{readonly ? '仅查看' : (submitting ? '提交中...' : '提交信息')}}
     </button>
   </view>
 </view>

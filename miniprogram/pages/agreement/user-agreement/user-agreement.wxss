@@ -1,4 +1,4 @@
-/* 隐私政策页面样式 */
+/* 用户协议页面样式 */
 .agreement-page {
   min-height: 100vh;
   background-color: #f8f8f8;
@@ -43,6 +43,16 @@
   line-height: 1.4;
 }
 
+.section-subtitle {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 16rpx;
+  margin-top: 24rpx;
+  line-height: 1.4;
+}
+
 .section-content {
   display: block;
   font-size: 26rpx;
@@ -52,6 +62,11 @@
   white-space: pre-line;
   word-wrap: break-word;
   word-break: break-all;
+  margin-bottom: 12rpx;
+}
+
+.section-content:last-child {
+  margin-bottom: 0;
 }
 
 .footer-text {

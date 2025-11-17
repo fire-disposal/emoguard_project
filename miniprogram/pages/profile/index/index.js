@@ -5,8 +5,6 @@ const auth = require('../../../utils/auth');
 Page({
   data: {
     userInfo: null,
-    editing: false,
-    formData: {},
     loading: true
   },
 
@@ -15,114 +13,80 @@ Page({
       auth.navigateToLogin();
       return;
     }
-    // 刷新用户信息
-    this.loadUserInfo();
+    // 仅主页展示昵称，无需每次都加载详细信息
+    userApi.getCurrentUser()
+      .then((res) => {
+        this.setData({
+          userInfo: res,
+          loading: false
+        });
+      })
+      .catch(() => {
+        this.setData({ loading: false });
+      });
+  },
+
+  /**
+   * 跳转到个人信息页面
+   */
+  // 合并后的个人信息管理入口
+  goToProfileManage() {
+    wx.navigateTo({
+      url: '/pages/profile/userinfo/userinfo'
+    });
   },
 
   onLoad() {
-    this.loadUserInfo();
+    // 仅首次进入加载一次
+    userApi.getCurrentUser()
+      .then((res) => {
+        this.setData({
+          userInfo: res,
+          loading: false
+        });
+      })
+      .catch(() => {
+        this.setData({ loading: false });
+      });
   },
 
 
   /**
    * 加载用户信息
    */
-  loadUserInfo() {
-    this.setData({ loading: true });
+  // 主页无需详细资料编辑功能，loadUserInfo 可移除
 
-    userApi.getCurrentUser()
-      .then((res) => {
-        this.setData({
-          userInfo: res,
-          formData: {
-            real_name: res.real_name || '',
-            gender: res.gender || '',
-            age: res.age ? String(res.age) : '',
-            education: res.education || '',
-            province: res.province || '',
-            city: res.city || '',
-            phone: res.phone || ''
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('加载用户信息失败:', error);
-      })
-      .finally(() => {
-        this.setData({ loading: false });
-      });
-  },
 
   /**
-   * 切换编辑模式
+   * 跳转到反馈页面
    */
-  toggleEdit() {
-    this.setData({
-      editing: !this.data.editing
+  goToProfileManage(){
+    wx.navigateTo({
+      url: '/pages/profile/userinfo/userinfo'
     });
   },
 
-  /**
-   * 输入变化
-   */
-  onInput(e) {
-    const { field } = e.currentTarget.dataset;
-    const { value } = e.detail;
-    
-    this.setData({
-      [`formData.${field}`]: value
+  goToFeedback() {
+    wx.navigateTo({
+      url: '/pages/feedback/feedback'
     });
   },
 
-  /**
-   * 保存资料
-   */
-  saveProfile() {
-    wx.showLoading({ title: '保存中...' });
-
-    userApi.updateProfile(this.data.formData)
-      .then((res) => {
-        wx.showToast({
-          title: '保存成功',
-          icon: 'success'
-        });
-
-        // 更新本地用户信息
-        auth.setUserInfo(res);
-
-        this.setData({
-          userInfo: res,
-          editing: false
-        });
-      })
-      .catch((error) => {
-        console.error('保存失败:', error);
-        wx.showToast({
-          title: error.message || '保存失败',
-          icon: 'none'
-        });
-      })
-      .finally(() => {
-        wx.hideLoading();
-      });
-  },
-
-  /**
-   * 性别选择变化
-   */
-  onGenderChange(e) {
-    const genders = ['男', '女', '其他'];
-    this.setData({
-      'formData.gender': genders[e.detail.value]
+  goToAbout() {
+    wx.navigateTo({
+      url: '/pages/agreement/about/about'
     });
   },
 
-  /**
-   * 日期选择变化
-   */
-  onDateChange(e) {
-    this.setData({
-      'formData.birthday': e.detail.value
+  goToPrivacyPolicy() {
+    wx.navigateTo({
+      url: '/pages/agreement/privacy-policy/privacy-policy'
+    });
+  },
+
+  goToUserAgreement() {
+    wx.navigateTo({
+      url: '/pages/agreement/user-agreement/user-agreement'
     });
   },
 
@@ -138,6 +102,35 @@ Page({
           auth.logout();
         }
       }
+    });
+  },
+  /**
+   * 关于弹窗
+   */
+  goToAbout() {
+    wx.showModal({
+      title: '关于',
+      content: '认知照顾情绪监测系统小程序\n版本：1.0.0\n版权所有 © 2025\n如需帮助请联系开发团队。',
+      showCancel: false,
+      confirmText: '知道了'
+    });
+  },
+
+  /**
+   * 跳转到隐私政策
+   */
+  goToPrivacyPolicy() {
+    wx.navigateTo({
+      url: '/pages/agreement/privacy-policy/privacy-policy'
+    });
+  },
+
+  /**
+   * 跳转到用户协议
+   */
+  goToUserAgreement() {
+    wx.navigateTo({
+      url: '/pages/agreement/user-agreement/user-agreement'
     });
   }
 });

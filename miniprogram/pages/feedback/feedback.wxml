@@ -1,0 +1,38 @@
+<!--pages/feedback/feedback.wxml-->
+<view class="feedback-container">
+  <view class="rating-section">
+    <text class="section-title">请为我们的服务评分</text>
+    <view class="star-rating">
+      <view 
+        wx:for="{{[1,2,3,4,5]}}" 
+        wx:key="item" 
+        class="star {{rating >= item ? 'active' : ''}}"
+        data-rating="{{item}}"
+        bindtap="onStarTap"
+      >
+        ★
+      </view>
+    </view>
+  </view>
+
+  <view class="content-section">
+    <text class="section-title">您的宝贵意见</text>
+    <textarea 
+      class="content-input"
+      placeholder="请输入您的意见和建议（选填）"
+      placeholder-style="color:#999"
+      maxlength="500"
+      bindinput="onContentInput"
+      value="{{content}}"
+    />
+    <text class="char-count">{{content.length}}/500</text>
+  </view>
+
+  <button 
+    class="submit-btn {{rating > 0 ? 'active' : ''}}" 
+    bindtap="onSubmit"
+    disabled="{{submitting}}"
+  >
+    提交反馈
+  </button>
+</view>

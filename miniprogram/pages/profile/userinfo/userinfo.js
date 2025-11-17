@@ -1,148 +1,123 @@
-// pages/profile/complete/complete.js
+// pages/profile/userinfo/userinfo.js
 const userApi = require('../../../api/user');
 const auth = require('../../../utils/auth');
 
 Page({
   data: {
-    formData: {
-      real_name: '',
-      gender: '',
-      age: '',
-      education: '',
-      region: [],
-      phone: ''
-    },
+    userInfo: null,
+    loading: true,
+    editing: false,
+    formData: {},
     genderOptions: ['男', '女', '其他'],
-    genderIndex: -1,
     educationOptions: ['文盲', '小学', '初中', '高中/中专', '大专', '本科及以上'],
+    genderIndex: -1,
     educationIndex: -1,
-    regionIndex: -1,
+    region: [],
     submitting: false,
     isFormValid: false
   },
 
-  onLoad(options) {
-    // 检查是否已登录
+  onShow() {
     if (!auth.isLogined()) {
-      auth.navigateToLogin('/pages/profile/complete/complete');
+      auth.navigateToLogin();
       return;
     }
-
-    // 只读模式支持
-    this.setData({
-      readonly: options && options.readonly === '1'
-    });
-
-    // 获取当前用户信息
     this.loadUserInfo();
   },
 
-  onShow() {
-    if (!auth.isLogined()) {
-      auth.navigateToLogin('/pages/profile/complete/complete');
-      return;
-    }
+  loadUserInfo() {
+    this.setData({ loading: true });
+    userApi.getCurrentUser()
+      .then((res) => {
+        // 兼容后端字段
+        const region = [res.province || '', res.city || '', res.district || ''];
+        this.setData({
+          userInfo: res,
+          formData: {
+            real_name: res.real_name || '',
+            gender: res.gender || '',
+            age: res.age ? String(res.age) : '',
+            education: res.education || '',
+            region,
+            phone: res.phone || ''
+          },
+          genderIndex: this.data.genderOptions.indexOf(res.gender),
+          educationIndex: this.data.educationOptions.indexOf(res.education),
+          region: region,
+          editing: false
+        });
+        this.validateForm();
+      })
+      .catch((error) => {
+        wx.showToast({
+          title: '获取用户信息失败',
+          icon: 'none'
+        });
+      })
+      .finally(() => {
+        this.setData({ loading: false });
+      });
   },
 
-  async loadUserInfo() {
-    try {
-      const userInfo = await userApi.getCurrentUser();
-      console.log('当前用户信息:', userInfo);
-      
-      // 如果信息已完善，跳转到首页
-      if (userInfo.is_profile_complete) {
-        wx.reLaunch({
-          url: '/pages/index/index'
-        });
-        return;
-      }
-
-      // 填充已有信息
+  // 切换编辑模式
+  toggleEdit() {
+    const newEditing = !this.data.editing;
+    if (!newEditing) {
+      // 取消编辑时，重置表单数据为当前用户信息
+      const userInfo = this.data.userInfo;
+      const region = [userInfo.province || '', userInfo.city || '', userInfo.district || ''];
       this.setData({
         formData: {
           real_name: userInfo.real_name || '',
           gender: userInfo.gender || '',
           age: userInfo.age ? String(userInfo.age) : '',
           education: userInfo.education || '',
-          region: Array.isArray(userInfo.region) ? userInfo.region : [],
+          region,
           phone: userInfo.phone || ''
-        }
+        },
+        genderIndex: this.data.genderOptions.indexOf(userInfo.gender),
+        educationIndex: this.data.educationOptions.indexOf(userInfo.education),
+        region: region
       });
-
-      // 设置选择器默认值
-      this.setPickerDefaults();
       this.validateForm();
-    } catch (error) {
-      console.error('获取用户信息失败:', error);
-      wx.showToast({
-        title: '获取用户信息失败',
-        icon: 'none'
-      });
     }
+    this.setData({ editing: newEditing });
   },
 
-  setPickerDefaults() {
-    const { formData } = this.data;
-    
-    // 性别选择器
-    const genderIndex = this.data.genderOptions.indexOf(formData.gender);
-    if (genderIndex !== -1) {
-      this.setData({ genderIndex });
-    }
-
-    // 学历选择器
-    const educationIndex = this.data.educationOptions.indexOf(formData.education);
-    if (educationIndex !== -1) {
-      this.setData({ educationIndex });
-    }
-
-    // 地区选择器
-    if (formData.region && formData.region.length === 3) {
-      this.setData({
-        regionIndex: formData.region
-      });
-    }
-  },
-
+  // 输入变化
   onInputChange(e) {
     const field = e.currentTarget.dataset.field;
     const value = e.detail.value;
-    
     this.setData({
       [`formData.${field}`]: value
     });
-    
     this.validateForm();
   },
 
   onGenderChange(e) {
     const index = e.detail.value;
     const gender = this.data.genderOptions[index];
-    
     this.setData({
       genderIndex: index,
       'formData.gender': gender
     });
-    
     this.validateForm();
   },
 
   onEducationChange(e) {
     const index = e.detail.value;
     const education = this.data.educationOptions[index];
-    
     this.setData({
       educationIndex: index,
       'formData.education': education
     });
-    
     this.validateForm();
   },
 
   onRegionChange(e) {
-    const region = e.detail.value; // region为数组 [省, 市, 区]
+    const region = e.detail.value;
     this.setData({
-      regionIndex: region,
+      region,
       'formData.region': region,
       'formData.province': region[0] || '',
       'formData.city': region[1] || '',
@@ -153,16 +128,14 @@ Page({
 
   validateForm() {
     const { formData } = this.data;
-    
     const isValid =
       formData.real_name.trim() !== '' &&
       formData.gender !== '' &&
       formData.age !== '' &&
       parseInt(formData.age) >= 1 && parseInt(formData.age) <= 100 &&
       formData.education !== '' &&
-      formData.region !== '' &&
+      formData.region && formData.region.length === 3 &&
       this.validatePhone(formData.phone);
-    
     this.setData({ isFormValid: isValid });
   },
 
@@ -173,21 +146,11 @@ Page({
   },
 
   async submitForm() {
-    if (this.data.readonly) {
-      wx.showToast({
-        title: '只读模式无法修改',
-        icon: 'none'
-      });
-      return;
-    }
     if (!this.data.isFormValid || this.data.submitting) {
       return;
     }
-  
     this.setData({ submitting: true });
-  
     try {
-      // 准备提交数据
       const submitData = {
         real_name: this.data.formData.real_name.trim(),
         gender: this.data.formData.gender,
@@ -198,38 +161,24 @@ Page({
         district: this.data.formData.district,
         phone: this.data.formData.phone
       };
-  
-      console.log('提交数据:', submitData);
-  
-      // 调用API更新用户信息
       const result = await userApi.updateProfile(submitData);
-      
-      console.log('更新成功:', result);
-  
-      // 更新本地用户信息
       auth.setUserInfo(result);
-  
       wx.showToast({
-        title: '信息完善成功',
+        title: '保存成功',
         icon: 'success',
         duration: 2000
       });
-  
-      // 跳转到首页
-      setTimeout(() => {
-        wx.reLaunch({
-          url: '/pages/index/index'
-        });
-      }, 2000);
-  
+      this.setData({ editing: false, userInfo: result });
+      this.loadUserInfo();
     } catch (error) {
-      console.error('提交失败:', error);
       wx.showToast({
-        title: error.message || '提交失败，请重试',
+        title: error.message || '保存失败',
         icon: 'none'
       });
     } finally {
       this.setData({ submitting: false });
     }
-  }
+  },
+
+
 });

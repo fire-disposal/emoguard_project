@@ -1,0 +1,166 @@
+<!-- pages/profile/userinfo/userinfo.wxml -->
+<view class="userinfo-container">
+  <view wx:if="{{loading}}" class="loading-state">
+    <text class="loading-text">加载中...</text>
+  </view>
+  <view wx:elif="{{userInfo && !editing}}" class="userinfo-content">
+    <view class="user-card card">
+      <view class="user-header">
+        <view class="user-avatar">{{userInfo.real_name ? userInfo.real_name.charAt(0) : '用'}}</view>
+        <view class="user-info">
+          <text class="user-nickname">{{userInfo.real_name || '用户'}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="profile-section card">
+      <view class="info-item">
+        <text class="item-label">真实姓名</text>
+        <text class="item-value">{{userInfo.real_name || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="item-label">性别</text>
+        <text class="item-value">{{userInfo.gender || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="item-label">年龄</text>
+        <text class="item-value">{{userInfo.age || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="item-label">学历</text>
+        <text class="item-value">{{userInfo.education || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="item-label">省份</text>
+        <text class="item-value">{{userInfo.province || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="item-label">城市</text>
+        <text class="item-value">{{userInfo.city || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="item-label">区/县</text>
+        <text class="item-value">{{userInfo.district || '未设置'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="item-label">手机号</text>
+        <text class="item-value">{{userInfo.phone || '未设置'}}</text>
+      </view>
+    </view>
+    <view class="btn-group">
+      <button class="edit-btn" bindtap="toggleEdit">修改信息</button>
+    </view>
+  </view>
+  
+  <!-- 编辑模式 -->
+  <view wx:elif="{{userInfo && editing}}" class="edit-content">
+    <view class="user-card card">
+      <view class="user-header">
+        <view class="user-avatar">{{userInfo.real_name ? userInfo.real_name.charAt(0) : '用'}}</view>
+        <view class="user-info">
+          <text class="user-nickname">{{userInfo.real_name || '用户'}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <form class="edit-form">
+      <!-- 真实姓名 -->
+      <view class="form-item">
+        <text class="label required">真实姓名</text>
+        <input
+          class="input"
+          placeholder="请输入您的真实姓名"
+          value="{{formData.real_name}}"
+          bindinput="onInputChange"
+          data-field="real_name"
+          maxlength="50"
+        />
+      </view>
+
+      <!-- 年龄 -->
+      <view class="form-item">
+        <text class="label required">年龄</text>
+        <input
+          class="input"
+          type="number"
+          placeholder="请输入您的年龄"
+          value="{{formData.age}}"
+          bindinput="onInputChange"
+          data-field="age"
+          maxlength="3"
+        />
+      </view>
+
+      <!-- 性别 -->
+      <view class="form-item">
+        <text class="label required">性别</text>
+        <picker
+          mode="selector"
+          range="{{genderOptions}}"
+          value="{{genderIndex}}"
+          bindchange="onGenderChange"
+        >
+          <view class="picker {{formData.gender ? '' : 'placeholder'}}">
+            {{formData.gender || '请选择性别'}}
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 学历 -->
+      <view class="form-item">
+        <text class="label required">学历</text>
+        <picker
+          mode="selector"
+          range="{{educationOptions}}"
+          value="{{educationIndex}}"
+          bindchange="onEducationChange"
+        >
+          <view class="picker {{formData.education ? '' : 'placeholder'}}">
+            {{formData.education || '请选择学历'}}
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 所在地区 -->
+      <view class="form-item">
+        <text class="label required">所在地区</text>
+        <picker
+          mode="region"
+          value="{{region}}"
+          bindchange="onRegionChange"
+        >
+          <view class="picker {{formData.region ? '' : 'placeholder'}}">
+            {{formData.region || '请选择所在地区'}}
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 手机号 -->
+      <view class="form-item">
+        <text class="label required">手机号</text>
+        <input
+          class="input"
+          type="number"
+          placeholder="请输入您的手机号"
+          value="{{formData.phone}}"
+          bindinput="onInputChange"
+          data-field="phone"
+          maxlength="11"
+        />
+      </view>
+    </form>
+    
+    <view class="edit-footer">
+      <button class="cancel-btn" bindtap="toggleEdit">取消</button>
+      <button
+        class="submit-btn {{isFormValid ? '' : 'disabled'}}"
+        bindtap="submitForm"
+        disabled="{{!isFormValid || submitting}}"
+      >
+        {{submitting ? '保存中...' : '保存'}}
+      </button>
+    </view>
+  </view>
+</view>

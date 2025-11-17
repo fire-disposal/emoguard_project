@@ -6,10 +6,6 @@
       <text class="title-text">智情守护</text>
       <text class="date-text">{{currentDate}}</text>
     </view>
-    <!-- <view class="welcome-message">
-      <text class="greeting">你好，{{userNickname}}</text>
-      <text class="subtitle">愿你每天都有好心情 ☀️</text>
-    </view> -->
     <!-- 情绪测试入口 - 优化版本 -->
     <view class="emotion-test-day" bindtap="goToEmotionTest" data-period="morning">
       <view class="entry-content">

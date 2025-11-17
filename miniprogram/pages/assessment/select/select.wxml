@@ -1,16 +1,11 @@
 <!-- 测评选择页面 - 支持智能测评和单问卷模式 -->
 
 <view class="container">
-  <!-- 页面标题 -->
-  <view class="header">
-    <text class="title">认知功能评估</text>
-    <text class="subtitle">科学评估，关爱认知健康</text>
-  </view>
 
   <!-- 智能测评入口 -->
   <view class="smart-section">
     <button class="smart-btn" bindtap="startSmartAssessment">
-      <text class="smart-title">🧠 智能测评</text>
+      <text class="smart-title">🧠 点击进行智能测评 </text>
       <text class="smart-desc">AI智能推荐，个性化评估方案</text>
     </button>
   </view>

@@ -1,11 +1,5 @@
 <!-- 情绪趋势分析页面 -->
 <view class="page">
-  <!-- 页面头部 -->
-  <view class="page-header">
-    <text class="page-title">情绪趋势分析</text>
-    <text class="page-subtitle">了解您的情绪变化规律</text>
-  </view>
-
   <!-- 控制面板 -->
   <view class="control-panel">
     <!-- 时间范围选择 -->

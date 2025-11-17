@@ -1,8 +1,9 @@
 /* 情绪趋势分析页面样式 - 简洁高可读性设计 */
 .page {
   min-height: 100vh;
-  background: #f8f9fa;
-  padding: 0;
+  background: linear-gradient(135deg, #e6f7ff 0%, #f0f5ff 100%);
+  padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
 }
 
 /* 页面头部 */
@@ -29,11 +30,11 @@
 
 /* 控制面板 */
 .control-panel {
-  background: #fff;
-  padding: 30rpx;
-  margin: 20rpx;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  background: white;
+  padding: 32rpx;
+  margin: 0 0 32rpx 0;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .time-range-selector,
@@ -153,11 +154,11 @@
 
 /* 图表容器 */
 .chart-container {
-  background: #fff;
-  border-radius: 16rpx;
-  margin: 20rpx;
-  padding: 30rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  background: white;
+  border-radius: 20rpx;
+  margin: 0 0 32rpx 0;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .chart-header {
@@ -215,11 +216,11 @@
 
 /* 数据说明 */
 .data-info {
-  background: #fff;
-  border-radius: 16rpx;
-  margin: 20rpx;
-  padding: 30rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  background: white;
+  border-radius: 20rpx;
+  margin: 0 0 32rpx 0;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .info-title {
