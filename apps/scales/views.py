@@ -1,5 +1,5 @@
 """
-量表API视图 - 极简设计，后端主导
+量表API视图 - 改进版本，更好的代码组织和可维护性
 """
 from ninja import Router, Query
 from typing import List, Optional, Dict, Any
@@ -17,6 +17,48 @@ import logging
 logger = logging.getLogger(__name__)
 
 scales_router = Router()
+
+
+class ScaleResultViewHelper:
+    """量表结果视图辅助类 - 处理数据转换和格式化"""
+    
+    @staticmethod
+    def format_scale_config_data(scale_config) -> Optional[Dict[str, Any]]:
+        """格式化量表配置数据"""
+        if not scale_config:
+            return None
+            
+        return {
+            'id': getattr(scale_config, 'id', 0) or 0,
+            'name': getattr(scale_config, 'name', '') or '',
+            'code': getattr(scale_config, 'code', '') or '',
+            'version': getattr(scale_config, 'version', '') or '',
+            'description': getattr(scale_config, 'description', '') or '',
+            'type': getattr(scale_config, 'type', '') or '',
+            'questions': getattr(scale_config, 'questions', []) or [],
+            'status': getattr(scale_config, 'status', '') or '',
+        }
+    
+    @staticmethod
+    def format_scale_result_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """格式化量表结果数据"""
+        if not raw_data:
+            return {}
+            
+        scale_config = raw_data.get('scale_config')
+        
+        return {
+            'id': raw_data.get('id', 0) or 0,
+            'scale_config': ScaleResultViewHelper.format_scale_config_data(scale_config),
+            'selected_options': raw_data.get('selected_options', []) or [],
+            'conclusion': raw_data.get('conclusion', '') or '',
+            'duration_ms': raw_data.get('duration_ms', 0) or 0,
+            'started_at': raw_data.get('started_at', '') or '',
+            'completed_at': raw_data.get('completed_at', '') or '',
+            'status': raw_data.get('status', '') or '',
+            'analysis': raw_data.get('analysis', {}) or {},
+        }
+
 
 # ========== 单量表功能接口 ==========
 
@@ -117,14 +159,17 @@ def create_single_result(request, data: ScaleResultCreateSchema):
 
 @scales_router.get("/results/{result_id}", response=ScaleResultResponseSchema)
 def get_single_result(request, result_id: int):
-    """获取单量表结果详情"""
+    """获取单量表结果详情 - 改进版本"""
     try:
-        result = SingleScaleService.get_single_scale_result(result_id)
-        if result:
-            return result
-        else:
+        raw_data = SingleScaleService.get_single_scale_result(result_id)
+        if not raw_data:
             return {"error": "结果不存在"}
+        
+        # 使用辅助类进行数据格式化
+        return ScaleResultViewHelper.format_scale_result_data(raw_data)
+        
     except Exception as e:
+        logger.error(f"获取单量表结果失败: {str(e)}")
         return {"error": f"获取结果失败: {str(e)}"}
 
 # ========== 智能测评流程接口 ==========

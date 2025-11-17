@@ -1,6 +1,8 @@
 {
   "pages": [
     "pages/login/login",
+    "pages/agreement/user-agreement/user-agreement",
+    "pages/agreement/privacy-policy/privacy-policy",
     "pages/index/index",
     "pages/mood/journal/journal",
     "pages/mood/moodtest/moodtest",
@@ -15,8 +17,8 @@
     "pages/reports/list/list",
     "pages/reports/detail/detail",
     "pages/profile/index/index",
-    "pages/profile/complete/complete",
-    "pages/tts-test/tts-test"
+    "pages/profile/complete/complete"
+
   ],
   "window": {
     "navigationBarTitleText": "情绪守护",

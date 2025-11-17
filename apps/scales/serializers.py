@@ -29,7 +29,6 @@ class ScaleResultCreateSchema(Schema):
 
 class ScaleResultResponseSchema(Schema):
     id: int
-    user_id: str
     scale_config: ScaleConfigResponseSchema
     selected_options: List[int]
     conclusion: Optional[str]

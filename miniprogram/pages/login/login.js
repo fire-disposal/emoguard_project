@@ -1,11 +1,13 @@
 // pages/login/login.js
 const userApi = require('../../api/user');
 const auth = require('../../utils/auth');
+const storage = require('../../utils/storage');
 
 Page({
   data: {
     loading: false,
-    redirectUrl: ''
+    redirectUrl: '',
+    isAgree: false,
   },
 
   onLoad(options) {
@@ -29,7 +31,7 @@ Page({
         })
         .catch((error) => {
           console.log('Token 无效，清除登录状态:', error);
-          auth.clearToken();
+          storage.clearToken();
           auth.clearUserInfo();
         });
     }
@@ -39,6 +41,17 @@ Page({
    * 微信登录
    */
   handleWechatLogin() {
+    console.log('点击登录，协议状态:', this.data.isAgree);
+    
+    if (!this.data.isAgree) {
+      wx.showToast({
+        title: '请先阅读并同意用户协议和隐私政策',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+    
     this.setData({ loading: true });
     
     // 调用 wx.login 获取 code
@@ -113,6 +126,30 @@ Page({
     });
   },
 
+  // 协议勾选框变更
+  onAgreementChange(e) {
+    // 更可靠的勾选状态判断
+    const isChecked = e.detail.value && e.detail.value.includes('agree');
+    this.setData({
+      isAgree: isChecked
+    });
+    console.log('协议勾选状态:', isChecked);
+  },
+
+  // 跳转用户协议
+  openUserAgreement() {
+    wx.navigateTo({
+      url: '/pages/agreement/user-agreement/user-agreement'
+    });
+  },
+
+  // 跳转隐私政策
+  openPrivacyPolicy() {
+    wx.navigateTo({
+      url: '/pages/agreement/privacy-policy/privacy-policy'
+    });
+  },
+
   /**
    * 登录成功后跳转
    */
@@ -163,3 +200,5 @@ Page({
     }
   }
 });
+
+// TODO: 需要新建 miniprogram/pages/agreement/user-agreement 与 privacy-policy 页面及内容文件

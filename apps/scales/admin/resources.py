@@ -8,13 +8,11 @@ from apps.users.models import User
 
 
 class ScaleResultResource(resources.ModelResource):
-    """量表结果导出资源 - 增强版，支持多种导出格式"""
-    
+    """量表结果导出资源 - 增强版，支持多种导出格式和题目展平"""
+
     # 基础信息
     id = fields.Field(column_name='记录ID', attribute='id')
     user_id_display = fields.Field(column_name='用户ID', attribute='user_id')
-    
-    # 用户基本信息（带缓存优化）
     user_real_name = fields.Field(
         column_name='用户姓名',
         attribute='user_id',
@@ -55,8 +53,6 @@ class ScaleResultResource(resources.ModelResource):
         attribute='user_id',
         widget=ForeignKeyWidget(User, 'phone')
     )
-    
-    # 量表基本信息
     scale_name = fields.Field(
         column_name='量表名称',
         attribute='scale_config__name',
@@ -77,8 +73,6 @@ class ScaleResultResource(resources.ModelResource):
         attribute='scale_config__version',
         widget=ForeignKeyWidget(ScaleConfig, 'version')
     )
-    
-    # 结果信息（增强版）
     score = fields.Field(column_name='得分', attribute='analysis')
     max_score = fields.Field(column_name='满分', attribute='analysis')
     level = fields.Field(column_name='等级', attribute='analysis')
@@ -86,20 +80,54 @@ class ScaleResultResource(resources.ModelResource):
     abnormal_details = fields.Field(column_name='异常详情', attribute='analysis')
     recommendations = fields.Field(column_name='建议', attribute='analysis')
     risk_assessment = fields.Field(column_name='风险评估', attribute='analysis')
-    
-    # 时间信息（增强版）
     duration_seconds = fields.Field(column_name='答题时长(秒)', attribute='duration_ms')
     duration_minutes = fields.Field(column_name='答题时长(分)', attribute='duration_ms')
     started_at = fields.Field(column_name='开始时间', attribute='started_at')
     completed_at = fields.Field(column_name='完成时间', attribute='completed_at')
     created_at = fields.Field(column_name='创建时间', attribute='created_at')
-    
-    # 智能测评关联
     assessment_id = fields.Field(
         column_name='智能测评ID',
         attribute='smart_assessment__id',
         widget=ForeignKeyWidget(SmartAssessmentRecord, 'id')
     )
+
+    # 精简且科研友好的动态题目展平导出
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 仅导出当前筛选结果中所有量表的题目（避免无关冗余）
+        self._question_fields = []
+        try:
+            # 只收集当前数据库所有ScaleConfig的题目（可按需过滤）
+            configs = ScaleConfig.objects.all()
+            seen = set()
+            for config in configs:
+                for idx, q in enumerate(config.questions):
+                    # 列名：Q序号_题干前10字
+                    col = f"Q{idx+1}_{q['question'][:10]}"
+                    if col not in seen:
+                        seen.add(col)
+                        self.fields[col] = fields.Field(column_name=col)
+                        self._question_fields.append((config.id, idx, col, q['question']))
+        except Exception:
+            pass
+
+    def dehydrate(self, obj):
+        data = super().dehydrate(obj)
+        # 只展平本条记录对应量表的题目
+        questions = getattr(obj.scale_config, 'questions', [])
+        answers = obj.selected_options or []
+        config_id = obj.scale_config.id if obj.scale_config else None
+        for q_cfg_id, q_idx, col, qtext in self._question_fields:
+            val = ''
+            if config_id == q_cfg_id and q_idx < len(questions) and q_idx < len(answers):
+                q = questions[q_idx]
+                opt_idx = answers[q_idx]
+                try:
+                    val = q['options'][opt_idx]['text']
+                except Exception:
+                    val = str(opt_idx)
+            data[col] = val
+        return data
     
     class Meta:
         model = ScaleResult

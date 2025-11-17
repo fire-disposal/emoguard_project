@@ -34,21 +34,22 @@
 
     <view class="card-footer">
       <view class="info-item">
-        <text class="info-icon">📱</text>
-        <text class="info-text">仅支持微信小程序登录</text>
-      </view>
-      <view class="info-item">
         <text class="info-icon">🔒</text>
         <text class="info-text">您的隐私安全受到保护</text>
       </view>
     </view>
   </view>
 
-  <!-- 底部协议 -->
-  <view class="agreement">
-    <text class="agreement-text">登录即表示您同意</text>
-    <text class="agreement-link">《用户协议》</text>
+  <!-- 协议勾选框及文本 -->
+  <view class="agreement-check">
+    <checkbox-group bindchange="onAgreementChange">
+      <label class="agreement-label">
+        <checkbox value="agree" checked="{{isAgree}}"/>
+        <text class="agreement-text">我已阅读并同意</text>
+      </label>
+    </checkbox-group>
+    <text class="agreement-link" bindtap="openUserAgreement">《用户协议》</text>
     <text class="agreement-text">和</text>
-    <text class="agreement-link">《隐私政策》</text>
+    <text class="agreement-link" bindtap="openPrivacyPolicy">《隐私政策》</text>
   </view>
 </view>

@@ -6,7 +6,6 @@ class EmotionRecordCreateSchema(Schema):
     anxiety: int
     energy: int
     sleep: int
-    # 移除user_id字段，从JWT获取
 
 class EmotionRecordResponseSchema(Schema):
     id: int
