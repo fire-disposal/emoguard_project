@@ -19,6 +19,8 @@ Page({
       auth.navigateToLogin();
       return;
     }
+    // 页面显示时加载情绪状态（从其他页面返回时会触发）
+    this.loadEmotionStatus();
   },
 
   onLoad() {
@@ -28,11 +30,10 @@ Page({
     this.updatePeriod(); // 更新时段
     this.loadEmotionStatus();
 
-    // 每分钟更新时间
+    // 每分钟更新时间（仅时间显示，不再轮询情绪状态）
     this.timer = setInterval(() => {
       this.getCurrentTime();
       this.updatePeriod(); // 同时更新时段
-      this.loadEmotionStatus();
     }, 60000);
   },
 
