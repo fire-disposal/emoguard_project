@@ -322,6 +322,151 @@
   }
 }
 
+/* 历史记录表单样式 */
+.history-container {
+  background: white;
+  border-radius: 20rpx;
+  margin: 0 0 32rpx 0;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.history-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #212529;
+}
+
+.history-count {
+  font-size: 24rpx;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.history-item {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  border: 2rpx solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.history-item:active {
+  background: #e9ecef;
+  transform: scale(0.98);
+}
+
+.record-date {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 16rpx;
+}
+
+.record-scores {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx;
+  background: white;
+  border-radius: 8rpx;
+  border: 1rpx solid #dee2e6;
+}
+
+.score-label {
+  font-size: 22rpx;
+  color: #6c757d;
+  margin-bottom: 8rpx;
+  font-weight: 500;
+}
+
+.score-value {
+  font-size: 32rpx;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.score-value.depression {
+  background: linear-gradient(135deg, #ff7875 0%, #ff4d4f 100%);
+}
+
+.score-value.anxiety {
+  background: linear-gradient(135deg, #ffa940 0%, #fa8c16 100%);
+}
+
+.score-value.energy {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+}
+
+.score-value.sleep {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+}
+
+/* 深色模式下的历史记录样式 */
+@media (prefers-color-scheme: dark) {
+  .history-container {
+    background: #2d2d2d;
+    color: #f8f9fa;
+  }
+  
+  .history-title {
+    color: #f8f9fa;
+  }
+  
+  .history-count {
+    color: #adb5bd;
+  }
+  
+  .history-item {
+    background: #3d3d3d;
+    border-color: #495057;
+  }
+  
+  .history-item:active {
+    background: #495057;
+  }
+  
+  .record-date {
+    color: #f8f9fa;
+  }
+  
+  .score-item {
+    background: #2d2d2d;
+    border-color: #495057;
+  }
+  
+  .score-label {
+    color: #adb5bd;
+  }
+}
+
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
   .page {

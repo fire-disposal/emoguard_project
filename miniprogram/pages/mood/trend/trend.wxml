@@ -14,17 +14,6 @@
       </view>
     </view>
 
-    <!-- 指标选择 -->
-    <view class="metric-selector">
-      <text class="selector-label">显示指标：</text>
-      <view class="metric-buttons">
-        <block wx:for="{{metricOptions}}" wx:key="value" wx:for-item="metric">
-          <button class="metric-btn {{selectedMetric === metric.value ? 'active' : ''}}"
-                  data-metric="{{metric.value}}"
-                  bindtap="onMetricSelect">{{metric.label}}</button>
-        </block>
-      </view>
-    </view>
   </view>
 
   <!-- 图表容器 -->
@@ -48,26 +37,37 @@
     </view>
   </view>
 
-  <!-- 数据说明 -->
-  <view class="data-info">
-    <text class="info-title">数据说明</text>
-    <view class="info-items">
-      <view class="info-item">
-        <text class="info-label">抑郁水平：</text>
-        <text class="info-value">0-3分，分数越高表示抑郁程度越严重</text>
-      </view>
-      <view class="info-item">
-        <text class="info-label">焦虑水平：</text>
-        <text class="info-value">0-10分，分数越高表示焦虑程度越严重</text>
-      </view>
-      <view class="info-item">
-        <text class="info-label">精力水平：</text>
-        <text class="info-value">0-3分，分数越高表示疲劳程度越严重</text>
-      </view>
-      <view class="info-item">
-        <text class="info-label">睡眠质量：</text>
-        <text class="info-value">0-4分，分数越高表示睡眠质量越差</text>
-      </view>
+  <!-- 历史记录表单 -->
+  <view class="history-container" wx:if="{{!loading && historyRecords.length > 0}}">
+    <view class="history-header">
+      <text class="history-title">历史记录</text>
+      <text class="history-count">共 {{historyRecords.length}} 条记录</text>
+    </view>
+    
+    <view class="history-list">
+      <block wx:for="{{historyRecords}}" wx:key="date" wx:for-item="record">
+        <view class="history-item">
+          <view class="record-date">{{record.formattedDate}}</view>
+          <view class="record-scores">
+            <view class="score-item">
+              <text class="score-label">抑郁</text>
+              <text class="score-value depression">{{record.depression}}</text>
+            </view>
+            <view class="score-item">
+              <text class="score-label">焦虑</text>
+              <text class="score-value anxiety">{{record.anxiety}}</text>
+            </view>
+            <view class="score-item">
+              <text class="score-label">精力</text>
+              <text class="score-value energy">{{record.energy}}</text>
+            </view>
+            <view class="score-item">
+              <text class="score-label">睡眠</text>
+              <text class="score-value sleep">{{record.sleep}}</text>
+            </view>
+          </view>
+        </view>
+      </block>
     </view>
   </view>
 
