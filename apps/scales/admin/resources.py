@@ -3,7 +3,7 @@
 """
 from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget
-from apps.scales.models import ScaleResult, ScaleConfig, SmartAssessmentRecord
+from apps.scales.models import ScaleResult, ScaleConfig
 from apps.users.models import User
 
 
@@ -85,11 +85,6 @@ class ScaleResultResource(resources.ModelResource):
     started_at = fields.Field(column_name='开始时间', attribute='started_at')
     completed_at = fields.Field(column_name='完成时间', attribute='completed_at')
     created_at = fields.Field(column_name='创建时间', attribute='created_at')
-    assessment_id = fields.Field(
-        column_name='智能测评ID',
-        attribute='smart_assessment__id',
-        widget=ForeignKeyWidget(SmartAssessmentRecord, 'id')
-    )
 
     # 精简且科研友好的动态题目展平导出
     def __init__(self, *args, **kwargs):
@@ -271,76 +266,3 @@ class ScaleResultResource(resources.ModelResource):
         return result.smart_assessment.id if result.smart_assessment else '无'
 
 
-class SmartAssessmentResource(resources.ModelResource):
-    """智能测评导出资源"""
-    
-    id = fields.Field(column_name='测评ID', attribute='id')
-    user_id_display = fields.Field(column_name='用户ID', attribute='user_id')
-    user_real_name = fields.Field(
-        column_name='用户姓名',
-        attribute='user_id',
-        widget=ForeignKeyWidget(User, 'real_name')
-    )
-    status = fields.Field(column_name='状态', attribute='status')
-    current_scale_index = fields.Field(column_name='当前进度', attribute='current_scale_index')
-    scale_count = fields.Field(column_name='量表数量', attribute='scale_scores')
-    
-    # 结果信息
-    final_conclusion = fields.Field(column_name='最终结论', attribute='final_result')
-    risk_level = fields.Field(column_name='风险等级', attribute='final_result')
-    abnormal_count = fields.Field(column_name='异常项目数', attribute='final_result')
-    total_score = fields.Field(column_name='总分', attribute='final_result')
-    
-    # 时间信息
-    started_at = fields.Field(column_name='开始时间', attribute='started_at')
-    completed_at = fields.Field(column_name='完成时间', attribute='completed_at')
-    created_at = fields.Field(column_name='创建时间', attribute='created_at')
-    total_duration_minutes = fields.Field(column_name='总时长(分钟)', attribute='started_at')
-    
-    class Meta:
-        model = SmartAssessmentRecord
-        fields = [
-            'id', 'user_id_display', 'user_real_name', 'status', 'current_scale_index', 'scale_count',
-            'final_conclusion', 'risk_level', 'abnormal_count', 'total_score',
-            'started_at', 'completed_at', 'created_at', 'total_duration_minutes'
-        ]
-        export_order = fields
-    
-    def dehydrate_user_id_display(self, assessment):
-        """用户ID显示（截断）"""
-        return str(assessment.user_id)[:8]
-    
-    def dehydrate_user_real_name(self, assessment):
-        """用户姓名"""
-        try:
-            user = User.objects.get(id=assessment.user_id)
-            return user.real_name or '匿名用户'
-        except User.DoesNotExist:
-            return '用户不存在'
-    
-    def dehydrate_scale_count(self, assessment):
-        """量表数量"""
-        return len(assessment.scale_scores) if assessment.scale_scores else 0
-    
-    def dehydrate_final_conclusion(self, assessment):
-        """最终结论"""
-        return assessment.final_result.get('conclusion', '未知结论') if assessment.final_result else '无结论'
-    
-    def dehydrate_risk_level(self, assessment):
-        """风险等级"""
-        return assessment.final_result.get('risk_level', '未知风险') if assessment.final_result else '无评估'
-    
-    def dehydrate_abnormal_count(self, assessment):
-        """异常项目数"""
-        return assessment.final_result.get('abnormal_count', 0) if assessment.final_result else 0
-    
-    def dehydrate_total_score(self, assessment):
-        """总分"""
-        return assessment.final_result.get('total_score', 0) if assessment.final_result else 0
-    
-    def dehydrate_total_duration_minutes(self, assessment):
-        """总时长（分钟）"""
-        if assessment.completed_at and assessment.started_at:
-            duration = assessment.get_total_duration()
-            return round(duration / 60000, 1)
-        return 0.0

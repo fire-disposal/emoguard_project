@@ -156,6 +156,9 @@ class ScaleResultService:
             conclusion = ScaleResultService._build_conclusion(analysis)
             
             # 创建量表结果
+            # 自动拷贝用户信息
+            from apps.users.models import User
+            user_obj = User.objects.filter(id=user_id).first()
             result = ScaleResult.objects.create(
                 user_id=user_id,
                 scale_config=scale_config,
@@ -165,7 +168,16 @@ class ScaleResultService:
                 started_at=started_dt,
                 completed_at=completed_dt,
                 status='completed',
-                analysis=analysis
+                analysis=analysis,
+                # 用户信息冗余字段
+                real_name=getattr(user_obj, "real_name", "") if user_obj else "",
+                gender=getattr(user_obj, "gender", "") if user_obj else "",
+                age=getattr(user_obj, "age", None) if user_obj else None,
+                education=getattr(user_obj, "education", "") if user_obj else "",
+                province=getattr(user_obj, "province", "") if user_obj else "",
+                city=getattr(user_obj, "city", "") if user_obj else "",
+                district=getattr(user_obj, "district", "") if user_obj else "",
+                phone=getattr(user_obj, "phone", "") if user_obj else "",
             )
             
             logger.info(f"量表结果创建成功: 用户{user_id}, 量表{scale_config.code}, 分数{analysis.get('score', 'N/A')}")

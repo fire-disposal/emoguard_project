@@ -4,7 +4,8 @@ const scaleApi = require('../../../api/scale');
 Page({
   data: {
     result: null,
-    loading: true
+    loading: true,
+    // 只保留单问卷结果
   },
 
   onLoad(options) {
@@ -17,23 +18,19 @@ Page({
   /**
    * 加载测评结果
    */
-  loadResult(id) {
+  async loadResult(id) {
     this.setData({ loading: true });
-
-    scaleApi.getResult(id)
-      .then((res) => {
-        this.setData({ result: res });
-      })
-      .catch((error) => {
-        console.error('加载测评结果失败:', error);
-        wx.showToast({
-          title: error.message || '加载失败',
-          icon: 'none'
-        });
-      })
-      .finally(() => {
-        this.setData({ loading: false });
+    try {
+      const res = await scaleApi.getResult(id);
+      this.setData({ result: res });
+    } catch (error) {
+      wx.showToast({
+        title: (error && error.message) || '加载失败',
+        icon: 'none'
       });
+    } finally {
+      this.setData({ loading: false });
+    }
   },
 
   /**

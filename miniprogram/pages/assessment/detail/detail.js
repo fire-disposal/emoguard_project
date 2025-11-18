@@ -10,7 +10,8 @@ Page({
     currentQuestionIndex: 0,
     startTime: 0,
     loading: true,
-    mode: 'single', // 'single', 'smart'
+    // 只保留单问卷模式
+    mode: 'single',
     assessmentId: null
   },
 
@@ -24,39 +25,32 @@ Page({
     }
 
     this.setData({
-      mode: mode || 'single',
-      assessmentId: assessmentId ? parseInt(assessmentId) : null
+      // 强制单问卷模式
+      mode: 'single',
+      assessmentId: null
     });
-    
+
     this.loadScale(id);
   },
 
   // 加载量表
   async loadScale(id) {
     try {
-      console.log('开始加载量表，ID:', id);
+      // 加载量表配置
       const res = await scaleApi.getConfig(id);
-      
-      console.log('量表配置原始数据:', res);
-      console.log('问题数据:', res.questions);
-      console.log('问题数量:', res.questions ? res.questions.length : 0);
-      
-      // 确保问题数据存在且为数组
-      const questions = res.questions || [];
+
+      // 校验问题数据
+      const questions = Array.isArray(res.questions) ? res.questions : [];
       const selectedOptions = new Array(questions.length).fill(-1);
 
-      
       this.setData({
         scaleConfig: res,
-        questions: questions,
-        selectedOptions: selectedOptions,
+        questions,
+        selectedOptions,
         startTime: Date.now(),
         loading: false
       });
-      
-      console.log('页面数据设置完成，当前问题索引:', 0);
     } catch (error) {
-      console.error('加载失败:', error);
       wx.showToast({ title: '加载失败', icon: 'none' });
       this.setData({ loading: false });
     }
@@ -65,41 +59,45 @@ Page({
   // 选择答案
   selectOption(e) {
     const { index } = e.currentTarget.dataset;
-    const selectedOptions = [...this.data.selectedOptions];
-    
-    // 确保当前题目索引有效
-    if (this.data.currentQuestionIndex >= 0 && this.data.currentQuestionIndex < selectedOptions.length) {
-      selectedOptions[this.data.currentQuestionIndex] = index;
-      this.setData({ selectedOptions });
+    const { currentQuestionIndex, selectedOptions } = this.data;
+    if (
+      Array.isArray(selectedOptions) &&
+      currentQuestionIndex >= 0 &&
+      currentQuestionIndex < selectedOptions.length
+    ) {
+      const updatedOptions = [...selectedOptions];
+      updatedOptions[currentQuestionIndex] = index;
+      this.setData({ selectedOptions: updatedOptions });
     }
   },
 
   // 上一题
   prevQuestion() {
-    if (this.data.currentQuestionIndex > 0) {
+    const { currentQuestionIndex } = this.data;
+    if (currentQuestionIndex > 0) {
       this.setData({
-        currentQuestionIndex: this.data.currentQuestionIndex - 1
+        currentQuestionIndex: currentQuestionIndex - 1
       });
     }
   },
 
   // 下一题
   nextQuestion() {
-    // 检查是否有题目
-    if (this.data.questions.length === 0) {
+    const { questions, selectedOptions, currentQuestionIndex } = this.data;
+    if (!Array.isArray(questions) || questions.length === 0) {
       wx.showToast({ title: '没有题目', icon: 'none' });
       return;
     }
-    
-    // 检查是否已选择答案
-    if (this.data.selectedOptions[this.data.currentQuestionIndex] === -1) {
+    if (
+      !Array.isArray(selectedOptions) ||
+      selectedOptions[currentQuestionIndex] === -1
+    ) {
       wx.showToast({ title: '请选择答案', icon: 'none' });
       return;
     }
-
-    if (this.data.currentQuestionIndex < this.data.questions.length - 1) {
+    if (currentQuestionIndex < questions.length - 1) {
       this.setData({
-        currentQuestionIndex: this.data.currentQuestionIndex + 1
+        currentQuestionIndex: currentQuestionIndex + 1
       });
     }
   },
@@ -134,64 +132,22 @@ Page({
         completed_at: now.toISOString()
       };
 
+      // 只保留单问卷模式
       let result;
-      
-      if (this.data.mode === 'smart' && this.data.assessmentId) {
-        // 智能测评模式
-        result = await scaleApi.submitSmartAnswer(
-          this.data.assessmentId,
-          this.data.scaleConfig.id,
-          data
-        );
-        
-        wx.hideLoading();
-        
-        if (result.success) {
-          if (result.completed) {
-            // 测评完成，跳转到结果页面
-            wx.redirectTo({
-              url: `/pages/assessment/smart-result/smart-result?assessmentId=${this.data.assessmentId}`
-            });
-          } else if (result.next_scale) {
-            // 还有下一个量表，继续答题
-            // 兼容后端返回 id/config_id 字段
-            const nextScaleId = result.next_scale.id || result.next_scale.config_id;
-            this.setData({
-              currentQuestionIndex: 0,
-              selectedOptions: new Array(result.next_scale.questions.length).fill(-1),
-              startTime: Date.now(),
-              scaleConfig: { ...result.next_scale, id: nextScaleId },
-              questions: result.next_scale.questions
-            }, () => {
-              // 回调中校验新量表ID，确保健壮
-              if (!this.data.scaleConfig || !this.data.scaleConfig.id) {
-                wx.showToast({ title: '量表ID异常', icon: 'none' });
-              }
-              // 打印页面数据设置完成
-              console.log('页面数据设置完成，当前问题索引:', this.data.currentQuestionIndex);
-            });
-            wx.showToast({ title: '继续下一个量表', icon: 'success' });
-          }
-        } else {
-          throw new Error(result.error || '提交失败');
-        }
-      } else {
-        // 单问卷模式
-        result = await scaleApi.createResult({
-          ...data,
-          user_id: userInfo.id
+      result = await scaleApi.createResult({
+        ...data,
+        user_id: userInfo.id
+      });
+
+      wx.hideLoading();
+
+      if (result.success) {
+        // 跳转到结果页面
+        wx.redirectTo({
+          url: `/pages/assessment/result/result?id=${result.id}`
         });
-        
-        wx.hideLoading();
-        
-        if (result.success) {
-          // 跳转到结果页面
-          wx.redirectTo({
-            url: `/pages/assessment/result/result?id=${result.id}`
-          });
-        } else {
-          throw new Error(result.error || '提交失败');
-        }
+      } else {
+        throw new Error(result.error || '提交失败');
       }
     } catch (error) {
       wx.hideLoading();

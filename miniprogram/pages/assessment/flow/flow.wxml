@@ -1,35 +1,25 @@
-<!--pages/assessment/detail/detail.wxml-->
+<!-- 流程测评页面，风格参考 detail -->
 <view class="assessment-container">
   <view wx:if="{{loading}}" class="loading-state">
     <text class="loading-text">加载中...</text>
   </view>
 
-  <view wx:elif="{{scaleConfig}}" class="assessment-content">
-    
-    <!-- 顶栏 - 问卷名称 -->
+  <view wx:elif="{{!finished}}" class="assessment-content">
     <view class="header-bar">
-      <text class="header-title">{{scaleConfig.name}}</text>
+      <text class="header-title">{{scaleList[currentScaleIndex].name}}</text>
     </view>
-
-    <!-- 空状态提示 -->
     <view wx:if="{{questions.length === 0}}" class="empty-state">
       <text class="empty-text">暂无题目</text>
     </view>
-
-    <!-- 进度条 -->
     <view class="progress-bar" wx:if="{{questions.length > 0}}">
       <view class="progress-fill" style="width: {{(currentQuestionIndex + 1) / questions.length * 100}}%"></view>
     </view>
     <view class="progress-text" wx:if="{{questions.length > 0}}">
       <text>{{currentQuestionIndex + 1}}/{{questions.length}}</text>
     </view>
-
-    <!-- 当前题目 -->
     <view class="question-section card" wx:if="{{questions.length > 0 && questions[currentQuestionIndex]}}">
       <view class="question-number">第 {{currentQuestionIndex + 1}} 题</view>
       <text class="question-text">{{questions[currentQuestionIndex].question}}</text>
-
-      <!-- 选项 -->
       <view class="options-list" wx:if="{{questions[currentQuestionIndex].options}}">
         <view
           wx:for="{{questions[currentQuestionIndex].options}}"
@@ -45,8 +35,6 @@
         </view>
       </view>
     </view>
-
-    <!-- 操作按钮 -->
     <view class="action-buttons" wx:if="{{questions.length > 0}}">
       <view
         class="btn-secondary {{currentQuestionIndex === 0 ? 'btn-disabled' : ''}}"
@@ -54,7 +42,6 @@
       >
         <text>上一题</text>
       </view>
-
       <view
         wx:if="{{currentQuestionIndex < questions.length - 1}}"
         class="btn-primary"
@@ -62,13 +49,51 @@
       >
         <text>下一题</text>
       </view>
-
       <view
         wx:elif="{{currentQuestionIndex === questions.length - 1}}"
         class="btn-primary"
-        bindtap="submitAssessment"
+        bindtap="submitScale"
       >
         <text>提交问卷</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{finished}}" class="result-container">
+    <view class="result-card">
+      <view class="result-header">
+        <text class="result-title">测评结果</text>
+        <text class="result-time">{{localResult.timestamp}}</text>
+      </view>
+      
+      <view class="result-content">
+        <view class="score-section">
+          <text class="score-text">{{localResult.scoreText}}</text>
+          <text class="status-text" style="color: {{localResult.statusColor}};">{{localResult.statusText}}</text>
+        </view>
+        
+        <view class="result-description">
+          <text class="desc-text">{{localResult.resultText}}</text>
+        </view>
+        
+        <view wx:if="{{submitting}}" class="submit-status">
+          <view class="loading-spinner"></view>
+          <text class="submit-text">正在提交结果，请稍候...</text>
+        </view>
+        
+        <view wx:elif="{{!submitting && !submitSuccess}}" class="submit-hint">
+          <text class="hint-text">结果将在3秒后自动提交</text>
+        </view>
+        
+        <view wx:elif="{{submitSuccess}}" class="submit-success-hint">
+          <text class="success-hint-text">✓ 结果已成功提交</text>
+        </view>
+      </view>
+    </view>
+    
+    <view class="manual-submit-section" wx:if="{{!submitting && !submitSuccess}}">
+      <view class="btn-primary" bindtap="manualSubmit">
+        <text>立即提交</text>
       </view>
     </view>
   </view>

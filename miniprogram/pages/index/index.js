@@ -215,7 +215,7 @@ Page({
    */
   startCognitiveFlow() {
     wx.navigateTo({
-      url: '/pages/assessment/smart/smart'
+      url: '/pages/assessment/flow/flow'
     });
   },
 

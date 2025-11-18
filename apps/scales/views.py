@@ -3,13 +3,10 @@
 """
 from ninja import Router, Query
 from typing import List, Optional, Dict, Any
-from apps.scales.assessment_core import SmartAssessmentService, SingleScaleService
+from apps.scales.assessment_core import SingleScaleService
 from apps.scales.models import ScaleConfig
 from apps.scales.serializers import (
     ScaleConfigResponseSchema, ScaleResultCreateSchema, ScaleResultResponseSchema,
-    SmartAssessmentStartResponseSchema,
-    SmartAssessmentAnswerSchema, SmartAssessmentAnswerResponseSchema,
-    SmartAssessmentResultSchema
 )
 from config.jwt_auth_adapter import jwt_auth
 import logging
@@ -171,79 +168,3 @@ def get_single_result(request, result_id: int):
     except Exception as e:
         logger.error(f"获取单量表结果失败: {str(e)}")
         return {"error": f"获取结果失败: {str(e)}"}
-
-# ========== 智能测评流程接口 ==========
-
-@scales_router.post("/smart-assessment/start", auth=jwt_auth, response=SmartAssessmentStartResponseSchema)
-def start_smart_assessment(request):
-    """开始智能测评 - 后端通过JWT识别用户"""
-    try:
-        # 从JWT获取用户ID，而不是从请求数据
-        user_id = str(request.user.id)
-        assessment = SmartAssessmentService.start_assessment(user_id)
-        return {
-            'success': True,
-            'assessment_id': assessment['id'],
-            'next_scale': assessment['next_scale'],
-            'total_scales': assessment['total_scales'],
-            'message': '智能测评已开始'
-        }
-        
-    except Exception as e:
-        logger.error(f"开始智能测评失败: {str(e)}")
-        return {"error": f"开始失败: {str(e)}"}
-
-@scales_router.get("/smart-assessment/{assessment_id}", response=SmartAssessmentResultSchema)
-def get_smart_assessment_result(request, assessment_id: int):
-    """获取智能测评结果 - 精简接口"""
-    try:
-        result = SmartAssessmentService.get_assessment_result(assessment_id)
-        if result:
-            # 构建响应数据
-            filtered_result = {
-                'id': result['id'],
-                'user_id': result['user_id'],
-                'status': result['status'],
-                'scale_responses': result['scale_responses'],
-                'scale_scores': result['scale_scores'],
-                'results': result['results'],
-                'final_result': result['final_result'],
-                'total_duration': result['total_duration']
-            }
-            return filtered_result
-        else:
-            return {"error": "测评不存在或未完成"}
-    except Exception as e:
-        logger.error(f"获取智能测评结果失败: {str(e)}")
-        return {"error": f"获取失败: {str(e)}"}
-
-@scales_router.post("/smart-assessment/{assessment_id}/answer/{scale_config_id}", auth=jwt_auth, response=SmartAssessmentAnswerResponseSchema)
-def submit_smart_answer(request, assessment_id: int, scale_config_id: int, data: SmartAssessmentAnswerSchema):
-    """提交智能测评答案"""
-    try:
-        # 从JWT获取用户ID，验证测评归属
-        user_id = str(request.user.id)
-        result = SmartAssessmentService.submit_answer(
-            assessment_id=assessment_id,
-            scale_config_id=scale_config_id,
-            user_id=user_id,  # 添加用户ID验证
-            selected_options=data.selected_options,
-            duration_ms=data.duration_ms,
-            started_at=data.started_at,
-            completed_at=data.completed_at
-        )
-        
-        if result['success']:
-            return {
-                'success': True,
-                'completed': result['completed'],
-                'next_scale': result.get('next_scale'),
-                'final_result': result.get('final_result'),
-                'message': result['message']
-            }
-        else:
-            return {"error": result.get('error', '提交失败')}
-            
-    except Exception as e:
-        logger.error(f"提交智能测评答案失败: {str(e)}")
-        return {"error": f"提交失败: {str(e)}"}

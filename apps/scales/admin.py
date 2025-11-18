@@ -5,8 +5,7 @@
 from apps.scales.admin import (
     ScaleConfigAdmin,
     ScaleResultAdmin,
-    SmartAssessmentRecordAdmin
 )
 
 # 确保这些类在模块级别可用，便于 Django 发现
-__all__ = ['ScaleConfigAdmin', 'ScaleResultAdmin', 'SmartAssessmentRecordAdmin']
+__all__ = ['ScaleConfigAdmin', 'ScaleResultAdmin']

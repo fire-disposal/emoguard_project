@@ -15,7 +15,7 @@ App({
     console.log('小程序启动');
     
     // 获取系统信息
-    this.globalData.systemInfo = wx.getSystemInfoSync();
+    this.globalData.systemInfo = wx.getSystemSetting();
     
     // 本地恢复流程更健壮，单独捕获每项异常，避免全局阻断
     let userInfo = null, token = null, refreshToken = null;

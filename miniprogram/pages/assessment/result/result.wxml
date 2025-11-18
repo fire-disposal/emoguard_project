@@ -4,6 +4,40 @@
     <text class="loading-text">加载中...</text>
   </view>
 
+  <!-- 流程测评结果展示 -->
+  <view wx:elif="{{flowResult}}" class="result-content">
+    <view class="complete-icon">✓</view>
+    <text class="complete-text">流程测评完成</text>
+    <view class="result-card card">
+      <text class="scale-name">本地分析</text>
+      <view wx:for="{{flowResult.local}}" wx:key="scale">
+        <view class="conclusion-section">
+          <text class="section-label">{{item.scale}} 分析</text>
+          <text class="conclusion-text">{{item.analysis.interpretation}}</text>
+        </view>
+        <view class="analysis-section">
+          <text class="section-label">详细分数</text>
+          <view class="analysis-content">
+            <text>得分：{{item.analysis.score}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="conclusion-section" wx:if="{{flowResult.remote}}">
+        <text class="section-label">后端存档信息</text>
+        <text class="conclusion-text">{{flowResult.remote.message || flowResult.remote.detail || flowResult.remote.status || flowResult.remote.id}}</text>
+      </view>
+    </view>
+    <view class="action-buttons">
+      <view class="btn-secondary" bindtap="goHome">
+        <text>返回首页</text>
+      </view>
+      <view class="btn-primary" bindtap="goToReports">
+        <text>查看报告</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 单量表结果展示 -->
   <view wx:elif="{{result}}" class="result-content">
     <!-- 完成提示 -->
     <view class="complete-icon">✓</view>

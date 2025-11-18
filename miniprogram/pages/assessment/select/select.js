@@ -46,10 +46,10 @@ Page({
 
       wx.showLoading({ title: '初始化中...' });
       
-      // 直接跳转到智能测评页面
+      // 跳转到新的流程测评页面
       wx.hideLoading();
       wx.navigateTo({
-        url: '/pages/assessment/smart/smart'
+        url: '/pages/assessment/flow/flow'
       });
       
     } catch (error) {

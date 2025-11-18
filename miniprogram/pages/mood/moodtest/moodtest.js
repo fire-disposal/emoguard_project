@@ -194,8 +194,8 @@ Page({
       // 添加时间戳和设备信息
       recordData.timestamp = new Date().toISOString();
       recordData.device_info = {
-        platform: wx.getSystemInfoSync().platform,
-        version: wx.getSystemInfoSync().version
+        platform: wx.getSystemSetting().platform,
+        version: wx.getSystemSetting().version
       };
       
       console.log('完整提交数据:', recordData);

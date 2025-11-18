@@ -30,27 +30,11 @@ function getResult(resultId) {
   return request.get(`/api/scales/results/${resultId}`);
 }
 
-// 开始智能测评
-function startSmartAssessment() {
-  return request.post('/api/scales/smart-assessment/start', {});
-}
 
-// 获取智能测评结果
-function getSmartAssessmentResult(assessmentId) {
-  return request.get(`/api/scales/smart-assessment/${assessmentId}`);
-}
-
-// 提交智能测评答案
-function submitSmartAnswer(assessmentId, scaleConfigId, data) {
-  return request.post(`/api/scales/smart-assessment/${assessmentId}/answer/${scaleConfigId}`, data);
-}
 
 module.exports = {
   listConfigs,
   getConfig,
   createResult,
   getResult,
-  startSmartAssessment,
-  getSmartAssessmentResult,
-  submitSmartAnswer
 };

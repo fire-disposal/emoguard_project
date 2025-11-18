@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     "apps.notifications",
     "apps.emotiontracker",
     "apps.feedback",
+    "apps.cognitive_flow",
 ]
 
 # 中间件
