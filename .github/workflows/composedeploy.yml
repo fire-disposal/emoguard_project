@@ -1,0 +1,124 @@
+name: Build & Deploy Backend Stack
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE_BASE_NAME: ghcr.io/${{ github.repository }}/emoguard-backend
+  DEPLOY_DIR: /srv/emoguard
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get Version
+      id: get_version
+      run: echo "VERSION=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+
+    - name: Build & Push Backend Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: |
+          ${{ env.IMAGE_BASE_NAME }}:${{ steps.get_version.outputs.VERSION }}
+          ${{ env.IMAGE_BASE_NAME }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy Stack via Docker Compose
+      run: |
+        VERSION=${{ steps.get_version.outputs.VERSION }}
+        IMAGE="${{ env.IMAGE_BASE_NAME }}:$VERSION"
+
+        ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+        set -euo pipefail
+
+        cd ${{ env.DEPLOY_DIR }}
+
+        # 备份上一个成功的镜像 tag
+        if [ -f last_successful_version.txt ]; then
+          LAST_VERSION=\$(cat last_successful_version.txt)
+        else
+          LAST_VERSION="latest"
+        fi
+
+        echo "🔐 Logging into GHCR..."
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+        echo "📦 Pulling latest backend image..."
+        docker pull $IMAGE
+
+        echo "🛑 Stopping existing stack..."
+        docker compose down || true
+
+        # 替换 compose 文件中的 backend 镜像
+        echo "🚀 Updating docker-compose.yml to use version $VERSION..."
+        # 只替换 backend 服务的镜像，避免 celery-worker/beat 被误替换
+        sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
+
+        # 保证宿主机相关目录存在且权限正确（适用于 Ubuntu/CentOS）
+        for d in media logs staticfiles pgdata redisdata; do
+          sudo mkdir -p /srv/emoguard/$d
+          sudo chown 1000:1000 /srv/emoguard/$d
+          sudo chmod 755 /srv/emoguard/$d
+        done
+
+        echo "🚀 Starting stack..."
+        docker compose up -d --remove-orphans
+
+        # Backend 健康检查
+        echo "⏳ Waiting for backend health..."
+        HEALTH_RETRIES=10
+        HEALTH_INTERVAL=3
+        for i in \$(seq 1 \$HEALTH_RETRIES); do
+          if docker exec emoguard-backend curl -fs http://localhost:8000/health/ > /dev/null; then
+            echo "✅ Backend healthy"
+            # 记录本次成功版本
+            echo "$VERSION" > last_successful_version.txt
+            exit 0
+          fi
+          echo "  ⌛ Health check retry \$i..."
+          sleep \$HEALTH_INTERVAL
+        done
+
+        echo "❌ Health check failed"
+        echo "📜 Recent backend logs:"
+        docker compose logs backend --tail 50
+
+        echo "♻️ Rolling back to last successful version: \$LAST_VERSION"
+        # 回滚时同样只替换 backend 服务镜像
+        sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: ${{ env.IMAGE_BASE_NAME }}:\$LAST_VERSION|" docker-compose.yml
+        docker compose down
+        docker compose up -d --remove-orphans
+
+        exit 1 
+        EOF
+    - name: ✅ Deployment Finished
+      run: echo "🚀 Deploy OK — version ${{ steps.get_version.outputs.VERSION }}"
