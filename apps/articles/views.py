@@ -6,7 +6,7 @@ from .serializers import (
     ArticleCreateSchema, ArticleUpdateSchema, ArticleResponseSchema, ArticleListQuerySchema
 )
 
-articles_router = Router()
+articles_router = Router(tags=["articles"])
 
 @articles_router.get("/", response=list[ArticleResponseSchema])
 def list_articles(request, filters: ArticleListQuerySchema = Query(...)):

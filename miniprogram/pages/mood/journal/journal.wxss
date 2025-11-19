@@ -129,8 +129,7 @@
 }
 
 .submit-mood-btn {
-  width: 90%; /* 将宽度改为90% */
-  /* 新增：设置外边距为 auto，配合块级元素(display: flex 也会使其表现类似块级) 实现水平居中 */
+  width: 90%; 
   margin-left: auto;
   margin-right: auto; 
   

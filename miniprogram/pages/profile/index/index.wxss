@@ -43,7 +43,7 @@
   font-size: 36rpx;
   font-weight: 700;
   color: #333;
-  margin-bottom: 8rpx;
+  margin-bottom: 30rpx;
 }
 
 .user-role {
@@ -52,7 +52,72 @@
   color: #999;
 }
 
-.edit-btn {
+
+/* 异常分数胶囊样式 */
+.abnormal-capsule-list {
+  display: flex;
+  flex-wrap: wrap;
+  /* gap: 16rpx; */ /* 小程序不支持gap，使用margin模拟 */
+  margin-top: 8rpx;
+}
+
+.abnormal-capsule {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  margin-right: 12rpx;
+  margin-bottom: 8rpx;
+}
+.abnormal-capsule-list .abnormal-capsule:last-child {
+  margin-right: 0;
+  background: #f5f5f5;
+  color: #333;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+
+.capsule-label {
+  margin-right: 12rpx;
+  font-weight: 600;
+}
+
+.capsule-score {
+  margin-right: 8rpx;
+  color: #fa541c;
+  font-weight: 700;
+}
+
+.capsule-desc {
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 不同异常类型颜色区分 */
+.abnormal-SCD {
+  background: #fffbe6;
+  color: #faad14;
+}
+.abnormal-MMSE {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+.abnormal-MoCA {
+  background: #f0f5ff;
+  color: #722ed1;
+}
+.abnormal-GAD-7 {
+  background: #fff1f0;
+  color: #f5222d;
+}
+.abnormal-PHQ-9 {
+  background: #f9f0ff;
+  color: #eb2f96;
+}
+.abnormal-ADL {
+  background: #f6ffed;
+  color: #52c41a;
   padding: 16rpx 32rpx;
   background: #f0f0f0;
   border-radius: 32rpx;

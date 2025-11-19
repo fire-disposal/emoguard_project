@@ -48,7 +48,7 @@ Page({
     try {
       const userInfo = await userApi.getCurrentUser();
       console.log('当前用户信息:', userInfo);
-      
+            
       // 如果信息已完善，跳转到首页
       if (userInfo.is_profile_complete) {
         wx.reLaunch({

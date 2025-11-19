@@ -14,21 +14,27 @@ admin.site.site_header = "情绪监测系统"
 class UserAdmin(BaseUserAdmin):
     """用户管理后台"""
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.exclude(is_staff=True)
+
     # 列表显示字段
     list_display = (
-        "id",
         "username",
         "real_name",
-        "email",
-        "role",
-        "user_type_display",
-        "wechat_openid_short",
-        "is_active",
-        "is_staff",
+        "gender",
+        "age",
+        "education",
+        "province",
+        "city",
+        "phone",
+        "score_scd", 
+        "score_mmse", 
+        "score_moca", 
         "is_profile_complete",
-        "date_joined",
+        "last_mood_tested_at",
     )
-    list_display_links = ("id", "username")
+    list_display_links = ("username",)
 
     # 搜索字段
     search_fields = (
@@ -51,9 +57,9 @@ class UserAdmin(BaseUserAdmin):
 
     # 字段分组
     fieldsets = (
-        ("基本信息", {"fields": ("username", "email", "password")}),
+        ("账号信息", {"fields": ("username", "email", "password")}),
         (
-            "用户资料",
+            "基础资料",
             {
                 "fields": (
                     "real_name",
@@ -62,21 +68,30 @@ class UserAdmin(BaseUserAdmin):
                     "education",
                     "province",
                     "city",
+                    "district",
+                    "phone",
                     "is_profile_complete",
-                )
+                    "score_scd",
+                    "score_mmse",
+                    "score_moca",
+                    "score_gad7",
+                    "score_phq9",
+                    "score_adl",
+                    "last_mood_tested_at",
+                ),
+                "description": "请完善用户的基本信息，便于后续服务。测评分数可由管理员直接编辑。",
             },
         ),
         (
-            "微信信息",
+            "微信相关（技术字段，通常可忽略）",
             {
                 "fields": ("wechat_openid", "wechat_unionid"),
                 "classes": ("collapse",),
-                "description": "微信小程序用户相关信息",
+                "description": "微信小程序用户相关信息，仅技术人员关注。",
             },
         ),
-        ("联系信息", {"fields": ("phone",), "classes": ("collapse",)}),
         (
-            "权限信息",
+            "权限设置",
             {
                 "fields": (
                     "role",
@@ -85,7 +100,8 @@ class UserAdmin(BaseUserAdmin):
                     "is_superuser",
                     "groups",
                     "user_permissions",
-                )
+                ),
+                "description": "如无特殊需求，保持默认即可。",
             },
         ),
         (

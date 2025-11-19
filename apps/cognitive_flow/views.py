@@ -6,7 +6,7 @@ from apps.cognitive_flow.serializers import (
 import logging
 from config.jwt_auth_adapter import jwt_auth
 
-cognitive_router = Router()
+cognitive_router = Router(tags=["cognitive_flow"])
 
 @cognitive_router.post("/submit", response=CognitiveAssessmentResultSchema, auth=jwt_auth)
 def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
@@ -49,7 +49,6 @@ def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
             score_gad7=getattr(data, "score_gad7", None),
             score_phq9=getattr(data, "score_phq9", None),
             score_adl=getattr(data, "score_adl", None),
-            score_sus=getattr(data, "score_sus", None),
             analysis=getattr(data, "analysis", {}) or {},
             started_at=parse_iso(getattr(data, "started_at", None)),
             completed_at=parse_iso(getattr(data, "completed_at", None))
@@ -72,7 +71,6 @@ def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
             score_gad7=record.score_gad7,
             score_phq9=record.score_phq9,
             score_adl=record.score_adl,
-            score_sus=record.score_sus,
             analysis=record.analysis,
             started_at=record.started_at.isoformat() if record.started_at else None,
             completed_at=record.completed_at.isoformat() if record.completed_at else None,
@@ -105,7 +103,6 @@ def get_assessment_result(request, record_id: int):
             score_gad7=record.score_gad7,
             score_phq9=record.score_phq9,
             score_adl=record.score_adl,
-            score_sus=record.score_sus,
             analysis=record.analysis,
             started_at=record.started_at.isoformat() if record.started_at else None,
             completed_at=record.completed_at.isoformat() if record.completed_at else None,

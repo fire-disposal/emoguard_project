@@ -19,6 +19,16 @@ Page({
     submitting: false
   },
 
+  /**
+   * 根据心情类型文本获取表情
+   */
+  getEmojiByMoodName(moodName) {
+    const mood = this.data.moodOptions.find(
+      m => m.name === moodName || m.label === moodName
+    );
+    return mood ? mood.emoji : '😐';
+  },
+
   onShow() {
     if (!auth.isLogined()) {
       auth.navigateToLogin();
@@ -48,12 +58,29 @@ Page({
       page_size: 20
     })
     .then((res) => {
+      // 确保数据格式正确，处理可能的空值或格式错误
+      const journals = (res || []).map(item => {
+        const moodName = item.mood_name || item.label || '未知';
+        return {
+          ...item,
+          emoji: this.getEmojiByMoodName(moodName),
+          mood_name: moodName,
+          mood_score: item.mood_score || item.score || 5,
+          text: item.text || '',
+          created_at: item.created_at || new Date().toISOString()
+        };
+      });
+      
       this.setData({
-        journals: res || []
+        journals: journals
       });
     })
     .catch((error) => {
       console.error('加载历史记录失败:', error);
+      // 出错时显示空数组而不是undefined
+      this.setData({
+        journals: []
+      });
     })
     .finally(() => {
       this.setData({ loading: false });
@@ -87,6 +114,14 @@ Page({
       return;
     }
 
+    if (!this.data.moodReason || !this.data.moodReason.trim()) {
+      wx.showToast({
+        title: '请填写心情原因',
+        icon: 'none'
+      });
+      return;
+    }
+
     if (this.data.submitting) return;
 
     const moodConfig = this.data.moodOptions.find(m => m.value === this.data.selectedMood);
@@ -107,7 +142,7 @@ Page({
     journalApi.createJournal({
       mood_score: moodConfig.score,
       mood_name: moodConfig.name,
-      text: this.data.moodReason.trim() || ''
+      text: this.data.moodReason.trim()
     })
     .then(() => {
       wx.showToast({

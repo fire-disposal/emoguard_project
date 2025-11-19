@@ -33,7 +33,10 @@
     </view>
     
     <view class="chart-wrapper">
-      <ec-canvas id="mychart-dom-line" canvas-id="mychart-line" ec="{{ec}}"></ec-canvas>
+      <ec-canvas id="mychart-dom-line" canvas-id="mychart-line" ec="{{ec}}" wx:if="{{!loading && trendData}}"></ec-canvas>
+      <view wx:else class="chart-placeholder">
+        <text class="placeholder-text">暂无图表数据</text>
+      </view>
     </view>
   </view>
 
@@ -75,5 +78,12 @@
   <view class="loading-container" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">正在加载数据...</text>
+  </view>
+
+  <!-- 空数据状态 -->
+  <view class="empty-state" wx:if="{{!loading && (!trendData || historyRecords.length === 0)}}">
+    <text class="empty-icon">📊</text>
+    <text class="empty-text">暂无情绪趋势数据</text>
+    <text class="empty-hint">开始记录您的情绪测评，查看趋势分析</text>
   </view>
 </view>

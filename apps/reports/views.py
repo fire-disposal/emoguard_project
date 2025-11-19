@@ -10,7 +10,7 @@ from .serializers import (
 )
 from config.jwt_auth_adapter import jwt_auth
 
-reports_router = Router()
+reports_router = Router(tags=["reports"])
 
 @reports_router.get("/", response=list[HealthReportResponseSchema], auth=jwt_auth)
 def list_reports(request, filters: HealthReportListQuerySchema = Query(...)):

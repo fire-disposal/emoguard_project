@@ -28,7 +28,7 @@
 
     <!-- 心情原因输入 -->
     <view class="mood-reason">
-      <text class="reason-label">心情原因（选填）</text>
+      <text class="reason-label">心情原因（必填）</text>
       <textarea
         value="{{moodReason}}"
         class="reason-input"
@@ -74,14 +74,14 @@
         wx:key="id" 
         class="history-item"
       >
-        <view class="item-emoji">{{item.mood_emoji}}</view>
+        <view class="item-emoji">{{item.emoji || '😐'}}</view>
         <view class="item-content">
           <view class="item-header">
-            <text class="item-mood-text">{{item.mood_name}}</text>
+            <text class="item-mood-text">{{item.mood_name || item.label}}</text>
             <text class="item-time">{{formatTime(item.created_at)}}</text>
           </view>
           <text wx:if="{{item.text}}" class="item-reason">{{item.text}}</text>
-          <text class="item-score">心情分数: {{item.mood_score}}/10</text>
+          <text class="item-score" wx:if="{{item.mood_score || item.score}}">心情分数: {{item.mood_score || item.score}}/10</text>
         </view>
       </view>
     </view>

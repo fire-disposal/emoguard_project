@@ -66,7 +66,6 @@ class CognitiveAssessmentRecord(models.Model):
     score_gad7 = models.FloatField(verbose_name='GAD7得分', null=True, blank=True)
     score_phq9 = models.FloatField(verbose_name='PHQ9得分', null=True, blank=True)
     score_adl = models.FloatField(verbose_name='ADL得分', null=True, blank=True)
-    score_sus = models.FloatField(verbose_name='SUS得分', null=True, blank=True)
     analysis = models.JSONField(default=dict, blank=True, verbose_name='评分分析')
     started_at = models.DateTimeField()
     completed_at = models.DateTimeField()

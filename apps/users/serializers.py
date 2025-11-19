@@ -44,6 +44,15 @@ class UserResponseSchema(Schema):
     # 评估状态
     has_completed_cognitive_assessment: bool
 
+    # 测评分数字段
+    score_scd: Optional[float] = None
+    score_mmse: Optional[float] = None
+    score_moca: Optional[float] = None
+    score_gad7: Optional[float] = None
+    score_phq9: Optional[float] = None
+    score_adl: Optional[float] = None
+    # 新增：上次每日情绪测试时间
+    last_mood_tested_at: Optional[str] = None
 
 class UserCreateSchema(Schema):
     """创建用户（管理员功能）"""

@@ -4,7 +4,7 @@ from apps.feedback.models import Feedback
 from apps.feedback.serializers import FeedbackCreateSchema
 from config.jwt_auth_adapter import jwt_auth
 
-feedback_router = Router()
+feedback_router = Router(tags=["feedback"])
 
 
 @feedback_router.post("/feedback", auth=jwt_auth)

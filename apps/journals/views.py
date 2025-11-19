@@ -11,7 +11,7 @@ from .serializers import (
 )
 from config.jwt_auth_adapter import jwt_auth
 
-journals_router = Router()
+journals_router = Router(tags=["journals"])
 
 @journals_router.get("/", response=list[MoodJournalResponseSchema], auth=jwt_auth)
 def list_journals(request, filters: MoodJournalListQuerySchema = Query(...)):

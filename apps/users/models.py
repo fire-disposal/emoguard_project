@@ -140,7 +140,21 @@ class User(AbstractUser):
         default=False,
         verbose_name='已完成初次认知评估'
     )
-    
+
+    # ========== 测评分数字段 ==========
+    score_scd = models.FloatField(null=True, blank=True, verbose_name="SCD量表分数")
+    score_mmse = models.FloatField(null=True, blank=True, verbose_name="MMSE量表分数")
+    score_moca = models.FloatField(null=True, blank=True, verbose_name="MoCA量表分数")
+    score_gad7 = models.FloatField(null=True, blank=True, verbose_name="GAD-7量表分数")
+    score_phq9 = models.FloatField(null=True, blank=True, verbose_name="PHQ-9量表分数")
+    score_adl = models.FloatField(null=True, blank=True, verbose_name="ADL量表分数")
+
+    # ========== 情绪测试相关 ==========
+    last_mood_tested_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="上次每日情绪测试时间"
+    )
 
     class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         verbose_name = '用户'

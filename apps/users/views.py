@@ -52,6 +52,13 @@ def _user_to_response_schema(user):
         phone=user.phone,
         is_profile_complete=user.is_profile_complete,
         has_completed_cognitive_assessment=user.has_completed_cognitive_assessment,
+        score_scd=user.score_scd,
+        score_mmse=user.score_mmse,
+        score_moca=user.score_moca,
+        score_gad7=user.score_gad7,
+        score_phq9=user.score_phq9,
+        score_adl=user.score_adl,
+        last_mood_tested_at=user.last_mood_tested_at,
     )
 
 

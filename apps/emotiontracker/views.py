@@ -7,18 +7,34 @@ from .serializers import (
 )
 from config.jwt_auth_adapter import jwt_auth
 
-emotion_router = Router()
+emotion_router = Router(tags=["emotiontracker"])
 
 @emotion_router.post("/", response=EmotionRecordResponseSchema, auth=jwt_auth)
 def create_emotion_record(request, data: EmotionRecordCreateSchema):
+    from apps.users.models import User
+    from django.utils import timezone
+
     current_user = request.auth
     record = EmotionRecord.objects.create(
         user_id=current_user.id,
         depression=data.depression,
         anxiety=data.anxiety,
         energy=data.energy,
-        sleep=data.sleep
+        sleep=data.sleep,
+        mainMood=getattr(data, "mainMood", None),
+        moodIntensity=getattr(data, "moodIntensity", None),
+        mainMoodOther=getattr(data, "mainMoodOther", None),
+        moodSupplementTags=getattr(data, "moodSupplementTags", None),
+        moodSupplementText=getattr(data, "moodSupplementText", None),
+        period=getattr(data, "period", None),
+        device_info=getattr(data, "device_info", None)
     )
+    # 更新用户上次情绪测试时间
+    try:
+        User.objects.filter(id=current_user.id).update(last_mood_tested_at=timezone.now())
+    except Exception:
+        pass
+
     return EmotionRecordResponseSchema(
         id=record.id,
         user_id=str(record.user_id),
@@ -26,6 +42,13 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
         anxiety=record.anxiety,
         energy=record.energy,
         sleep=record.sleep,
+        mainMood=record.mainMood,
+        moodIntensity=record.moodIntensity,
+        mainMoodOther=record.mainMoodOther,
+        moodSupplementTags=record.moodSupplementTags,
+        moodSupplementText=record.moodSupplementText,
+        period=record.period,
+        device_info=record.device_info,
         created_at=record.created_at.isoformat()
     )
 

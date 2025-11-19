@@ -3,7 +3,7 @@
 """
 from ninja import Router, Query
 from typing import List, Optional, Dict, Any
-from apps.scales.assessment_core import SingleScaleService
+from apps.scales.assessment_core import ScaleResultService
 from apps.scales.models import ScaleConfig
 from apps.scales.serializers import (
     ScaleConfigResponseSchema, ScaleResultCreateSchema, ScaleResultResponseSchema,
@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-scales_router = Router()
+scales_router = Router(tags=["scales"])
 
 
 class ScaleResultViewHelper:
@@ -132,7 +132,7 @@ def create_single_result(request, data: ScaleResultCreateSchema):
     try:
         # 从JWT获取用户ID
         user_id = str(request.user.id)
-        result = SingleScaleService.create_single_scale_result(
+        result = ScaleResultService.create_single_scale_result(
             user_id=user_id,
             scale_config_id=data.scale_config_id,
             selected_options=data.selected_options,
@@ -158,7 +158,7 @@ def create_single_result(request, data: ScaleResultCreateSchema):
 def get_single_result(request, result_id: int):
     """获取单量表结果详情 - 改进版本"""
     try:
-        raw_data = SingleScaleService.get_single_scale_result(result_id)
+        raw_data = ScaleResultService.get_single_scale_result(result_id)
         if not raw_data:
             return {"error": "结果不存在"}
         

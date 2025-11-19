@@ -495,3 +495,49 @@
     color: #adb5bd;
   }
 }
+
+/* 图表占位符样式 */
+.chart-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 500rpx;
+  background: #f8f9fa;
+  border-radius: 8rpx;
+  border: 2rpx dashed #dee2e6;
+}
+
+.placeholder-text {
+  font-size: 28rpx;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* 空数据状态样式 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 40rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #6c757d;
+  line-height: 1.5;
+}

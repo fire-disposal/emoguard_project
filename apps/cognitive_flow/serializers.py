@@ -9,7 +9,6 @@ class CognitiveAssessmentSubmitSchema(Schema):
     score_gad7: Optional[float] = None
     score_phq9: Optional[float] = None
     score_adl: Optional[float] = None
-    score_sus: Optional[float] = None
     analysis: Optional[Dict[str, dict]] = None
     started_at: str
     completed_at: str
@@ -31,7 +30,6 @@ class CognitiveAssessmentResultSchema(Schema):
     score_gad7: Optional[float] = None
     score_phq9: Optional[float] = None
     score_adl: Optional[float] = None
-    score_sus: Optional[float] = None
     analysis: Dict
     started_at: str
     completed_at: str

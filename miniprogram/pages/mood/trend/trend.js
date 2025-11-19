@@ -89,7 +89,7 @@ Page({
 
       const formattedDates = trendData.dates.map(formatDateMD);
 
-      // 构建历史记录数据
+      // 构建历史记录数据，确保数据完整性
       const historyRecords = this.buildHistoryRecords(trendData);
 
       this.setData({
@@ -98,12 +98,18 @@ Page({
         loading: false
       });
 
-      setTimeout(() => this.updateChart(), 150);
+      // 延迟更新图表，确保DOM已渲染
+      setTimeout(() => this.updateChart(), 200);
     } catch (error) {
-      this.setData({ loading: false });
+      console.error('加载情绪趋势数据失败:', error);
+      this.setData({
+        loading: false,
+        trendData: null,
+        historyRecords: []
+      });
 
       wx.showToast({
-        title: '加载失败',
+        title: '加载失败，请重试',
         icon: 'none',
         duration: 2000
       });
@@ -111,35 +117,57 @@ Page({
   },
 
   updateChart() {
-    const ecComponent = this.selectComponent('#mychart-dom-line');
-    if (!ecComponent || !ecComponent.chart || !this.data.trendData) return;
+    try {
+      const ecComponent = this.selectComponent('#mychart-dom-line');
+      if (!ecComponent || !ecComponent.chart || !this.data.trendData) {
+        console.warn('图表组件未准备好或数据缺失');
+        return;
+      }
 
-    const chart = ecComponent.chart;
-    const data = this.data.trendData;
+      const chart = ecComponent.chart;
+      const data = this.data.trendData;
 
-    const seriesBase = [
-      { key: 'depression', name: '抑郁', color: '#ff7875' },
-      { key: 'anxiety', name: '焦虑', color: '#ffa940' },
-      { key: 'energy', name: '精力', color: '#52c41a' },
-      { key: 'sleep', name: '睡眠', color: '#1890ff' }
-    ];
+      // 确保数据数组存在且长度一致
+      if (!data.dates || !Array.isArray(data.dates) || data.dates.length === 0) {
+        console.warn('日期数据无效');
+        return;
+      }
 
-    const chosen = seriesBase;
+      const seriesBase = [
+        { key: 'depression', name: '抑郁', color: '#ff7875' },
+        { key: 'anxiety', name: '焦虑', color: '#ffa940' },
+        { key: 'energy', name: '精力', color: '#52c41a' },
+        { key: 'sleep', name: '睡眠', color: '#1890ff' }
+      ];
 
-    const series = chosen.map(s => ({
-      name: s.name,
-      type: 'line',
-      smooth: true,
-      data: data[s.key] || [],
-      lineStyle: { color: s.color, width: 3 },
-      itemStyle: { color: s.color, borderWidth: 1 }
-    }));
+      const chosen = seriesBase;
+      
+      // 过滤掉数据不完整的系列
+      const series = chosen.map(s => {
+        const seriesData = data[s.key] || [];
+        // 确保数据长度与日期长度一致，不足的用0填充
+        const paddedData = seriesData.length >= data.dates.length
+          ? seriesData.slice(0, data.dates.length)
+          : [...seriesData, ...Array(data.dates.length - seriesData.length).fill(0)];
+          
+        return {
+          name: s.name,
+          type: 'line',
+          smooth: true,
+          data: paddedData,
+          lineStyle: { color: s.color, width: 3 },
+          itemStyle: { color: s.color, borderWidth: 1 }
+        };
+      });
 
-    chart.setOption({
-      legend: { data: chosen.map(s => s.name) },
-      xAxis: { data: data.dates },
-      series
-    });
+      chart.setOption({
+        legend: { data: chosen.map(s => s.name) },
+        xAxis: { data: data.dates },
+        series
+      });
+    } catch (error) {
+      console.error('更新图表失败:', error);
+    }
   },
 
   onTimeRangeChange(e) {
@@ -167,18 +195,23 @@ Page({
     }
 
     const records = [];
-    const { dates, depression, anxiety, energy, sleep } = trendData;
+    const { dates, depression = [], anxiety = [], energy = [], sleep = [] } = trendData;
 
     for (let i = 0; i < dates.length; i++) {
-      const record = {
-        date: dates[i],
-        formattedDate: formatDateMD(dates[i]),
-        depression: depression[i] || 0,
-        anxiety: anxiety[i] || 0,
-        energy: energy[i] || 0,
-        sleep: sleep[i] || 0
-      };
-      records.push(record);
+      try {
+        const record = {
+          date: dates[i],
+          formattedDate: formatDateMD(dates[i]),
+          depression: depression[i] || 0,
+          anxiety: anxiety[i] || 0,
+          energy: energy[i] || 0,
+          sleep: sleep[i] || 0
+        };
+        records.push(record);
+      } catch (error) {
+        console.warn(`处理第${i}条记录时出错:`, error);
+        continue;
+      }
     }
 
     // 按日期倒序排列（最新的在前）

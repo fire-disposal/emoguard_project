@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class SingleScaleService:
+class ScaleResultService:
     """单量表服务 - 独立的单问卷功能"""
     
     @staticmethod
