@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/${GITHUB_REPO}/emoguard-backend:${VERSION:-latest}
+    build: .
     container_name: emoguard-backend
     restart: unless-stopped
     depends_on:
@@ -22,6 +22,7 @@ services:
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
 
     volumes:
+      - .:/app
       - /srv/emoguard/media:/app/media
       - /srv/emoguard/logs:/app/logs
       - /srv/emoguard/staticfiles:/app/staticfiles
@@ -32,9 +33,8 @@ services:
       timeout: 5s
       retries: 5
 
-
   celery-worker:
-    image: ghcr.io/${GITHUB_REPO}/emoguard-backend:${VERSION:-latest}
+    build: .
     container_name: emoguard-celery-worker
     restart: unless-stopped
     depends_on:
@@ -49,16 +49,23 @@ services:
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
     command: ["uv", "run", "celery", "-A", "apps.notice", "worker", "-l", "info", "-Q", "notice"]
     volumes:
+      - .:/app
+      - /srv/emoguard/media:/app/media
       - /srv/emoguard/logs:/app/logs
-
+      - /srv/emoguard/staticfiles:/app/staticfiles
 
   celery-beat:
-    image: ghcr.io/${GITHUB_REPO}/emoguard-backend:${VERSION:-latest}
+    build: .
     container_name: emoguard-celery-beat
     restart: unless-stopped
     depends_on:
       - db
       - redis
+    volumes:
+      - .:/app
+      - /srv/emoguard/media:/app/media
+      - /srv/emoguard/logs:/app/logs
+      - /srv/emoguard/staticfiles:/app/staticfiles
     environment:
       SECRET_KEY: ${SECRET_KEY}
       WECHAT_MINI_PROGRAM_APP_ID: ${WECHAT_MINI_PROGRAM_APP_ID}
@@ -67,9 +74,6 @@ services:
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
     command: ["uv", "run", "celery", "-A", "apps.notice", "beat", "-l", "info", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler"]
-    volumes:
-      - /srv/emoguard/logs:/app/logs
-
 
   db:
     image: postgres:15
@@ -86,7 +90,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
 
   redis:
     image: redis:7
