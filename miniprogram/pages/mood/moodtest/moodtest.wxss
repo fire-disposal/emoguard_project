@@ -372,3 +372,44 @@
     padding: 20rpx;
   }
 }
+/* 提交成功卡片美化 */
+.submit-success.question-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 60rpx auto 0;
+  max-width: 600rpx;
+  text-align: center;
+  box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 48rpx 32rpx 40rpx 32rpx;
+}
+.success-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background: #e7f3ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20rpx;
+}
+.success-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #007aff;
+  margin-bottom: 8rpx;
+}
+.success-desc {
+  font-size: 28rpx;
+  color: #495057;
+  margin-bottom: 40rpx;
+}
+.submit-success .btn.btn-primary {
+  width: 80%;
+  margin: 0 auto;
+  font-size: 30rpx;
+  border-radius: 12rpx;
+}

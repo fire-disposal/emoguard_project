@@ -234,23 +234,16 @@ Page({
     try {
       // 构建统一的测评数据
       const recordData = {
-        // 认知测评数据
         depression: this.data.depression,
         anxiety: this.data.anxiety,
         energy: this.data.energy,
         sleep: this.data.sleep,
-
-        // 主观情绪数据
         mainMood: this.data.mainMood,
         moodIntensity: this.data.moodIntensity,
         mainMoodOther: this.data.mainMood === 'other' ? this.data.mainMoodOther.trim() : '',
         moodSupplementTags: this.data.moodSupplementTags,
         moodSupplementText: this.data.moodSupplementText.trim(),
-
-        // 时间段
         period: this.data.currentPeriod || 'unknown',
-
-        // 补充信息
         device_info: {
           platform: wx.getSystemInfoSync().platform,
           version: wx.getSystemInfoSync().version
@@ -265,11 +258,8 @@ Page({
         this.showSubmissionAlert(response.alert);
       }
 
-      // wx.showToast({ title: '测评提交成功', icon: 'success' });
-      this.setData({ showSuccess: true });
-
-      // 弹出订阅消息框
-      this.handleSubscribeMessage();
+      // 只显示完成页，不自动弹订阅，按钮由用户点击触发
+      this.setData({ showSuccess: true, submitting: false });
 
     } catch (error) {
       console.error('提交失败:', error);

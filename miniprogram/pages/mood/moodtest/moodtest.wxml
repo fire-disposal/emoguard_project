@@ -1,125 +1,133 @@
 <!-- 情绪测评页面 - 整合版本 -->
-<view class="page">
-  <!-- 进度条 -->
-  <view class="progress-container" wx:if="{{questions.length > 0}}">
-    <view class="progress-bar">
-      <view class="progress-fill" style="width: {{currentStep < questions.length ? ((currentStep + 1) * 100 / questions.length) : 100}}%"></view>
-    </view>
-    <text class="progress-text">{{currentStep + 1}}/{{questions.length}}</text>
-  </view>
-
-  <!-- 主要内容区域 -->
-  <view class="content-area" wx:if="{{questions.length > 0 && currentStep < questions.length}}">
-    <view class="question-card">
-      <view class="question-header">
-        <text class="question-title">{{questions[currentStep].title}}</text>
-        <text class="question-subtitle">{{questions[currentStep].question}}</text>
+<block wx:if="{{!showSuccess}}">
+  <view class="page">
+    <!-- 进度条 -->
+    <view class="progress-container" wx:if="{{questions.length > 0}}">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{currentStep < questions.length ? ((currentStep + 1) * 100 / questions.length) : 100}}%"></view>
       </view>
+      <text class="progress-text">{{currentStep + 1}}/{{questions.length}}</text>
+    </view>
 
-      <!-- 单选题 -->
-      <block wx:if="{{questions[currentStep].type === 'radio'}}">
-        <view class="question-content">
-          <radio-group class="radio-group" data-key="{{questions[currentStep].key}}" bindchange="handleRadioChange">
-            <block wx:for="{{questions[currentStep].options}}" wx:key="value" wx:for-item="item">
-              <label class="radio-option {{getOptionSelected(currentStep, item.value) ? 'selected' : ''}}">
-                <radio value="{{item.value}}" checked="{{getOptionSelected(currentStep, item.value)}}" />
-                <view class="option-content">
-                  <text class="option-text">{{item.text}}</text>
-                  <text class="option-desc">{{item.desc}}</text>
-                </view>
-              </label>
-            </block>
-          </radio-group>
+    <!-- 主要内容区域 -->
+    <view class="content-area" wx:if="{{questions.length > 0 && currentStep < questions.length}}">
+      <view class="question-card">
+        <view class="question-header">
+          <text class="question-title">{{questions[currentStep].title}}</text>
+          <text class="question-subtitle">{{questions[currentStep].question}}</text>
         </view>
-      </block>
 
-      <!-- 滑块题 -->
-      <block wx:if="{{questions[currentStep].type === 'scale'}}">
-        <view class="question-content">
-          <view class="scale-container">
-            <view class="scale-labels">
-              <text class="scale-min-text">{{questions[currentStep].minText}}</text>
-              <text class="scale-max-text">{{questions[currentStep].maxText}}</text>
-            </view>
-            <slider class="scale-slider" 
-                    min="{{questions[currentStep].min}}" 
-                    max="{{questions[currentStep].max}}"
-                    value="{{getCurrentValue(currentStep) || 0}}"
-                    show-value="{{true}}"
-                    data-key="{{questions[currentStep].key}}"
-                    bindchange="handleSliderChange" />
-            <text class="scale-desc">{{questions[currentStep].desc}}</text>
+        <!-- 单选题 -->
+        <block wx:if="{{questions[currentStep].type === 'radio'}}">
+          <view class="question-content">
+            <radio-group class="radio-group" data-key="{{questions[currentStep].key}}" bindchange="handleRadioChange">
+              <block wx:for="{{questions[currentStep].options}}" wx:key="value" wx:for-item="item">
+                <label class="radio-option {{getOptionSelected(currentStep, item.value) ? 'selected' : ''}}">
+                  <radio value="{{item.value}}" checked="{{getOptionSelected(currentStep, item.value)}}" />
+                  <view class="option-content">
+                    <text class="option-text">{{item.text}}</text>
+                    <text class="option-desc">{{item.desc}}</text>
+                  </view>
+                </label>
+              </block>
+            </radio-group>
           </view>
-        </view>
-      </block>
+        </block>
 
-      <!-- 情绪选择（特殊单选） -->
-      <block wx:if="{{questions[currentStep].type === 'mood'}}">
-        <view class="question-content">
-          <view class="mood-options">
-            <block wx:for="{{questions[currentStep].options}}" wx:key="value">
-              <view class="mood-option {{mainMood === item.value ? 'selected' : ''}}"
-                    bindtap="handleMoodSelect" data-key="mainMood" data-value="{{item.value}}">
-                <view class="mood-icon {{item.icon}}"></view>
-                <text class="mood-text">{{item.text}}</text>
+        <!-- 滑块题 -->
+        <block wx:if="{{questions[currentStep].type === 'scale'}}">
+          <view class="question-content">
+            <view class="scale-container">
+              <view class="scale-labels">
+                <text class="scale-min-text">{{questions[currentStep].minText}}</text>
+                <text class="scale-max-text">{{questions[currentStep].maxText}}</text>
               </view>
-            </block>
+              <slider class="scale-slider" 
+                      min="{{questions[currentStep].min}}" 
+                      max="{{questions[currentStep].max}}"
+                      value="{{getCurrentValue(currentStep) || 0}}"
+                      show-value="{{true}}"
+                      data-key="{{questions[currentStep].key}}"
+                      bindchange="handleSliderChange" />
+              <text class="scale-desc">{{questions[currentStep].desc}}</text>
+            </view>
           </view>
-          <view wx:if="{{mainMood === 'other'}}" class="other-mood-input">
-            <input placeholder="请填写其他情绪" value="{{mainMoodOther}}"
-                   data-key="mainMoodOther" bindinput="handleTextChange"/>
+        </block>
+
+        <!-- 情绪选择（特殊单选） -->
+        <block wx:if="{{questions[currentStep].type === 'mood'}}">
+          <view class="question-content">
+            <view class="mood-options">
+              <block wx:for="{{questions[currentStep].options}}" wx:key="value">
+                <view class="mood-option {{mainMood === item.value ? 'selected' : ''}}"
+                      bindtap="handleMoodSelect" data-key="mainMood" data-value="{{item.value}}">
+                  <view class="mood-icon {{item.icon}}"></view>
+                  <text class="mood-text">{{item.text}}</text>
+                </view>
+              </block>
+            </view>
+            <view wx:if="{{mainMood === 'other'}}" class="other-mood-input">
+              <input placeholder="请填写其他情绪" value="{{mainMoodOther}}"
+                     data-key="mainMoodOther" bindinput="handleTextChange"/>
+            </view>
           </view>
-        </view>
-      </block>
+        </block>
 
-      <!-- 多选题（复选框） -->
-      <block wx:if="{{questions[currentStep].type === 'checkbox'}}">
-        <view class="question-content">
-          <checkbox-group class="checkbox-group" data-key="{{questions[currentStep].key}}" bindchange="handleCheckboxChange">
-            <block wx:for="{{questions[currentStep].options}}" wx:key="value" wx:for-item="item">
-              <label class="checkbox-option {{getCheckboxSelected(currentStep, item.value) ? 'selected' : ''}}">
-                <checkbox value="{{item.value}}" checked="{{getCheckboxSelected(currentStep, item.value)}}" />
-                <text class="checkbox-text">{{item.text}}</text>
-              </label>
-            </block>
-          </checkbox-group>
-        </view>
-      </block>
+        <!-- 多选题（复选框） -->
+        <block wx:if="{{questions[currentStep].type === 'checkbox'}}">
+          <view class="question-content">
+            <checkbox-group class="checkbox-group" data-key="{{questions[currentStep].key}}" bindchange="handleCheckboxChange">
+              <block wx:for="{{questions[currentStep].options}}" wx:key="value" wx:for-item="item">
+                <label class="checkbox-option {{getCheckboxSelected(currentStep, item.value) ? 'selected' : ''}}">
+                  <checkbox value="{{item.value}}" checked="{{getCheckboxSelected(currentStep, item.value)}}" />
+                  <text class="checkbox-text">{{item.text}}</text>
+                </label>
+              </block>
+            </checkbox-group>
+          </view>
+        </block>
 
-      <!-- 文本输入 -->
-      <block wx:if="{{questions[currentStep].type === 'text'}}">
-        <view class="question-content">
-          <input class="text-input" 
-                 placeholder="{{questions[currentStep].placeholder || '请输入内容'}}"
-                 value="{{getCurrentValue(currentStep) || ''}}"
-                 data-key="{{questions[currentStep].key}}"
-                 bindinput="handleTextChange" />
-        </view>
-      </block>
+        <!-- 文本输入 -->
+        <block wx:if="{{questions[currentStep].type === 'text'}}">
+          <view class="question-content">
+            <input class="text-input" 
+                   placeholder="{{questions[currentStep].placeholder || '请输入内容'}}"
+                   value="{{getCurrentValue(currentStep) || ''}}"
+                   data-key="{{questions[currentStep].key}}"
+                   bindinput="handleTextChange" />
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons" wx:if="{{questions.length > 0}}">
+      <button class="btn btn-secondary {{currentStep === 0 ? 'disabled' : ''}}" 
+              bindtap="prevStep" 
+              disabled="{{currentStep === 0}}">
+        上一步
+      </button>
+      
+      <button class="btn btn-primary" 
+              bindtap="{{currentStep === questions.length - 1 ? 'handleSubmit' : 'nextStep'}}"
+              loading="{{submitting}}"
+              disabled="{{submitting}}">
+        {{currentStep === questions.length - 1 ? '提交测评' : '下一步'}}
+      </button>
     </view>
   </view>
-
-  <!-- 操作按钮 -->
-  <view class="action-buttons" wx:if="{{questions.length > 0}}">
-    <button class="btn btn-secondary {{currentStep === 0 ? 'disabled' : ''}}" 
-            bindtap="prevStep" 
-            disabled="{{currentStep === 0}}">
-      上一步
-    </button>
-    
-    <button class="btn btn-primary" 
-            bindtap="{{currentStep === questions.length - 1 ? 'handleSubmit' : 'nextStep'}}"
-            loading="{{submitting}}"
-            disabled="{{submitting}}">
-      {{currentStep === questions.length - 1 ? '提交测评' : '下一步'}}
-    </button>
-  </view>
-</view>
+</block>
 
 <!-- 提交成功页 -->
-<view class="submit-success" wx:if="{{showSuccess}}">
-  <view class="success-icon"></view>
-  <view class="success-title">提交成功</view>
-  <view class="success-desc">感谢您的填写，欢迎下次继续记录。</view>
-  <button class="btn btn-primary" bindtap="handleSubscribe">订阅下次提醒</button>
-</view>
+<block wx:if="{{showSuccess}}">
+  <view class="submit-success question-card" style="margin: 60rpx auto 0; max-width: 600rpx; text-align: center; box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.08);">
+    <view class="question-header" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 32rpx;">
+      <view class="success-icon" style="width: 80rpx; height: 80rpx; background: #e7f3ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20rpx;">
+        <text style="font-size: 48rpx; color: #007aff;">✔</text>
+      </view>
+      <view class="success-title" style="font-size: 36rpx; font-weight: 700; color: #007aff; margin-bottom: 8rpx;">提交成功</view>
+    </view>
+    <view class="success-desc" style="font-size: 28rpx; color: #495057; margin-bottom: 40rpx;">感谢您的填写，欢迎下次继续记录。</view>
+    <button class="btn btn-primary" style="width: 80%; margin: 0 auto; font-size: 30rpx; border-radius: 12rpx;" type="primary" bindtap="handleSubscribe">订阅下次提醒</button>
+  </view>
+</block>
