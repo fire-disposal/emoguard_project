@@ -7,7 +7,7 @@ from apps.journals.views import journals_router
 from apps.reports.views import reports_router
 from apps.scales.views import scales_router
 from apps.cognitive_flow.views import cognitive_router
-from apps.notifications.views import notifications_router
+from apps.notice.views import notice_router
 from apps.emotiontracker.views import emotion_router
 from apps.feedback.views import feedback_router
 
@@ -36,7 +36,7 @@ api.add_router("/journals", journals_router)
 api.add_router("/reports", reports_router)
 api.add_router("/cognitive", cognitive_router)
 api.add_router("/scales", scales_router)
-api.add_router("/notifications", notifications_router)
+api.add_router("/notice", notice_router)
 api.add_router("/emotiontracker", emotion_router)
 api.add_router("/feedback", feedback_router)
 

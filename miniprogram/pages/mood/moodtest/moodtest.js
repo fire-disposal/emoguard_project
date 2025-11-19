@@ -132,8 +132,6 @@ Page({
 
     const periodText = this.data.currentPeriod === 'morning' ? '早间' : this.data.currentPeriod === 'evening' ? '晚间' : '情绪';
     wx.setNavigationBarTitle({ title: `${periodText}测评` });
-
-    this.getTodayStatus();
   },
 
   // --- 统一的数据绑定处理 ---
@@ -270,12 +268,7 @@ Page({
       this.setData({ showSuccess: true });
 
       // 弹出订阅消息框
-      wx.requestSubscribeMessage({
-        tmplIds: ['TEMPLATE_ID'], // 替换为你的订阅消息模板ID
-        success(res) {
-          // 可根据需要处理订阅结果
-        }
-      })
+      this.handleSubscribeMessage();
 
     } catch (error) {
       console.error('提交失败:', error);
@@ -291,12 +284,68 @@ Page({
 
   // 订阅按钮事件
   handleSubscribe() {
+    this.handleSubscribeMessage();
+  },
+
+  // 处理订阅消息
+  handleSubscribeMessage() {
+    const templateId = '5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI';
+    
     wx.requestSubscribeMessage({
-      tmplIds: ['TEMPLATE_ID'], // 替换为你的订阅消息模板ID
-      success(res) {
-        // 可根据需要处理订阅结果
+      tmplIds: [templateId],
+      success: (res) => {
+        console.log('订阅消息结果:', res);
+        
+        // 如果用户同意订阅，同步到后端
+        if (res[templateId] === 'accept') {
+          this.syncSubscribeStatus(templateId, 'accept');
+        } else if (res[templateId] === 'reject') {
+          this.syncSubscribeStatus(templateId, 'reject');
+        } else if (res[templateId] === 'ban') {
+          this.syncSubscribeStatus(templateId, 'ban');
+        }
+      },
+      fail: (err) => {
+        console.error('订阅消息失败:', err);
       }
     });
+  },
+
+  // 同步订阅状态到后端
+  async syncSubscribeStatus(templateId, action) {
+    try {
+      const app = getApp();
+      const token = wx.getStorageSync('token');
+      
+      const response = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.apiBaseUrl}/api/notice/subscribe/`,
+          method: 'POST',
+          data: {
+            template_id: templateId,
+            action: action
+          },
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      console.log('同步订阅状态成功:', response.data);
+      
+      if (response.data.status === 'success') {
+        wx.showToast({
+          title: '订阅成功',
+          icon: 'success'
+        });
+      }
+    } catch (error) {
+      console.error('同步订阅状态失败:', error);
+      // 不显示错误，避免影响用户体验
+    }
   },
   // 获取当前进度的百分比 (优化为基于总步数)
   getProgressPercent() {

@@ -73,7 +73,7 @@ INSTALLED_APPS = [
     "apps.journals",
     "apps.reports",
     "apps.scales",
-    "apps.notifications",
+    "apps.notice",
     "apps.emotiontracker",
     "apps.feedback",
     "apps.cognitive_flow",
@@ -191,6 +191,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 WECHAT_MINI_PROGRAM_APP_ID = os.environ.get('WECHAT_MINI_PROGRAM_APP_ID', '')
 WECHAT_MINI_PROGRAM_APP_SECRET = os.environ.get('WECHAT_MINI_PROGRAM_APP_SECRET', '')
+
+# 微信小程序订阅消息模板ID配置
+WECHAT_SUBSCRIPTION_TEMPLATES = {
+    'MOOD_REMINDER': os.environ.get('WECHAT_MOOD_REMINDER_TEMPLATE_ID', ''),  # 情绪测评提醒模板ID
+    'ASSESSMENT_REMINDER': os.environ.get('WECHAT_ASSESSMENT_REMINDER_TEMPLATE_ID', '5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI'),  # 测评提醒模板ID
+    'DAILY_REPORT': os.environ.get('WECHAT_DAILY_REPORT_TEMPLATE_ID', ''),  # 日报模板ID
+    'WEEKLY_REPORT': os.environ.get('WECHAT_WEEKLY_REPORT_TEMPLATE_ID', ''),  # 周报模板ID
+}
 
 # =============================================================================
 # JWT 认证配置

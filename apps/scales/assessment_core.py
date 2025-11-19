@@ -2,9 +2,7 @@
 评估核心模块 - 极简设计，后端主导
 """
 from typing import Dict, Any, Optional, List
-from django.utils import timezone
-from apps.scales.models import ScaleResult, ScaleConfig
-from apps.users.models import User
+from apps.scales.models import ScaleResult
 import logging
 
 logger = logging.getLogger(__name__)

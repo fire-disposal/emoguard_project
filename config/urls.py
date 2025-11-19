@@ -20,6 +20,7 @@ urlpatterns = [
     path('health/', health_check, name='health'),  # 健康检查
     path('admin/', admin.site.urls),
     path('api/', include('config.api')),  # Ninja API统一路由
+    path('', include('apps.notice.urls')),  # Notice应用路由
     path('summernote/', include('django_summernote.urls')),  # 富文本编辑器
 ]
 

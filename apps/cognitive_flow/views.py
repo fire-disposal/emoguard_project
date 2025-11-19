@@ -53,6 +53,12 @@ def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
             started_at=parse_iso(getattr(data, "started_at", None)),
             completed_at=parse_iso(getattr(data, "completed_at", None))
         )
+        # 更新用户认知评估完成状态
+        try:
+            from apps.users.models import User
+            User.objects.filter(id=current_user.id).update(has_completed_cognitive_assessment=True)
+        except Exception as update_exc:
+            logger.error(f"更新用户认知评估完成状态失败: {update_exc}", exc_info=True)
         logger.info(f"创建测评记录成功: id={record.id}")
         return CognitiveAssessmentResultSchema(
             id=record.id,
