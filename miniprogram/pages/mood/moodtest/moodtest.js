@@ -1,4 +1,5 @@
 const emotionApi = require('../../../api/emotiontracker');
+const noticeApi = require('../../../api/notice');
 
 // --- 常量配置：将配置数据独立出来，使代码更清晰 ---
 const COGNITIVE_QUESTIONS = [
@@ -314,29 +315,14 @@ Page({
   // 同步订阅状态到后端
   async syncSubscribeStatus(templateId, action) {
     try {
-      const app = getApp();
-      const token = wx.getStorageSync('token');
-      
-      const response = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `${app.globalData.apiBaseUrl}/api/notice/subscribe/`,
-          method: 'POST',
-          data: {
-            template_id: templateId,
-            action: action
-          },
-          header: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          success: resolve,
-          fail: reject
-        });
+      const response = await noticeApi.syncSubscribeStatus({
+        template_id: templateId,
+        action: action
       });
 
-      console.log('同步订阅状态成功:', response.data);
+      console.log('同步订阅状态成功:', response);
       
-      if (response.data.status === 'success') {
+      if (response.status === 'success') {
         wx.showToast({
           title: '订阅成功',
           icon: 'success'

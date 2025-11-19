@@ -5,7 +5,6 @@ Django 管理命令：创建定时任务
 from django.core.management.base import BaseCommand
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from django.utils import timezone
-import json
 
 class Command(BaseCommand):
     help = '创建情绪测评提醒定时任务'
