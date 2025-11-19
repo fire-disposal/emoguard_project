@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "ninja_extra",
     "ninja_jwt",
     'django_summernote',
+    'django_celery_beat',
     'import_export',
     
     # 自定义应用
@@ -196,8 +197,6 @@ WECHAT_MINI_PROGRAM_APP_SECRET = os.environ.get('WECHAT_MINI_PROGRAM_APP_SECRET'
 WECHAT_SUBSCRIPTION_TEMPLATES = {
     'MOOD_REMINDER': os.environ.get('WECHAT_MOOD_REMINDER_TEMPLATE_ID', ''),  # 情绪测评提醒模板ID
     'ASSESSMENT_REMINDER': os.environ.get('WECHAT_ASSESSMENT_REMINDER_TEMPLATE_ID', '5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI'),  # 测评提醒模板ID
-    'DAILY_REPORT': os.environ.get('WECHAT_DAILY_REPORT_TEMPLATE_ID', ''),  # 日报模板ID
-    'WEEKLY_REPORT': os.environ.get('WECHAT_WEEKLY_REPORT_TEMPLATE_ID', ''),  # 周报模板ID
 }
 
 # =============================================================================
@@ -216,6 +215,17 @@ NINJA_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
     'TOKEN_USER_CLASS': 'users.User',
 }
+
+# =============================================================================
+# Celery 配置
+# =============================================================================
+
+# Celery 配置
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/1')
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = False
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # =============================================================================
 # CORS 与 CSRF 配置

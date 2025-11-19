@@ -50,5 +50,25 @@ uv run python manage.py collectstatic --noinput
 
 echo "✅ 初始化完成，启动应用..."
 
+# ============================
+# ✅ 创建定时任务
+# ============================
+echo "🔄 创建定时任务..."
+uv run python manage.py setup_periodic_tasks
+
+# ============================
+# ✅ 启动 Celery Worker（后台）
+# ============================
+echo "🔄 启动 Celery Worker..."
+nohup uv run celery -A apps.notice worker -l info -Q notice > /app/logs/celery-worker.log 2>&1 &
+
+# ============================
+# ✅ 启动 Celery Beat（后台）
+# ============================
+echo "🔄 启动 Celery Beat..."
+nohup uv run celery -A apps.notice beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler > /app/logs/celery-beat.log 2>&1 &
+
+echo "✅ Celery 服务已启动"
+
 # 最后执行 CMD 命令（gunicorn）
 exec "$@"
