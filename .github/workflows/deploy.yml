@@ -88,16 +88,22 @@ jobs:
         docker pull $IMAGE
 
         echo "🛑 Stopping existing stack..."
-        # 此时的 docker-compose.yml 已经是最新版本
         docker compose -f docker-compose.yml down || true
+        
+        echo "🧹 Removing old containers..."
+        for cname in emoguard-backend emoguard-celery-worker emoguard-celery-beat; do
+          if docker ps -a --format '{{.Names}}' | grep -w "$cname"; then
+            docker rm -f "$cname"
+          fi
+        done
 
-        # 替换 compose 文件中的 backend 镜像
+        echo "🧼 Cleaning up unused images..."
         echo "🚀 Updating docker-compose.yml to use version $VERSION..."
         sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
         sed -i.bak "/celery-worker:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
         sed -i.bak "/celery-beat:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
 
-        # 保证宿主机相关目录存在且权限正确（适用于 Ubuntu/CentOS）
+        echo "📁 Ensuring necessary directories ..."
         for d in media logs staticfiles pgdata redisdata; do
           sudo mkdir -p /srv/emoguard/$d
           sudo chown 1000:1000 /srv/emoguard/$d
@@ -107,14 +113,12 @@ jobs:
         echo "🚀 Starting stack..."
         docker compose -f docker-compose.yml up -d --remove-orphans
 
-        # Backend 健康检查
         echo "⏳ Waiting for backend health..."
         HEALTH_RETRIES=10
         HEALTH_INTERVAL=3
         for i in \$(seq 1 \$HEALTH_RETRIES); do
           if docker exec emoguard-backend curl -fs http://localhost:8000/health/ > /dev/null; then
             echo "✅ Backend healthy"
-            # 记录本次成功版本
             echo "$VERSION" > last_successful_version.txt
             exit 0
           fi
