@@ -73,15 +73,15 @@ else
     # ============================
     case "$CONTAINER_ROLE" in
         "worker")
-            echo "// [🔄️ 启动 Celery Worker]-------------------------//"
+            echo "// [🔄️ 启动 Celery Worker]----------------------------//"
             exec uv run celery -A apps.notice worker -l info -Q notice
             ;;
         "beat")
-            echo "// [❤️ 启动 Celery Beat]-------------------------//"
+            echo "// [❤️ 启动 Celery Beat]----------------------------//"
             exec uv run celery -A apps.notice beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
             ;;
         "backend")
-            echo "// [🌱 启动 Backend 后端]-------------------------//"
+            echo "// [🌱 启动 Backend 后端]----------------------------//"
             
             #banner展示
             cat << 'EMOGUARD_BANNER'

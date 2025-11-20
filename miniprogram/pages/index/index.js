@@ -1,39 +1,38 @@
-// pages/index/index.js
 const auth = require('../../utils/auth');
 const emotionApi = require('../../api/emotiontracker');
+const errorUtil = require('../../utils/error');
 
 Page({
   data: {
-    currentDate: '',
-    currentTime: '',
+    currentDate: '', // 格式：2023年10月26日 星期四
+    currentTime: '', // 格式：14:30
     userNickname: '',
-    currentPeriod: '', 
-    showCognitiveGuide: false,
-    hasCompletedAssessment: false,
-    morningFilled: false,
-    eveningFilled: false
+    currentPeriod: '', // 当前时段标识: 'morning', 'afternoon', 'evening'
+    currentPeriodText: '', // 当前时段中文: '早间', '下午', '晚间'
+    showCognitiveGuide: false, // 是否显示认知评估引导卡片
+    hasCompletedAssessment: false, // 是否已完成认知评估
+    morningFilled: false, // 早上情绪记录是否已填写
+    eveningFilled: false // 晚上情绪记录是否已填写
   },
 
   onShow() {
-    if (!auth.isLogined()) {
-      auth.navigateToLogin();
-      return;
-    }
+    // 统一调用全局防抖鉴权检查
+    getApp().debouncedCheckAuth();
     // 页面显示时加载情绪状态（从其他页面返回时会触发）
     this.loadEmotionStatus();
   },
 
   onLoad() {
     this.getCurrentDate();
-    this.getCurrentTime();
     this.loadUserInfo();
-    this.updatePeriod(); // 更新时段
+
+    // 初始化时间/时段并设置定时器
+    this.updateTimeAndPeriod();
     this.loadEmotionStatus();
 
-    // 每分钟更新时间（仅时间显示，不再轮询情绪状态）
+    // 每分钟更新时间
     this.timer = setInterval(() => {
-      this.getCurrentTime();
-      this.updatePeriod(); // 同时更新时段
+      this.updateTimeAndPeriod();
     }, 60000);
   },
 
@@ -43,30 +42,24 @@ Page({
     }
   },
 
+  /**
+   * 加载今日情绪记录状态
+   */
   loadEmotionStatus() {
     emotionApi.getTodayStatus().then(res => {
       console.log('获取今日状态成功:', res);
-
       this.setData({
         morningFilled: !!res.morning_filled,
         eveningFilled: !!res.evening_filled
       });
-
-
-
     }).catch((error) => {
-      console.error('获取今日状态失败:', error);
-      console.error('错误详情:', error.message);
-
+      errorUtil.handleError(error);
+      // 获取失败时，默认设置为未完成，避免前端逻辑错误
       this.setData({
         morningFilled: false,
         eveningFilled: false
       });
-
-      // 只在首次加载时显示错误提示
-      if (!this.data.morningFilled && !this.data.eveningFilled) {
-        console.log('使用默认状态: 均未完成');
-      }
+      console.log('获取今日状态失败，使用默认状态: 均未完成');
     });
   },
 
@@ -87,39 +80,30 @@ Page({
   },
 
   /**
-   * 获取当前时间
+   * 更新当前时间和时段
    */
-  getCurrentTime() {
+  updateTimeAndPeriod() {
     const now = new Date();
     const hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, '0');
 
-    this.setData({
-      currentTime: `${hours}:${minutes}`
-    });
-  },
-
-  /**
-   * 更新当前时段（早间/晚间）
-   */
-  updatePeriod() {
-    const now = new Date();
-    const hours = now.getHours();
     let period = '';
     let periodText = '';
 
+    // 时段划分逻辑：
     if (hours >= 5 && hours < 12) {
-      period = 'morning';
+      period = 'morning'; // 5:00 - 11:59
       periodText = '早间';
     } else if (hours >= 12 && hours < 18) {
-      period = 'afternoon';
+      period = 'afternoon'; // 12:00 - 17:59
       periodText = '下午';
     } else {
-      period = 'evening';
+      period = 'evening'; // 18:00 - 4:59 (晚间/夜间)
       periodText = '晚间';
     }
 
     this.setData({
+      currentTime: `${hours}:${minutes}`,
       currentPeriod: period,
       currentPeriodText: periodText
     });
@@ -128,17 +112,21 @@ Page({
   /**
    * 加载用户信息
    */
-  loadUserInfo() {
-    const userInfo = auth.getUserInfo();
+  async loadUserInfo() {
+    let userInfo = getApp().globalData.userInfo;
+    if (!userInfo || userInfo.is_profile_complete === undefined) {
+      // 若无全局用户信息则异步获取
+      userInfo = await getApp().getUserInfoAsync();
+    }
 
     // 检查是否完成认知评估
     const hasCompleted = userInfo?.has_completed_cognitive_assessment || false;
-    const showGuide = !hasCompleted;
 
     this.setData({
       userNickname: userInfo?.nickname || '用户',
       hasCompletedAssessment: hasCompleted,
-      showCognitiveGuide: showGuide
+      // 仅在未完成评估时显示引导
+      showCognitiveGuide: !hasCompleted
     });
   },
 
@@ -172,29 +160,31 @@ Page({
 
   /**
    * 跳转到情绪测试
+   * @param {Object} e - 事件对象，dataset.period 可用于指定早间/晚间
    */
   goToEmotionTest(e) {
     const period = e?.currentTarget?.dataset?.period || this.data.currentPeriod;
-    const isMorning = period === 'morning';
-    const isEvening = period === 'evening';
+    const isEveningRecord = period === 'evening';
     const now = new Date();
     const hours = now.getHours();
 
-    // 早上不允许填写晚间
-    if (isEvening && hours < 14) {
+    // 强制限制：晚间记录须在 14:00 (下午两点) 之后填写
+    if (isEveningRecord && hours < 14) {
       wx.showToast({
-        title: '请于14:00后填写晚间记录',
+        title: '晚间记录请于 14:00 后填写',
         icon: 'none'
       });
       return;
     }
 
-    const isFilled = (isMorning && this.data.morningFilled) || (isEvening && this.data.eveningFilled);
+    const isFilled = (period === 'morning' && this.data.morningFilled) ||
+      (period === 'evening' && this.data.eveningFilled);
 
     if (isFilled) {
+      // 已填写，弹窗确认是否重测
       wx.showModal({
         title: '提示',
-        content: '您已经完成了今天的情绪测试，是否重新测试？',
+        content: '您已完成本次情绪测试，是否重新测试？',
         success: (res) => {
           if (res.confirm) {
             wx.navigateTo({
@@ -204,6 +194,7 @@ Page({
         }
       });
     } else {
+      // 未填写，直接跳转
       wx.navigateTo({
         url: `/pages/mood/moodtest/moodtest?period=${period}`
       });
