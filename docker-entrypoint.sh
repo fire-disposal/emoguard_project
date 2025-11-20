@@ -40,11 +40,11 @@ if [ -d "apps/scales/yaml_configs" ]; then
 fi
 
 # ============================
-# ✅ 收集静态文件（生产环境临时 + 容器外挂载目录）
+# ✅ 收集静态文件文件处理
 # ============================
-# 修复静态文件收集权限问题
-mkdir -p /app/staticfiles
-chmod -R 777 /app/staticfiles
+echo "🔑 修复挂载目录权限..."
+mkdir -p /app/media /app/logs /app/staticfiles
+chmod -R 777 /app/media /app/logs /app/staticfiles
 echo "📁 收集静态文件..."
 uv run python manage.py collectstatic --noinput
 

@@ -12,9 +12,7 @@ ENV PYTHONUNBUFFERED=1 \
 # 系统依赖
 RUN apt-get update && apt-get install -y \
     gcc \
-    postgresql-client \
     curl \
-    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖声明文件

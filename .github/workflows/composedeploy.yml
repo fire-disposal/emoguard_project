@@ -80,7 +80,6 @@ jobs:
 
         # 替换 compose 文件中的 backend 镜像
         echo "🚀 Updating docker-compose.yml to use version $VERSION..."
-        # 只替换 backend 服务的镜像，避免 celery-worker/beat 被误替换
         sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
 
         # 保证宿主机相关目录存在且权限正确（适用于 Ubuntu/CentOS）
