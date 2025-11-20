@@ -25,6 +25,7 @@ dependencies = [
     "uvicorn>=0.38.0",
     "celery>=5.5.3",
     "django-celery-beat>=2.8.1",
+    "redis>=7.1.0",
 ]
 
 [tool.deadcode]

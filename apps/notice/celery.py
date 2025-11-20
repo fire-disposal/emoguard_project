@@ -25,15 +25,3 @@ app.conf.task_routes = {
     'apps.notice.tasks.send_morning_reminder': {'queue': 'notice'},
     'apps.notice.tasks.send_evening_reminder': {'queue': 'notice'},
 }
-
-# 配置定时任务（需要在 Django admin 中通过 django-celery-beat 管理）
-app.conf.beat_schedule = {
-    'send-morning-reminder': {
-        'task': 'apps.notice.tasks.send_morning_reminder',
-        'schedule': '0 9 * * *',  # 每天早上 9:00
-    },
-    'send-evening-reminder': {
-        'task': 'apps.notice.tasks.send_evening_reminder',
-        'schedule': '0 21 * * *',  # 每天晚上 21:00
-    },
-}

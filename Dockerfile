@@ -27,7 +27,7 @@ RUN chmod +x /app/docker-entrypoint.sh
 COPY . .
 
 # 创建目录（容器内只做占位，真实挂载）
-RUN mkdir -p media logs staticfiles && chmod -R 755 /app
+RUN mkdir -p media staticfiles && chmod -R 755 /app
 
 # 非 root 运行
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

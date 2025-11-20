@@ -23,7 +23,6 @@ services:
 
     volumes:
       - /srv/emoguard/media:/app/media
-      - /srv/emoguard/logs:/app/logs
       - /srv/emoguard/staticfiles:/app/staticfiles
 
     healthcheck:
@@ -41,13 +40,13 @@ services:
       - db
       - redis
     environment:
+      CONTAINER_ROLE: worker
       SECRET_KEY: ${SECRET_KEY}
       WECHAT_MINI_PROGRAM_APP_ID: ${WECHAT_MINI_PROGRAM_APP_ID}
       WECHAT_MINI_PROGRAM_APP_SECRET: ${WECHAT_MINI_PROGRAM_APP_SECRET}
       DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
-    command: ["uv", "run", "celery", "-A", "apps.notice", "worker", "-l", "info", "-Q", "notice"]
     volumes:
       - /srv/emoguard/logs:/app/logs
 
@@ -60,13 +59,13 @@ services:
       - db
       - redis
     environment:
+      CONTAINER_ROLE: beat
       SECRET_KEY: ${SECRET_KEY}
       WECHAT_MINI_PROGRAM_APP_ID: ${WECHAT_MINI_PROGRAM_APP_ID}
       WECHAT_MINI_PROGRAM_APP_SECRET: ${WECHAT_MINI_PROGRAM_APP_SECRET}
       DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
-    command: ["uv", "run", "celery", "-A", "apps.notice", "beat", "-l", "info", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler"]
     volumes:
       - /srv/emoguard/logs:/app/logs
 
