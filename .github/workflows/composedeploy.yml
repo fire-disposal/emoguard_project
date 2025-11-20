@@ -5,7 +5,6 @@ on:
 
 env:
   IMAGE_BASE_NAME: ghcr.io/${{ github.repository }}/emoguard-backend
-  DEPLOY_DIR: /srv/emoguard
 
 jobs:
   deploy:
@@ -60,7 +59,7 @@ jobs:
         ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
         set -euo pipefail
 
-        cd ${{ env.DEPLOY_DIR }}
+        pwd
 
         # 备份上一个成功的镜像 tag
         if [ -f last_successful_version.txt ]; then
@@ -76,21 +75,24 @@ jobs:
         docker pull $IMAGE
 
         echo "🛑 Stopping existing stack..."
-        docker compose down || true
+        # 显式地指定 Compose 文件的路径
+        docker compose -f docker-compose.yml down || true
 
         # 替换 compose 文件中的 backend 镜像
         echo "🚀 Updating docker-compose.yml to use version $VERSION..."
+        # 显式地指定 Compose 文件的路径
         sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
 
         # 保证宿主机相关目录存在且权限正确（适用于 Ubuntu/CentOS）
         for d in media logs staticfiles pgdata redisdata; do
-          sudo mkdir -p /srv/emoguard/$d
-          sudo chown 1000:1000 /srv/emoguard/$d
-          sudo chmod 755 /srv/emoguard/$d
+          sudo mkdir -p $d
+          sudo chown 1000:1000 $d
+          sudo chmod 755 $d
         done
 
         echo "🚀 Starting stack..."
-        docker compose up -d --remove-orphans
+        # 显式地指定 Compose 文件的路径
+        docker compose -f docker-compose.yml up -d --remove-orphans
 
         # Backend 健康检查
         echo "⏳ Waiting for backend health..."
