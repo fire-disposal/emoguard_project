@@ -51,15 +51,25 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+    - name: Upload Docker Compose File
+      run: |
+        # 使用 scp 将本地仓库中的 docker-compose.yml 复制到远程服务器的家目录
+        # -o StrictHostKeyChecking=no 用于避免第一次连接时的交互确认
+        # -i ~/.ssh/id_rsa 指定了私钥路径
+        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+          ./docker-compose.yml \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/docker-compose.yml
+
     - name: Deploy Stack via Docker Compose
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
         IMAGE="${{ env.IMAGE_BASE_NAME }}:$VERSION"
 
+        # 远程连接到服务器
         ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
         set -euo pipefail
 
-        pwd
+        pwd # 确认当前工作目录（默认为SSH用户的家目录）
 
         # 备份上一个成功的镜像 tag
         if [ -f last_successful_version.txt ]; then
@@ -75,12 +85,11 @@ jobs:
         docker pull $IMAGE
 
         echo "🛑 Stopping existing stack..."
-        # 显式地指定 Compose 文件的路径
+        # 此时的 docker-compose.yml 已经是最新版本
         docker compose -f docker-compose.yml down || true
 
         # 替换 compose 文件中的 backend 镜像
         echo "🚀 Updating docker-compose.yml to use version $VERSION..."
-        # 显式地指定 Compose 文件的路径
         sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
 
         # 保证宿主机相关目录存在且权限正确（适用于 Ubuntu/CentOS）
@@ -91,7 +100,6 @@ jobs:
         done
 
         echo "🚀 Starting stack..."
-        # 显式地指定 Compose 文件的路径
         docker compose -f docker-compose.yml up -d --remove-orphans
 
         # Backend 健康检查
@@ -105,7 +113,7 @@ jobs:
             echo "$VERSION" > last_successful_version.txt
             exit 0
           fi
-          echo "  ⌛ Health check retry \$i..."
+          echo "  ⌛ Health check retry \$i..."
           sleep \$HEALTH_INTERVAL
         done
 
