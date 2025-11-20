@@ -50,6 +50,43 @@ jobs:
         echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Render remote .env from GitHub Secrets
+      run: |
+        ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        set -euo pipefail
+
+        # 1. 生成/覆盖 ~/.env（权限 600，仅当前用户可读）
+        umask 0077
+        cat > ~/.env << ENVEOF
+        # ===== Postgres =====
+        POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+        POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+        POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+
+        # ===== Redis =====
+        REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+
+        # ===== Django =====
+        SECRET_KEY=${{ secrets.SECRET_KEY }}
+        DJANGO_SUPERUSER_USERNAME=${{ secrets.DJANGO_SUPERUSER_USERNAME }}
+        DJANGO_SUPERUSER_EMAIL=${{ secrets.DJANGO_SUPERUSER_EMAIL }}
+        DJANGO_SUPERUSER_PASSWORD=${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
+
+        # ===== WeChat Mini-Program =====
+        WECHAT_MINI_PROGRAM_APP_ID=${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}
+        WECHAT_MINI_PROGRAM_APP_SECRET=${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}
+
+        # ===== Optional extras =====
+        DEBUG=${{ secrets.DEBUG }}
+        ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+        SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+        ENVEOF
+
+        # 2. 确认写出成功（可选，调试用）
+        echo "✅ Remote .env ready"
+        ls -l ~/.env
+        EOF
 
     - name: Upload Docker Compose File
       run: |
