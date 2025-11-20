@@ -63,7 +63,10 @@ jobs:
     - name: Deploy Stack via Docker Compose
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
-        IMAGE="${{ env.IMAGE_BASE_NAME }}:$VERSION"
+        REPO="${{ github.repository }}"
+        IMAGE="ghcr.io/$REPO/emoguard-backend:$VERSION"
+        export REPO
+        export VERSION
 
         # 远程连接到服务器
         ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
@@ -91,12 +94,14 @@ jobs:
         # 替换 compose 文件中的 backend 镜像
         echo "🚀 Updating docker-compose.yml to use version $VERSION..."
         sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
+        sed -i.bak "/celery-worker:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
+        sed -i.bak "/celery-beat:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
 
         # 保证宿主机相关目录存在且权限正确（适用于 Ubuntu/CentOS）
         for d in media logs staticfiles pgdata redisdata; do
-          sudo mkdir -p $d
-          sudo chown 1000:1000 $d
-          sudo chmod 755 $d
+          sudo mkdir -p /srv/emoguard/$d
+          sudo chown 1000:1000 /srv/emoguard/$d
+          sudo chmod 755 /srv/emoguard/$d
         done
 
         echo "🚀 Starting stack..."

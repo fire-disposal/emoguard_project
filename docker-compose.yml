@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/${GITHUB_REPO}/emoguard-backend:${VERSION:-latest}
+    image: ghcr.io/${REPO}/emoguard-backend:${VERSION:-latest}
     container_name: emoguard-backend
     restart: unless-stopped
     depends_on:
@@ -33,7 +33,7 @@ services:
 
 
   celery-worker:
-    image: ghcr.io/${GITHUB_REPO}/emoguard-backend:${VERSION:-latest}
+    image: ghcr.io/${REPO}/emoguard-backend:${VERSION:-latest}
     container_name: emoguard-celery-worker
     restart: unless-stopped
     depends_on:
@@ -52,7 +52,7 @@ services:
 
 
   celery-beat:
-    image: ghcr.io/${GITHUB_REPO}/emoguard-backend:${VERSION:-latest}
+    image: ghcr.io/${REPO}/emoguard-backend:${VERSION:-latest}
     container_name: emoguard-celery-beat
     restart: unless-stopped
     depends_on:
