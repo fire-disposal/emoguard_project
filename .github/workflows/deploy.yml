@@ -69,9 +69,6 @@ jobs:
           DJANGO_SUPERUSER_PASSWORD=${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
           WECHAT_MINI_PROGRAM_APP_ID=${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}
           WECHAT_MINI_PROGRAM_APP_SECRET=${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}
-          DEBUG=${{ secrets.DEBUG }}
-          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-          SENTRY_DSN=${{ secrets.SENTRY_DSN }}
           EOF
 
           # 3. 上传到服务器
