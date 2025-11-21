@@ -160,13 +160,7 @@ jobs:
         echo "❌ Health check failed"
         echo "📜 Recent backend logs:"
         docker compose logs backend --tail 50
-
-        echo "♻️ Rolling back to last successful version: \$LAST_VERSION"
-        # 回滚时同样只替换 backend 服务镜像
-        sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: ${{ env.IMAGE_BASE_NAME }}:\$LAST_VERSION|" docker-compose.yml
-        docker compose down
-        docker compose up -d --remove-orphans
-
+ 
         exit 1 
         EOF
     - name: ✅ Deployment Finished
