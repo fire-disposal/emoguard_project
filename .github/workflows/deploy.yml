@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_BASE_NAME: ghcr.io/${{ github.repository }}/emoguard-backend
+  IMAGE_BASE: ghcr.io/${{ github.repository }}/emoguard-backend
 
 jobs:
   deploy:
@@ -15,153 +15,102 @@ jobs:
       packages: write
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Login to GHCR
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Get Version
-      id: get_version
-      run: echo "VERSION=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+      - name: Get Version
+        id: ver
+        run: echo "IMAGE=${{ env.IMAGE_BASE }}:${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
 
-    - name: Build & Push Backend Image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./Dockerfile
-        push: true
-        tags: |
-          ${{ env.IMAGE_BASE_NAME }}:${{ steps.get_version.outputs.VERSION }}
-          ${{ env.IMAGE_BASE_NAME }}:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build & Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.ver.outputs.IMAGE }}
+            ${{ env.IMAGE_BASE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-        
-    - name: Render remote .env from GitHub Secrets
-      run: |
-        ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-        set -euo pipefail
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-        # 1. 生成/覆盖 ~/.env（权限 600，仅当前用户可读）
-        umask 0077
-        cat > ~/.env << ENVEOF
-        # ===== Postgres =====
-        POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-        POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-        POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+      - name: Render & Upload stack files
+        run: |
+          # 1. 渲染 compose（唯一占位符 __IMAGE__）
+          sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g" \
+              docker-compose.yml > docker-compose.rendered.yml
 
-        # ===== Redis =====
-        REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          # 2. 渲染 .env
+          cat > .env <<EOF
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          DJANGO_SUPERUSER_USERNAME=${{ secrets.DJANGO_SUPERUSER_USERNAME }}
+          DJANGO_SUPERUSER_EMAIL=${{ secrets.DJANGO_SUPERUSER_EMAIL }}
+          DJANGO_SUPERUSER_PASSWORD=${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
+          WECHAT_MINI_PROGRAM_APP_ID=${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}
+          WECHAT_MINI_PROGRAM_APP_SECRET=${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}
+          DEBUG=${{ secrets.DEBUG }}
+          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+          SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+          EOF
 
-        # ===== Django =====
-        SECRET_KEY=${{ secrets.SECRET_KEY }}
-        DJANGO_SUPERUSER_USERNAME=${{ secrets.DJANGO_SUPERUSER_USERNAME }}
-        DJANGO_SUPERUSER_EMAIL=${{ secrets.DJANGO_SUPERUSER_EMAIL }}
-        DJANGO_SUPERUSER_PASSWORD=${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
+          # 3. 上传到服务器
+          scp -i ~/.ssh/id_rsa \
+              docker-compose.rendered.yml \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/docker-compose.yml
+          scp -i ~/.ssh/id_rsa \
+              .env \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/.env
 
-        # ===== WeChat Mini-Program =====
-        WECHAT_MINI_PROGRAM_APP_ID=${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}
-        WECHAT_MINI_PROGRAM_APP_SECRET=${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}
+      - name: Deploy stack
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -euo pipefail
 
-        # ===== Optional extras =====
-        DEBUG=${{ secrets.DEBUG }}
-        ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-        SENTRY_DSN=${{ secrets.SENTRY_DSN }}
-        ENVEOF
+            # 登录 & 拉镜像
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose -f ~/docker-compose.yml pull
 
-        # 2. 确认写出成功（可选，调试用）
-        echo "✅ Remote .env ready"
-        ls -l ~/.env
-        EOF
+            # 目录权限
+            sudo mkdir -p /srv/emoguard/{media,logs,staticfiles,pgdata,redisdata}
+            sudo chown -R 1000:1000 /srv/emoguard
+            sudo chmod -R 755 /srv/emoguard
 
-    - name: Upload Docker Compose File
-      run: |
-        # 使用 scp 将本地仓库中的 docker-compose.yml 复制到远程服务器的家目录
-        # -o StrictHostKeyChecking=no 用于避免第一次连接时的交互确认
-        # -i ~/.ssh/id_rsa 指定了私钥路径
-        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
-          ./docker-compose.yml \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/docker-compose.yml
+            # 启动
+            docker compose -f ~/docker-compose.yml down --remove-orphans
+            docker compose -f ~/docker-compose.yml up -d
 
-    - name: Deploy Stack via Docker Compose
-      run: |
-        VERSION=${{ steps.get_version.outputs.VERSION }}
-        REPO="${{ github.repository }}"
-        IMAGE="ghcr.io/$REPO/emoguard-backend:$VERSION"
-        export REPO
-        export VERSION
+            # 健康检查
+            for i in {1..10}; do
+              docker exec emoguard-backend curl -fsS http://localhost:8000/health && break
+              echo "⏳ health check $i..."
+              sleep 3
+            done || { docker compose logs backend --tail 30; exit 1; }
 
-        # 远程连接到服务器
-        ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-        set -euo pipefail
+            # 记录版本
+            echo "${GITHUB_SHA::8}" > ~/last_successful_version.txt
+            echo "✅ Deploy OK — ${{ steps.ver.outputs.IMAGE }}"
+          EOF
 
-        pwd # 确认当前工作目录（默认为SSH用户的家目录）
-
-        # 备份上一个成功的镜像 tag
-        if [ -f last_successful_version.txt ]; then
-          LAST_VERSION=\$(cat last_successful_version.txt)
-        else
-          LAST_VERSION="latest"
-        fi
-
-        echo "🔐 Logging into GHCR..."
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-        echo "📦 Pulling latest backend image..."
-        docker pull $IMAGE
-
-        echo "🛑 Stopping existing stack..."
-        docker compose -f docker-compose.yml down || true
-        
-
-        echo "🧼 Cleaning up unused images..."
-        echo "🚀 Updating docker-compose.yml to use version $VERSION..."
-        sed -i.bak "/backend:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
-        sed -i.bak "/celery-worker:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
-        sed -i.bak "/celery-beat:/,/container_name:/s|image:.*emoguard-backend.*|image: $IMAGE|" docker-compose.yml
-
-        echo "📁 Ensuring necessary directories ..."
-        for d in media logs staticfiles pgdata redisdata; do
-          sudo mkdir -p /srv/emoguard/$d
-          sudo chown 1000:1000 /srv/emoguard/$d
-          sudo chmod 755 /srv/emoguard/$d
-        done
-
-        echo "🚀 Starting stack..."
-        docker compose -f docker-compose.yml up -d --remove-orphans
-
-        echo "⏳ Waiting for backend health..."
-        HEALTH_RETRIES=10
-        HEALTH_INTERVAL=3
-        for i in \$(seq 1 \$HEALTH_RETRIES); do
-          if docker exec emoguard-backend curl -fs http://localhost:8000/health/ > /dev/null; then
-            echo "✅ Backend healthy"
-            echo "$VERSION" > last_successful_version.txt
-            exit 0
-          fi
-          echo "  ⌛ Health check retry \$i..."
-          sleep \$HEALTH_INTERVAL
-        done
-
-        echo "❌ Health check failed"
-        echo "📜 Recent backend logs:"
-        docker compose logs backend --tail 50
- 
-        exit 1 
-        EOF
-    - name: ✅ Deployment Finished
-      run: echo "🚀 Deploy OK — version ${{ steps.get_version.outputs.VERSION }}"
+      - name: ✅ Finish
+        run: echo "🚀 Deploy finished — ${{ steps.ver.outputs.IMAGE }}"
