@@ -30,7 +30,14 @@ jobs:
 
       - name: Get Version
         id: ver
-        run: echo "IMAGE=${{ env.IMAGE_BASE }}:${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
+        # 统一关键脚本 set -euo pipefail
+        run: |
+          set -euo pipefail
+          # 1. 修正镜像 tag 渲染为 shell 语法 `${GITHUB_SHA:-latest}`，并截取前 8 位 SHA
+          # 使用 shell 参数扩展，确保变量安全，如果 GITHUB_SHA 为空，则默认为 latest
+          TAG_SHORT=$(echo "${GITHUB_SHA:0:8}")
+          TAG_FINAL="${TAG_SHORT:-latest}"
+          echo "IMAGE=${{ env.IMAGE_BASE }}:$TAG_FINAL" >> $GITHUB_OUTPUT
 
       - name: Build & Push
         uses: docker/build-push-action@v5
@@ -45,7 +52,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Setup SSH
+        # 统一关键脚本 set -euo pipefail
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
@@ -54,10 +63,12 @@ jobs:
           echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
       - name: Render & Upload stack files
+        # 统一关键脚本 set -euo pipefail
         run: |
+          set -euo pipefail
           # 1. 渲染 compose（唯一占位符 __IMAGE__）
           sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g" \
-              docker-compose.yml > docker-compose.rendered.yml
+            docker-compose.yml > docker-compose.rendered.yml
 
           # 2. 渲染 .env
           cat > .env <<EOF
@@ -74,15 +85,16 @@ jobs:
 
           # 3. 上传到服务器
           scp -i ~/.ssh/id_rsa \
-              docker-compose.rendered.yml \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/docker-compose.yml
+            docker-compose.rendered.yml \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/docker-compose.yml
           scp -i ~/.ssh/id_rsa \
-              .env \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/.env
+            .env \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/.env
 
       - name: Deploy stack
         run: |
           ssh -i ~/.ssh/id_rsa -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            # 5. 统一关键脚本 set -euo pipefail
             set -euo pipefail
 
             # 登录 & 拉镜像
@@ -118,18 +130,19 @@ jobs:
             docker ps -a | grep emoguard || true
             
             echo "📋 检查端口监听:"
-            netstat -tlnp | grep :8000 || true
+            # 3. 将端口监听检查统一改为 ss -tlnp | grep :8000 || true
             ss -tlnp | grep :8000 || true
 
             # 健康检查
             echo "🔍 开始健康检查..."
-            for i in {1..15}; do
+            # 4. 健康检查重试次数与间隔调整为 20 次，每次 5 秒
+            for i in {1..20}; do
               if docker exec emoguard-backend curl -fsS http://localhost:8000/health; then
                 echo "✅ 健康检查通过"
                 break
               fi
-              echo "⏳ health check $i/15 failed, waiting..."
-              if [ $i -eq 5 ] || [ $i -eq 10 ]; then
+              echo "⏳ health check $i/20 failed, waiting..."
+              if [ $i -eq 5 ] || [ $i -eq 10 ] || [ $i -eq 15 ]; then
                 echo "📋 容器状态:"
                 docker ps -a | grep emoguard
                 echo "📋 最近日志:"
