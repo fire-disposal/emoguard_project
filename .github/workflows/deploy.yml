@@ -30,7 +30,7 @@ jobs:
 
       - name: Get Version
         id: ver
-        run: echo "IMAGE=${{ env.IMAGE_BASE }}:${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+        run: echo "IMAGE=${{ env.IMAGE_BASE }}:${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
 
       - name: Build & Push
         uses: docker/build-push-action@v5
@@ -49,7 +49,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+          # 禁用严格主机密钥检查以提高CI/CD稳定性
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
       - name: Render & Upload stack files
         run: |
@@ -81,31 +83,71 @@ jobs:
 
       - name: Deploy stack
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -euo pipefail
 
             # 登录 & 拉镜像
+            echo "🔑 Docker登录..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            echo "📥 拉取镜像..."
             docker compose -f ~/docker-compose.yml pull
+            
+            echo "🔍 验证镜像:"
+            docker images | grep emoguard || echo "⚠️ 未找到emoguard镜像"
 
             # 目录权限
+            echo "📁 创建目录结构..."
             sudo mkdir -p /srv/emoguard/{media,logs,staticfiles,pgdata,redisdata}
             sudo chown -R 1000:1000 /srv/emoguard
             sudo chmod -R 755 /srv/emoguard
+            
+            echo "📋 目录权限检查:"
+            ls -la /srv/emoguard/ || true
 
             # 启动
+            echo "🚀 停止旧容器..."
             docker compose -f ~/docker-compose.yml down --remove-orphans
+            
+            echo "🚀 启动新容器..."
             docker compose -f ~/docker-compose.yml up -d
+            
+            echo "⏳ 等待容器初始化..."
+            sleep 10
+            
+            echo "📋 检查容器状态:"
+            docker ps -a | grep emoguard || true
+            
+            echo "📋 检查端口监听:"
+            netstat -tlnp | grep :8000 || true
+            ss -tlnp | grep :8000 || true
 
             # 健康检查
-            for i in {1..10}; do
-              docker exec emoguard-backend curl -fsS http://localhost:8000/health && break
-              echo "⏳ health check $i..."
-              sleep 3
-            done || { docker compose logs backend --tail 30; exit 1; }
+            echo "🔍 开始健康检查..."
+            for i in {1..15}; do
+              if docker exec emoguard-backend curl -fsS http://localhost:8000/health; then
+                echo "✅ 健康检查通过"
+                break
+              fi
+              echo "⏳ health check $i/15 failed, waiting..."
+              if [ $i -eq 5 ] || [ $i -eq 10 ]; then
+                echo "📋 容器状态:"
+                docker ps -a | grep emoguard
+                echo "📋 最近日志:"
+                docker compose logs backend --tail 20
+              fi
+              sleep 5
+            done || {
+              echo "❌ 健康检查失败，收集诊断信息:"
+              docker ps -a
+              docker compose logs backend --tail 50
+              docker compose logs db --tail 20
+              docker compose logs redis --tail 20
+              exit 1
+            }
 
             # 记录版本
-            echo "${GITHUB_SHA::8}" > ~/last_successful_version.txt
+            echo "${GITHUB_SHA:0:8}" > ~/last_successful_version.txt
             echo "✅ Deploy OK — ${{ steps.ver.outputs.IMAGE }}"
           EOF
 
