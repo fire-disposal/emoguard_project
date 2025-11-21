@@ -19,9 +19,9 @@ services:
       DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
       DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
 
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
+      DATABASE_URL: postgresql://emoguard:${POSTGRES_PASSWORD}@db:5432/emoguard
+      CELERY_BROKER_URL: redis://:emoguardredis@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:emoguardredis@redis:6379/1
       TZ: Asia/Shanghai
     volumes:
       - /srv/emoguard/media:/app/media
@@ -49,9 +49,9 @@ services:
     environment:
       CONTAINER_ROLE: worker
       SECRET_KEY: ${SECRET_KEY}
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
+      DATABASE_URL: postgresql://emoguard:${POSTGRES_PASSWORD}@db:5432/emoguard
+      CELERY_BROKER_URL: redis://:emoguardredis@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:emoguardredis@redis:6379/1
       TZ: Asia/Shanghai
     volumes:
       - /srv/emoguard/logs:/app/logs
@@ -71,9 +71,9 @@ services:
     environment:
       CONTAINER_ROLE: beat
       SECRET_KEY: ${SECRET_KEY}
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
+      DATABASE_URL: postgresql://emoguard:${POSTGRES_PASSWORD}@db:5432/emoguard
+      CELERY_BROKER_URL: redis://:emoguardredis@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:emoguardredis@redis:6379/1
       TZ: Asia/Shanghai
     volumes:
       - /srv/emoguard/logs:/app/logs
@@ -86,9 +86,9 @@ services:
     container_name: emoguard-db
     # restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: emoguard
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: postgres
+      POSTGRES_DB: emoguard
     volumes:
       - /srv/emoguard/pgdata:/var/lib/postgresql/data
     networks:
@@ -105,13 +105,13 @@ services:
     image: redis:7
     container_name: emoguard-redis
     # restart: unless-stopped
-    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    command: ["redis-server", "--requirepass", "emoguardredis"]
     volumes:
       - /srv/emoguard/redisdata:/data
     networks:
       - emoguard-net
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a ${REDIS_PASSWORD} ping"]
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a emoguardredis ping"]
       interval: 15s
       timeout: 10s
       retries: 8

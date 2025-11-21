@@ -69,6 +69,7 @@ jobs:
           DJANGO_SUPERUSER_PASSWORD=${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
           WECHAT_MINI_PROGRAM_APP_ID=${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}
           WECHAT_MINI_PROGRAM_APP_SECRET=${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}
+          COMPOSE_BAKE=true
           EOF
 
           # 3. 上传到服务器
