@@ -8,9 +8,9 @@ const auth = require('./auth');
 
 //-------------后端接口地址----------------
 
-const BASE_URL = 'http://127.0.0.1:8000';
+// const BASE_URL = 'http://127.0.0.1:8000';
 
-// const BASE_URL = 'https://cg.aoxintech.com';
+const BASE_URL = 'https://cg.aoxintech.com';
 
 //------------------------------------
 

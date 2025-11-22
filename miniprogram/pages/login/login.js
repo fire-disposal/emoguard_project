@@ -128,7 +128,6 @@ Page({
       console.log('获取用户信息:', userInfo);
 
       // 检查信息是否完善
-      // 注意：后端的 res.user 可能没有 is_profile_complete 字段，这里使用 app.js 刷新后的 globalData
       if (!userInfo || !userInfo.is_profile_complete) {
         console.log('用户信息未完善，跳转到信息完善页面');
         wx.reLaunch({
