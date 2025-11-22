@@ -1,76 +1,84 @@
 name: Build & Deploy Backend Stack
 
 on:
+  # 使用 workflow_dispatch 允许手动触发，方便调试
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deployment'
+        required: false
+        default: 'Manual deploy'
 
 env:
+  # 定义镜像的基础路径
   IMAGE_BASE: ghcr.io/${{ github.repository }}/emoguard-backend
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: dev
+    environment: dev # 部署环境名称
     permissions:
       contents: read
-      packages: write
+      packages: write # 写入 GHCR
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GHCR
+      - name: Login to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get Version
+      - name: Get Version Tag
         id: ver
-        # 统一关键脚本 set -euo pipefail
         run: |
           set -euo pipefail
-          # 1. 修正镜像 tag 渲染为 shell 语法 `${GITHUB_SHA:-latest}`，并截取前 8 位 SHA
-          # 使用 shell 参数扩展，确保变量安全，如果 GITHUB_SHA 为空，则默认为 latest
+          # 截取 SHA 前 8 位作为标签，作为部署版本
           TAG_SHORT=$(echo "${GITHUB_SHA:0:8}")
-          TAG_FINAL="${TAG_SHORT:-latest}"
+          TAG_FINAL="${TAG_SHORT:-latest}" 
+          # 输出完整的镜像地址和标签
           echo "IMAGE=${{ env.IMAGE_BASE }}:$TAG_FINAL" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG_FINAL" >> $GITHUB_OUTPUT # 方便后续步骤引用
 
-      - name: Build & Push
+      - name: Build & Push Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ steps.ver.outputs.IMAGE }}
-            ${{ env.IMAGE_BASE }}:latest
+            ${{ steps.ver.outputs.IMAGE }} # SHA tag
+            ${{ env.IMAGE_BASE }}:latest # latest tag
+          # 启用 GitHub Actions 缓存，加速构建
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Setup SSH
-        # 统一关键脚本 set -euo pipefail
+      - name: Setup SSH Key
+        # 手动创建 SSH 私钥文件，用于 scp 和 ssh
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # 禁用严格主机密钥检查以提高CI/CD稳定性
-          echo "StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          # 配置 SSH 客户端：禁用严格主机密钥检查，提高 CI/CD 稳定性
+          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
-      - name: Render & Upload stack files
-        # 统一关键脚本 set -euo pipefail
+      - name: Render & Upload Stack Files
         run: |
           set -euo pipefail
-          # 1. 渲染 compose（唯一占位符 __IMAGE__）
+          
+          # 1. 渲染 docker-compose.yml 文件，替换镜像占位符
+          # 使用步骤输出的完整 IMAGE 变量
           sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g" \
             docker-compose.yml > docker-compose.rendered.yml
 
-          # 2. 渲染 .env
+          # 2. 生成 .env 文件，包含所有敏感配置
           cat > .env <<EOF
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
@@ -83,18 +91,19 @@ jobs:
           COMPOSE_BAKE=true
           EOF
 
-          # 3. 上传到服务器
-          scp -i ~/.ssh/id_rsa \
-            docker-compose.rendered.yml \
+          # 3. 上传到服务器（放置在用户主目录）
+          echo "📤 Uploading files to server..."
+          scp -i ~/.ssh/id_rsa docker-compose.rendered.yml \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/docker-compose.yml
-          scp -i ~/.ssh/id_rsa \
-            .env \
+          scp -i ~/.ssh/id_rsa .env \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/.env
 
-      - name: Deploy stack
+      - name: Deploy Stack via SSH
         run: |
-          ssh -i ~/.ssh/id_rsa -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # 5. 统一关键脚本 set -euo pipefail
+          # SSH 连接到服务器并执行部署命令
+          # 确保 EOF 标记与 ssh 命令在 run: | 块内对齐。
+          ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            # 统一关键脚本，任何非零退出码都将终止脚本
             set -euo pipefail
 
             # 登录 & 拉镜像
@@ -102,66 +111,64 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "📥 拉取镜像..."
-            docker compose -f ~/docker-compose.yml pull
+            # 使用 ~/docker-compose.yml 和 ~/.env
+            docker compose -f ~/docker-compose.yml --env-file ~/.env pull
             
             echo "🔍 验证镜像:"
             docker images | grep emoguard || echo "⚠️ 未找到emoguard镜像"
 
-            # 目录权限
-            echo "📁 创建目录结构..."
-            sudo mkdir -p /srv/emoguard/{media,logs,staticfiles,pgdata,redisdata}
-            sudo chown -R 1000:1000 /srv/emoguard
-            sudo chmod -R 755 /srv/emoguard
-            
-            echo "📋 目录权限检查:"
-            ls -la /srv/emoguard/ || true
-
-            # 启动
+            # 停止旧容器并清理孤立容器
             echo "🚀 停止旧容器..."
-            docker compose -f ~/docker-compose.yml down --remove-orphans
+            docker compose -f ~/docker-compose.yml --env-file ~/.env down --remove-orphans
             
+            # 启动新容器
             echo "🚀 启动新容器..."
-            docker compose -f ~/docker-compose.yml up -d
+            docker compose -f ~/docker-compose.yml --env-file ~/.env up -d
             
             echo "⏳ 等待容器初始化..."
             sleep 10
             
+            # 检查服务状态
             echo "📋 检查容器状态:"
             docker ps -a | grep emoguard || true
-            
+
             echo "📋 检查端口监听:"
-            # 3. 将端口监听检查统一改为 ss -tlnp | grep :8000 || true
             ss -tlnp | grep :8000 || true
 
-            # 健康检查
-            echo "🔍 开始健康检查..."
-            # 4. 健康检查重试次数与间隔调整为 20 次，每次 5 秒
+            # 健康检查：等待后端应用启动并响应
+            echo "🔍 开始健康检查 (Max 20 attempts, 5s interval)..."
+            health_check_passed=false
             for i in {1..20}; do
+              # 从宿主机内部执行 curl 检查后端容器的健康端点
               if docker exec emoguard-backend curl -fsS http://localhost:8000/health; then
                 echo "✅ 健康检查通过"
+                health_check_passed=true
                 break
               fi
-              echo "⏳ health check $i/20 failed, waiting..."
+              echo "⏳ Health check $i/20 failed, waiting 5 seconds..."
+              
+              # 定期打印诊断信息
               if [ $i -eq 5 ] || [ $i -eq 10 ] || [ $i -eq 15 ]; then
-                echo "📋 容器状态:"
+                echo "--- 诊断信息 ---"
                 docker ps -a | grep emoguard
-                echo "📋 最近日志:"
                 docker compose logs backend --tail 20
+                echo "----------------"
               fi
               sleep 5
-            done || {
-              echo "❌ 健康检查失败，收集诊断信息:"
+            done
+
+            if [ "$health_check_passed" != "true" ]; then
+              echo "❌ 健康检查失败，收集最终诊断信息:"
               docker ps -a
               docker compose logs backend --tail 50
               docker compose logs db --tail 20
               docker compose logs redis --tail 20
               exit 1
-            }
+            fi
 
-            # 记录版本
+            # 记录版本并完成
             echo "${GITHUB_SHA:0:8}" > ~/last_successful_version.txt
-            echo "✅ Deploy OK — ${{ steps.ver.outputs.IMAGE }}"
+            echo "✅ Deploy OK — Image Tag: ${{ steps.ver.outputs.TAG }}"
           EOF
-
-      - name: ✅ Finish
-        run: echo "🚀 Deploy finished — ${{ steps.ver.outputs.IMAGE }}"
+      - name: ✅ Finish Deployment
+        run: "echo \"🚀 Deploy finished — Image: ${{ steps.ver.outputs.IMAGE }}\""

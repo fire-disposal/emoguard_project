@@ -2,7 +2,7 @@ services:
   backend:
     image: __IMAGE__
     container_name: emoguard-backend
-    # restart: unless-stopped
+    restart: unless-stopped # 标准化重启策略
     depends_on:
       db:
         condition: service_healthy
@@ -11,61 +11,68 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Django Secrets
+      # Django Secrets and environment variables
       SECRET_KEY: ${SECRET_KEY}
       DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
       DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
       DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
-      # WeChat Secrets
       WECHAT_MINI_PROGRAM_APP_ID: ${WECHAT_MINI_PROGRAM_APP_ID}
       WECHAT_MINI_PROGRAM_APP_SECRET: ${WECHAT_MINI_PROGRAM_APP_SECRET}
-      # Database and Caching URLs
+      
+      # Database and Caching URLs (使用 service name 作为 host)
       DATABASE_URL: postgresql://emoguard:${POSTGRES_PASSWORD}@db:5432/emoguard
-      # 3. 移除 Celery URL 中的硬编码密码，使用环境变量
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
-      # Timezone
+      
+      # Timezone and Redis Password for healthcheck/app logic
       TZ: Asia/Shanghai
-      # Make REDIS_PASSWORD available to curl healthcheck (optional, but good practice)
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD} # 传递给应用的环境变量
 
     volumes:
-      - /srv/emoguard/media:/app/media
-      - /srv/emoguard/staticfiles:/app/staticfiles
+      # 使用命名卷，更推荐 Docker Compose 的标准做法
+      - media_data:/app/media
+      - staticfiles_data:/app/staticfiles
     networks:
       - emoguard-net
 
+    # 后端健康检查：确保 Web 服务启动并响应
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
       interval: 15s
       timeout: 10s
       retries: 8
       start_period: 30s
-
-
+      
+  # ----------------------------------------------------
+  # 2. Celery Worker Service
+  # ----------------------------------------------------
   celery-worker:
     image: __IMAGE__
     container_name: emoguard-celery-worker
-    # restart: unless-stopped 
+    restart: unless-stopped 
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      CONTAINER_ROLE: worker
+      # 确保 Worker 知道它是 Worker 角色
+      CONTAINER_ROLE: worker 
       SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://emoguard:${POSTGRES_PASSWORD}@db:5432/emoguard
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
       TZ: Asia/Shanghai
-      REDIS_PASSWORD: ${REDIS_PASSWORD} # 将 Redis 密码传给 Celery 容器
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
-      - /srv/emoguard/logs:/app/logs
+      # 假设 logs 卷用于 Celery 日志
+      - logs_data:/app/logs
     networks:
       - emoguard-net
 
-
+  # ----------------------------------------------------
+  # 3. Celery Beat Service
+  # ----------------------------------------------------
   celery-beat:
     image: __IMAGE__
     container_name: emoguard-celery-beat
@@ -76,6 +83,7 @@ services:
       redis:
         condition: service_healthy
     environment:
+      # 确保 Beat 知道它是 Beat 角色
       CONTAINER_ROLE: beat
       SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://emoguard:${POSTGRES_PASSWORD}@db:5432/emoguard
@@ -84,11 +92,13 @@ services:
       TZ: Asia/Shanghai
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
-      - /srv/emoguard/logs:/app/logs
+      - logs_data:/app/logs # Beat 和 Worker 共享日志卷
     networks:
       - emoguard-net
 
-
+  # ----------------------------------------------------
+  # 4. PostgreSQL Database (db)
+  # ----------------------------------------------------
   db:
     image: postgres:15
     container_name: emoguard-db
@@ -97,35 +107,55 @@ services:
       POSTGRES_USER: emoguard
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: emoguard
+      TZ: Asia/Shanghai
     volumes:
-      - /srv/emoguard/pgdata:/var/lib/postgresql/data
+      # 使用命名卷持久化数据
+      - pg_data:/var/lib/postgresql/data
     networks:
       - emoguard-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -q"]
-      interval: 15s
-      timeout: 10s
-      retries: 8
-      start_period: 30s
+      test: ["CMD-SHELL", "pg_isready -U emoguard -d emoguard"] # 明确指定用户和数据库，更健壮
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s # 缩短启动期，15s 应该足够
 
-
+  # ----------------------------------------------------
+  # 5. Redis Cache/Broker (redis)
+  # ----------------------------------------------------
   redis:
-    image: redis:7
+    image: redis:7-alpine
     container_name: emoguard-redis
     restart: unless-stopped
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    # Redis 不使用 environment 设置密码，而是通过 command
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
-      - /srv/emoguard/redisdata:/data
+      # 使用命名卷持久化数据
+      - redis_data:/data
     networks:
       - emoguard-net
+    # Redis 健康检查：使用 redis-cli 认证并执行 PING
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a ${REDIS_PASSWORD} ping"]
-      interval: 15s
-      timeout: 10s
-      retries: 8
-      start_period: 20s
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a ${REDIS_PASSWORD} ping | grep PONG"] # 确保返回 PONG
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+# ----------------------------------------------------
+# Named Volumes and Network Configuration
+# ----------------------------------------------------
+volumes:
+  pg_data:
+    name: emoguard_pg_data # 明确命名，避免冲突
+  redis_data:
+    name: emoguard_redis_data
+  media_data:
+    name: emoguard_media
+  staticfiles_data:
+    name: emoguard_staticfiles
+  logs_data:
+    name: emoguard_logs
 
 networks:
   emoguard-net:
