@@ -75,6 +75,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    environment:
       CONTAINER_ROLE: beat
       SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://emoguard:${POSTGRES_PASSWORD}@db:5432/emoguard
