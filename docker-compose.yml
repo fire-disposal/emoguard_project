@@ -2,7 +2,7 @@ services:
   backend:
     image: __IMAGE__
     container_name: emoguard-backend
-    restart: unless-stopped
+    # restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -36,7 +36,6 @@ services:
       - emoguard-net
 
     healthcheck:
-      # 保持 Python 检查不变，如果您确定容器内有 curl，推荐使用更轻量的：
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
       interval: 15s
       timeout: 10s
@@ -47,12 +46,12 @@ services:
   celery-worker:
     image: __IMAGE__
     container_name: emoguard-celery-worker
-    restart: unless-stopped # 1. 增加自动重启策略
+    # restart: unless-stopped 
     depends_on:
       db:
-        condition: service_healthy # 2. 依赖 DB 的健康状态
+        condition: service_healthy
       redis:
-        condition: service_healthy # 2. 依赖 Redis 的健康状态
+        condition: service_healthy
     environment:
       CONTAINER_ROLE: worker
       SECRET_KEY: ${SECRET_KEY}
@@ -70,20 +69,19 @@ services:
   celery-beat:
     image: __IMAGE__
     container_name: emoguard-celery-beat
-    restart: unless-stopped # 1. 增加自动重启策略
+    restart: unless-stopped
     depends_on:
       db:
-        condition: service_healthy # 2. 依赖 DB 的健康状态
+        condition: service_healthy
       redis:
-        condition: service_healthy # 2. 依赖 Redis 的健康状态
-    environment:
+        condition: service_healthy
       CONTAINER_ROLE: beat
       SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://emoguard:${POSTGRES_PASSWORD}@db:5432/emoguard
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/1
       TZ: Asia/Shanghai
-      REDIS_PASSWORD: ${REDIS_PASSWORD} # 将 Redis 密码传给 Celery 容器
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - /srv/emoguard/logs:/app/logs
     networks:
@@ -113,18 +111,15 @@ services:
   redis:
     image: redis:7
     container_name: emoguard-redis
-    restart: unless-stopped # 1. 增加自动重启策略
+    restart: unless-stopped
     environment:
-      # 4. 将密码作为环境变量传入，供 command 使用
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-    # 5. command 引用环境变量，避免硬编码
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - /srv/emoguard/redisdata:/data
     networks:
       - emoguard-net
     healthcheck:
-      # 6. healthcheck 引用环境变量，避免硬编码
       test: ["CMD-SHELL", "redis-cli --no-auth-warning -a ${REDIS_PASSWORD} ping"]
       interval: 15s
       timeout: 10s
