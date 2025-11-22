@@ -7,11 +7,8 @@ const storage = require('./storage');
 const auth = require('./auth'); 
 
 //-------------后端接口地址----------------
-
-// const BASE_URL = 'http://127.0.0.1:8000';
-
-const BASE_URL = 'https://cg.aoxintech.com';
-
+const BASE_URL = 'http://127.0.0.1:8000';
+// const BASE_URL = 'https://cg.aoxintech.com';
 //------------------------------------
 
 // 是否正在刷新 token
@@ -27,50 +24,74 @@ let refreshFailed = false;
  */
 function refreshToken() {
   return new Promise((resolve, reject) => {
-    // 如果已经标记为刷新失败，直接拒绝
+    // 如果已经标记为刷新失败，直接拒绝，不再发起请求
     if (refreshFailed) {
       reject(new Error('Token refresh already failed'));
       return;
     }
 
-    const refreshToken = storage.getRefreshToken();
+    // 获取 refresh token (通常仅存在 storage 中)
+    const refreshTokenStr = storage.getRefreshToken();
 
-    if (!refreshToken) {
-      refreshFailed = true;
-      auth.clearAuth(); // 清理旧状态
-      auth.navigateToLogin(); // 没有 refresh token，直接跳转登录
+    if (!refreshTokenStr) {
+      handleRefreshFail('No refresh token locally');
       reject(new Error('No refresh token'));
       return;
     }
 
+    console.log('正在尝试刷新 Token...');
+
     wx.request({
-      url: `${BASE_URL}/api/token/refresh`,
+      url: `${BASE_URL}/api/token/refresh`, // 请确认后端接口路径
       method: 'POST',
-      data: { refresh: refreshToken },
+      data: { refresh: refreshTokenStr },
+      header: { 'Content-Type': 'application/json' }, // 显式声明
       success: (res) => {
         if (res.statusCode === 200 && res.data.access) {
-          // 刷新成功，重置失败标记
+          console.log('Token 刷新成功');
           refreshFailed = false;
-          // [优化] 确保同时存储新的 access 和 refresh token（如果后端返回了新的 refresh）
-          storage.setToken(res.data.access, res.data.refresh || refreshToken);
-          resolve(res.data.access);
+          
+          const newAccess = res.data.access;
+          const newRefresh = res.data.refresh || refreshTokenStr; // 后端可能不返回新的 refresh
+
+          // [关键优化 1]：刷新成功后，必须同时更新 Storage 和 GlobalData
+          // 确保 auth.getToken() 能立即获取到最新值
+          storage.setToken(newAccess, newRefresh);
+          
+          const app = getApp();
+          if (app && app.globalData) {
+            app.globalData.token = newAccess;
+            app.globalData.refreshToken = newRefresh;
+          }
+
+          resolve(newAccess);
         } else {
-          // 刷新失败，执行统一清理和跳转
-          refreshFailed = true;
-          auth.clearAuth(); 
-          auth.navigateToLogin();
+          handleRefreshFail(`Refresh rejected by server: ${res.statusCode}`);
           reject(new Error('Refresh token failed'));
         }
       },
       fail: (error) => {
-        // 网络请求失败，标记失败状态，并执行清理和跳转
-        refreshFailed = true;
-        auth.clearAuth(); 
-        auth.navigateToLogin();
+        // 网络层面的失败（断网等），不应该清除登录态，而是让用户重试
+        console.error('刷新 Token 网络请求失败:', error);
+        // 这里不置 refreshFailed = true，允许下次网络恢复后继续尝试
         reject(error);
       }
     });
   });
+}
+
+/**
+ * 辅助函数：统一处理刷新失败
+ */
+function handleRefreshFail(reason) {
+  console.warn('Token 刷新最终失败:', reason);
+  refreshFailed = true;
+  isRefreshing = false;
+  requestQueue = [];
+  
+  // 清理所有状态并跳转
+  auth.clearAuth(); 
+  auth.navigateToLogin();
 }
 
 /**
@@ -97,24 +118,24 @@ function request(options) {
       ...header
     };
 
-    // 添加 Authorization 头
+    // [关键优化 2]：使用 auth.getToken() (内存优先)
+    // 避免频繁读取 Storage，且保证与 app.js 状态一致
     if (!skipAuth) {
-      try {
-        const token = storage.getToken();
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        } else {
-          // 确保本地无 Token 时也进行跳转，但需避免在 refreshToken 中重复跳转
-          if (!refreshFailed) {
-              console.warn('未获取到本地token，自动跳转登录');
-              auth.navigateToLogin();
-          }
-          // 在没有 Token 时中断请求，防止发送无效请求
-          reject(new Error('Missing access token'));
-          return; 
-        }
-      } catch (error) {
-        console.error('Error getting token:', error);
+      const token = auth.getToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        // [关键优化 3]：没有 Token 时，不强制跳转，而是 Reject
+        // 原因：app.js 的 onShow 已经在做鉴权跳转了。如果 request 这里也跳转，
+        // 可能会导致页面刚打开就跳两次。这里只负责拦截请求。
+        console.warn('Request blocked: No token found');
+        
+        // 如果你确定某些接口必须在有 Token 时才能调用，可以保留跳转，
+        // 但建议加一个防抖或由页面 catch 处理
+        // auth.navigateToLogin(); 
+        
+        reject(new Error('Missing access token'));
+        return; 
       }
     }
 
@@ -129,21 +150,15 @@ function request(options) {
 
         // 成功响应
         if (statusCode >= 200 && statusCode < 300) {
-          // Promise 成功时只 resolve 响应数据 data
           resolve(data); 
           return;
         }
 
-        // 401 未授权 - 尝试刷新 token
+        // --- 401 处理逻辑 ---
         if (statusCode === 401 && !skipAuth) {
-          // 如果已经标记为刷新失败，直接跳转登录页，不再重试
+          // 如果已经标记为刷新失败，直接退出
           if (refreshFailed) {
-            wx.showToast({
-              title: '登录状态失效，请重新登录',
-              icon: 'none'
-            });
-            auth.navigateToLogin();
-            reject(new Error('Token refresh failed, please login again'));
+            reject(new Error('Token refresh failed previously'));
             return;
           }
 
@@ -153,150 +168,84 @@ function request(options) {
             refreshToken()
               .then((newToken) => {
                 isRefreshing = false;
-
-                // 重试所有队列中的请求
-                requestQueue.forEach(cb => cb(newToken));
+                // Token 刷新成功，处理队列
+                console.log(`重试队列中的 ${requestQueue.length} 个请求`);
+                requestQueue.forEach(callback => callback());
                 requestQueue = [];
 
                 // 重试当前请求
+                // 注意：这里递归调用 request，它会重新调用 auth.getToken()，
+                // 因为我们在 refreshToken 中已经更新了 GlobalData，所以能拿到新的
                 request(options).then(resolve).catch(reject);
               })
               .catch((error) => {
-                isRefreshing = false;
-                requestQueue = [];
-
-                // [优化] Token 刷新失败，使用统一的 auth.clearAuth()
-                auth.clearAuth(); 
-                auth.navigateToLogin();
-                
-                wx.showToast({
-                  title: '登录状态失效，请重新登录',
-                  icon: 'none'
-                });
+                // 刷新过程中发生错误（如 Refresh Token 也失效了）
+                handleRefreshFail('Refresh process crashed');
                 reject(error);
               });
           } else {
-            // 将请求加入队列
+            // 正在刷新，将当前请求加入队列
+            // 使用闭包保存 resolve/reject
             requestQueue.push(() => {
               request(options).then(resolve).catch(reject);
             });
           }
           return;
         }
+        // --- End 401 ---
 
         // 403 禁止访问
         if (statusCode === 403) {
-          wx.showToast({
-            title: '无权限访问',
-            icon: 'none'
-          });
+          wx.showToast({ title: '无权限访问', icon: 'none' });
           reject(new Error('Forbidden (403)'));
           return;
         }
 
         // 404 资源不存在
         if (statusCode === 404) {
-          wx.showToast({
-            title: '请求的资源不存在',
-            icon: 'none'
-          });
+          // 可选：屏蔽 404 toast，交给页面处理
+          // wx.showToast({ title: '资源不存在', icon: 'none' });
           reject(new Error('Not Found (404)'));
           return;
         }
 
         // 500 服务器错误
         if (statusCode >= 500) {
-          wx.showToast({
-            title: '服务器异常，请稍后重试',
-            icon: 'none'
-          });
+          wx.showToast({ title: '服务器繁忙', icon: 'none' });
           reject(new Error('Server Error (5xx)'));
           return;
         }
 
-        // 其他错误 (如 400 Bad Request 等)
-        const errorMsg = data?.detail || data?.message || `请求失败 (Status: ${statusCode})`;
-        wx.showToast({
-          title: errorMsg,
-          icon: 'none'
-        });
-        reject(new Error(`API Error (${statusCode}): ${errorMsg}`));
+        // 其他业务错误 (根据后端规范调整)
+        const errorMsg = data?.detail || data?.message || `请求错误 (${statusCode})`;
+        wx.showToast({ title: errorMsg, icon: 'none' });
+        reject(new Error(errorMsg));
       },
       fail: (error) => {
-        // 网络连接失败 (如超时、DNS 错误等)
-        console.error('Request network failed:', error);
-
-        // 网络连接失败，显示提示
-        wx.showToast({
-          title: '网络连接失败',
-          icon: 'none',
-          duration: 2000
-        });
-
-        // [优化] 移除网络失败时的延迟跳转登录页逻辑，仅依赖 reject 和 app.js 的 onShow 检查。
-        
+        // 网络物理故障 (DNS, Timeout)
+        console.error('Network Error:', error);
+        wx.showToast({ title: '网络连接不稳定', icon: 'none' });
         reject(error);
       }
     });
   });
 }
 
-/**
- * GET 请求
- */
-function get(url, data, options = {}) {
-  return request({
-    url,
-    method: 'GET',
-    data,
-    ...options
-  });
-}
-
-/**
- * POST 请求
- */
-function post(url, data, options = {}) {
-  return request({
-    url,
-    method: 'POST',
-    data,
-    ...options
-  });
-}
-
-/**
- * PUT 请求
- */
-function put(url, data, options = {}) {
-  return request({
-    url,
-    method: 'PUT',
-    data,
-    ...options
-  });
-}
-
-/**
- * DELETE 请求
- */
-function del(url, data, options = {}) {
-  return request({
-    url,
-    method: 'DELETE',
-    data,
-    ...options
-  });
-}
+// 简便方法封装
+const get = (url, data, options = {}) => request({ url, method: 'GET', data, ...options });
+const post = (url, data, options = {}) => request({ url, method: 'POST', data, ...options });
+const put = (url, data, options = {}) => request({ url, method: 'PUT', data, ...options });
+const del = (url, data, options = {}) => request({ url, method: 'DELETE', data, ...options });
 
 /**
  * 重置 token 刷新状态
- * 在用户登录成功后调用，清除刷新失败标记
+ * [必须] 在 login.js 登录成功后调用
  */
 function resetRefreshState() {
   refreshFailed = false;
   isRefreshing = false;
   requestQueue = [];
+  console.log('Request 状态已重置');
 }
 
 module.exports = {
@@ -305,5 +254,6 @@ module.exports = {
   post,
   put,
   delete: del,
-  resetRefreshState
+  resetRefreshState,
+  BASE_URL // 导出 URL 方便其他地方引用（如上传文件）
 };

@@ -121,21 +121,22 @@ WSGI_APPLICATION = "config.wsgi.application"
 # 数据库 URL
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# 数据库配置
+# 默认数据库配置：优先使用 DATABASE_URL，如果没有则回退到本地 SQLite
 DATABASES = {
-    'default': dj_database_url.parse(DATABASE_URL)
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
-# 数据库连接池配置
-DATABASES['default']['CONN_MAX_AGE'] = 600  # 连接保持时间（秒）
-DATABASES['default']['CONN_HEALTH_CHECKS'] = True  # Django 4.1+ 连接健康检查
-
-# 数据库性能优化配置（仅适配 PostgreSQL）
-DATABASES['default']['OPTIONS'] = {
-    'connect_timeout': 10,
-    'options': '-c statement_timeout=30000'  # 30秒查询超时
-}
-
+# 针对 PostgreSQL 的特定性能优化配置
+# 只有当确实在使用 PostgreSQL 时才应用这些选项，否则会导致 SQLite 崩溃
+if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    DATABASES['default']['OPTIONS'] = {
+        'connect_timeout': 10,
+        'options': '-c statement_timeout=30000'  # 30秒查询超时
+    }
 # =============================================================================
 # 认证与授权
 # =============================================================================

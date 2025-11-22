@@ -2,31 +2,76 @@
 const journalApi = require('../../../api/journal');
 const auth = require('../../../utils/auth');
 
+// 题目配置 - 根据TODO.MD要求
+const JOURNAL_QUESTIONS = [
+  {
+    key: 'mainMood',
+    title: '主观情绪',
+    question: '您现在主要是什么感觉？',
+    type: 'mood',
+    options: [
+      { value: 'happy', text: '愉快/高兴', emoji: '😄' },
+      { value: 'calm', text: '平静/放松', emoji: '😌' },
+      { value: 'sad', text: '难过/悲伤', emoji: '😢' },
+      { value: 'anxious', text: '焦虑/担心', emoji: '😰' },
+      { value: 'angry', text: '易怒/烦躁', emoji: '😡' },
+      { value: 'tired', text: '疲惫/无力', emoji: '😫' },
+      { value: 'other', text: '其他', emoji: '🤔' }
+    ]
+  },
+  {
+    key: 'moodIntensity',
+    title: '情绪强度',
+    question: '您当前感受的强度如何？',
+    type: 'radio',
+    options: [
+      { value: 1, text: '轻微', desc: '情绪感受较弱' },
+      { value: 2, text: '中等', desc: '情绪感受适中' },
+      { value: 3, text: '明显', desc: '情绪感受较强' }
+    ]
+  },
+  {
+    key: 'moodSupplementTags',
+    title: '情绪原因',
+    question: '导致此情绪的原因（可多选）',
+    type: 'checkbox',
+    options: [
+      { value: 'body', text: '身体不适', desc: '' },
+      { value: 'family', text: '家庭事务', desc: '' },
+      { value: 'memory', text: '记忆困扰', desc: '' },
+      { value: 'sleep', text: '睡眠不好', desc: '' },
+      { value: 'work', text: '工作/学习压力', desc: '' },
+      { value: 'other', text: '其他', desc: '' }
+    ]
+  },
+  {
+    key: 'moodSupplementText',
+    title: '补充说明',
+    question: '请简短写下导致此情绪的事情',
+    type: 'text',
+    placeholder: '可填写具体内容'
+  }
+];
+
 Page({
   data: {
-    selectedMood: '',
-    moodReason: '',
-    moodOptions: [
-      { value: 'very-happy', emoji: '😄', label: '非常开心', score: 9, name: '非常开心' },
-      { value: 'happy', emoji: '😊', label: '开心', score: 7, name: '开心' },
-      { value: 'normal', emoji: '😐', label: '一般', score: 5, name: '一般' },
-      { value: 'sad', emoji: '😔', label: '难过', score: 3, name: '难过' },
-      { value: 'very-sad', emoji: '😢', label: '很难过', score: 1, name: '很难过' },
-      { value: 'anxious', emoji: '😰', label: '焦虑', score: 2, name: '焦虑' }
-    ],
+    // 答案数据
+    mainMood: null,
+    mainMoodOther: '',
+    moodIntensity: null,
+    moodSupplementTags: [],
+    moodSupplementText: '',
+    
+    // 页面状态
+    submitting: false,
     journals: [],
     loading: false,
-    submitting: false
-  },
-
-  /**
-   * 根据心情类型文本获取表情
-   */
-  getEmojiByMoodName(moodName) {
-    const mood = this.data.moodOptions.find(
-      m => m.name === moodName || m.label === moodName
-    );
-    return mood ? mood.emoji : '😐';
+    
+    // 题目配置
+    questions: JOURNAL_QUESTIONS,
+    
+    // 历史记录相关
+    showHistory: true
   },
 
   onShow() {
@@ -34,14 +79,12 @@ Page({
       auth.navigateToLogin();
       return;
     }
-    // 刷新列表
     this.loadJournals();
   },
 
   onLoad() {
     this.loadJournals();
   },
-
 
   /**
    * 加载历史记录
@@ -55,10 +98,9 @@ Page({
     journalApi.listJournals({
       user_id: userInfo.id,
       page: 1,
-      page_size: 20
+      page_size: 10
     })
     .then((res) => {
-      // 确保数据格式正确，处理可能的空值或格式错误
       const journals = (res || []).map(item => {
         const moodName = item.mood_name || item.label || '未知';
         return {
@@ -77,7 +119,6 @@ Page({
     })
     .catch((error) => {
       console.error('加载历史记录失败:', error);
-      // 出错时显示空数组而不是undefined
       this.setData({
         journals: []
       });
@@ -88,35 +129,100 @@ Page({
   },
 
   /**
-   * 选择心情
+   * 根据心情类型文本获取表情
    */
-  selectMood(e) {
-    const { value } = e.currentTarget.dataset;
-    this.setData({ selectedMood: value });
+  getEmojiByMoodName(moodName) {
+    const moodMap = {
+      '快乐': '😄',
+      '开心': '😊',
+      '平静': '😌',
+      '一般': '😐',
+      '难过': '😔',
+      '悲伤': '😢',
+      '焦虑': '😰',
+      '担心': '😟',
+      '烦躁': '😠',
+      '易怒': '😡',
+      '疲惫': '😫',
+      '无力': '😩'
+    };
+    
+    for (let key in moodMap) {
+      if (moodName.includes(key)) {
+        return moodMap[key];
+      }
+    }
+    return '😐';
   },
 
-  /**
-   * 输入心情原因
-   */
-  onReasonInput(e) {
-    this.setData({ moodReason: e.detail.value });
+  // --- 数据绑定处理 ---
+  
+  // 处理单选变化
+  handleRadioChange(e) {
+    const { key } = e.currentTarget.dataset;
+    this.setData({ [key]: Number(e.detail.value) });
+  },
+
+  // 处理多选变化（复选框）
+  handleCheckboxChange(e) {
+    const { key } = e.currentTarget.dataset;
+    const values = e.detail.value;
+    this.setData({ [key]: values });
+  },
+
+  // 处理文本输入变化
+  handleTextChange(e) {
+    const { key } = e.currentTarget.dataset;
+    this.setData({ [key]: e.detail.value });
+  },
+
+  // 处理情绪选择（特殊类型的单选）
+  handleMoodSelect(e) {
+    const { key, value } = e.currentTarget.dataset;
+    const isOther = value === 'other';
+
+    this.setData({
+      [key]: value,
+      mainMoodOther: isOther ? this.data.mainMoodOther : '',
+    });
+  },
+
+  // 获取选项选中状态
+  getOptionSelected(questionIndex, optionValue) {
+    const question = this.data.questions[questionIndex];
+    const currentValue = this.data[question.key];
+    return currentValue === optionValue;
+  },
+
+  // 获取复选框选中状态
+  getCheckboxSelected(questionIndex, optionValue) {
+    const question = this.data.questions[questionIndex];
+    const currentValues = this.data[question.key] || [];
+    return currentValues.includes(optionValue);
+  },
+
+  // 获取当前值
+  getCurrentValue(questionIndex) {
+    const question = this.data.questions[questionIndex];
+    return this.data[question.key];
   },
 
   /**
    * 提交心情记录
    */
   submitMoodRecord() {
-    if (!this.data.selectedMood) {
+    // 验证必填项
+    if (!this.data.mainMood) {
       wx.showToast({
-        title: '请选择心情',
+        title: '请选择主观情绪',
         icon: 'none'
       });
       return;
     }
 
-    if (!this.data.moodReason || !this.data.moodReason.trim()) {
+    if (!this.data.moodIntensity) {
       wx.showToast({
-        title: '请填写心情原因',
+        title: '请选择情绪强度',
         icon: 'none'
       });
       return;
@@ -124,26 +230,19 @@ Page({
 
     if (this.data.submitting) return;
 
-    const moodConfig = this.data.moodOptions.find(m => m.value === this.data.selectedMood);
-    if (!moodConfig) {
-      wx.showToast({
-        title: '无效的心情选择',
-        icon: 'none'
-      });
-      return;
-    }
-
     this.setData({ submitting: true });
     wx.showLoading({ title: '记录中...' });
 
-    const now = new Date();
-    const recordDate = now.toISOString();
+    // 构建提交数据
+    const submitData = {
+      mainMood: this.data.mainMood,
+      moodIntensity: this.data.moodIntensity,
+      mainMoodOther: this.data.mainMoodOther,
+      moodSupplementTags: this.data.moodSupplementTags,
+      moodSupplementText: this.data.moodSupplementText.trim()
+    };
 
-    journalApi.createJournal({
-      mood_score: moodConfig.score,
-      mood_name: moodConfig.name,
-      text: this.data.moodReason.trim()
-    })
+    journalApi.createJournal(submitData)
     .then(() => {
       wx.showToast({
         title: '心情记录成功',
@@ -152,8 +251,11 @@ Page({
 
       // 清空输入
       this.setData({
-        selectedMood: '',
-        moodReason: ''
+        mainMood: null,
+        mainMoodOther: '',
+        moodIntensity: null,
+        moodSupplementTags: [],
+        moodSupplementText: ''
       });
 
       // 刷新列表
@@ -169,6 +271,60 @@ Page({
     .finally(() => {
       wx.hideLoading();
       this.setData({ submitting: false });
+    });
+  },
+
+  /**
+   * 获取情绪文本
+   */
+  getMoodText(moodValue, otherText) {
+    const moodMap = {
+      'happy': '快乐/愉快',
+      'calm': '平静/放松',
+      'sad': '难过/悲伤',
+      'anxious': '焦虑/担心',
+      'angry': '易怒/烦躁',
+      'tired': '疲惫/无力',
+      'other': otherText || '其他情绪'
+    };
+    return moodMap[moodValue] || '未知情绪';
+  },
+
+  /**
+   * 构建补充说明文本
+   */
+  buildSupplementText() {
+    let text = '';
+    
+    // 添加标签信息
+    if (this.data.moodSupplementTags.length > 0) {
+      const tagMap = {
+        'body': '身体不适',
+        'family': '家庭事务',
+        'memory': '记忆困扰',
+        'sleep': '睡眠不好',
+        'work': '工作/学习压力',
+        'other': '其他原因'
+      };
+      const tagTexts = this.data.moodSupplementTags.map(tag => tagMap[tag] || tag);
+      text += '原因：' + tagTexts.join('、') + '。';
+    }
+    
+    // 添加详细说明
+    if (this.data.moodSupplementText.trim()) {
+      if (text) text += ' ';
+      text += this.data.moodSupplementText.trim();
+    }
+    
+    return text || '暂无详细说明';
+  },
+
+  /**
+   * 切换历史记录显示
+   */
+  toggleHistory() {
+    this.setData({
+      showHistory: !this.data.showHistory
     });
   },
 

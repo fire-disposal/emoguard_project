@@ -33,21 +33,40 @@
   color: #333;
 }
 
-.mood-selector {
-  margin-bottom: 28rpx;
+/* 题目块样式 */
+.question-block {
+  margin-bottom: 40rpx;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 16rpx;
 }
 
-.selector-label {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
+.question-header {
   margin-bottom: 20rpx;
 }
 
+.question-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.question-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.question-content {
+  padding: 0 8rpx;
+}
+
+/* 情绪选择样式 */
 .mood-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16rpx;
 }
 
@@ -56,23 +75,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f8f9fa;
-  border: 3rpx solid transparent;
-  border-radius: 20rpx;
-  padding: 24rpx 12rpx;
+  background: white;
+  border: 3rpx solid #e0e6ed;
+  border-radius: 16rpx;
+  padding: 20rpx 12rpx;
   transition: all 0.3s;
-}
-
-.mood-emoji {
-  font-size: 56rpx;
-  margin-bottom: 8rpx;
-  transition: transform 0.3s;
-}
-
-.mood-label {
-  font-size: 24rpx;
-  color: #666;
-  font-weight: 500;
 }
 
 .mood-option.selected {
@@ -81,33 +88,120 @@
   box-shadow: 0 4rpx 16rpx rgba(24, 144, 255, 0.2);
 }
 
-.mood-option.selected .mood-emoji {
-  transform: scale(1.15);
+.mood-emoji {
+  font-size: 48rpx;
+  margin-bottom: 8rpx;
+  text-align: center;
 }
 
-.mood-option.selected .mood-label {
+
+.mood-text {
+  font-size: 22rpx;
+  color: #666;
+  text-align: center;
+}
+
+.mood-option.selected .mood-text {
   color: #0050b3;
   font-weight: 700;
 }
 
-.mood-reason {
-  margin-bottom: 28rpx;
+/* 其他情绪输入框 */
+.other-mood-input {
+  margin-top: 16rpx;
 }
 
-.reason-label {
+.other-mood-input input {
+  width: 100%;
+  background: white;
+  border: 2rpx solid #e0e6ed;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  font-size: 28rpx;
+}
+
+/* 单选按钮样式 */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 2rpx solid #e0e6ed;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  transition: all 0.3s;
+}
+
+.radio-option.selected {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  border-color: #1890ff;
+}
+
+.radio-option radio {
+  margin-right: 16rpx;
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-text {
   display: block;
   font-size: 28rpx;
-  font-weight: 600;
   color: #333;
-  margin-bottom: 16rpx;
+  font-weight: 500;
 }
 
-.reason-input {
-  width: 100%;
-  min-height: 160rpx;
-  background: #f8f9fa;
+.option-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+/* 复选框样式 */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  background: white;
   border: 2rpx solid #e0e6ed;
-  border-radius: 16rpx;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  transition: all 0.3s;
+}
+
+.checkbox-option.selected {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  border-color: #1890ff;
+}
+
+.checkbox-option checkbox {
+  margin-right: 16rpx;
+}
+
+.checkbox-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+/* 文本输入样式 */
+.text-input {
+  width: 100%;
+  min-height: 120rpx;
+  background: white;
+  border: 2rpx solid #e0e6ed;
+  border-radius: 12rpx;
   padding: 20rpx;
   font-size: 28rpx;
   color: #333;
@@ -115,12 +209,7 @@
   box-sizing: border-box;
 }
 
-.reason-placeholder {
-  color: #bfbfbf;
-  font-size: 26rpx;
-}
-
-.reason-count {
+.text-count {
   display: block;
   text-align: right;
   font-size: 22rpx;
@@ -128,12 +217,10 @@
   margin-top: 8rpx;
 }
 
+/* 提交按钮 */
 .submit-mood-btn {
-  width: 90%; 
-  margin-left: auto;
-  margin-right: auto; 
-  
-  /* 其他样式保持不变 */
+  width: 90%;
+  margin: 40rpx auto 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -147,9 +234,14 @@
   box-shadow: 0 6rpx 20rpx rgba(24, 144, 255, 0.3);
   transition: all 0.3s;
 }
-/* :active 样式不变 */
+
 .submit-mood-btn:active:not(.btn-disabled) {
   transform: scale(0.98);
+}
+
+.submit-mood-btn.btn-disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .btn-icon {
@@ -186,6 +278,45 @@
   background: #f5f5f5;
   padding: 4rpx 16rpx;
   border-radius: 12rpx;
+}
+
+.toggle-icon {
+  font-size: 24rpx;
+  color: #999;
+  transition: transform 0.3s;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60rpx 40rpx;
+}
+
+.empty-icon {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+}
+
+.empty-text {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.empty-hint {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
 }
 
 .history-list .history-item {

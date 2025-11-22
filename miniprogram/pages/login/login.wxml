@@ -20,7 +20,7 @@
         class="wechat-btn {{loading ? 'loading' : ''}}" 
         disabled="{{loading}}"
         bindtap="handleWechatLogin"
-      >
+       style="position: relative; left: -6rpx; top: -1rpx">
         <view wx:if="{{loading}}" class="btn-loading">
           <text class="loading-icon">⏳</text>
           <text class="loading-text">登录中...</text>

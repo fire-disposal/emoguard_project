@@ -1,9 +1,5 @@
 <!--pages/reports/list/list.wxml-->
 <view class="reports-container gradient-bg">
-  <view class="reports-header">
-    <text class="header-title">健康报告</text>
-    <text class="header-subtitle">查看您的心理健康评估报告</text>
-  </view>
 
   <view wx:if="{{loading && reports.length === 0}}" class="loading-state">
     <text class="loading-text">加载中...</text>
@@ -11,8 +7,7 @@
 
   <view wx:elif="{{reports.length === 0}}" class="empty-state">
     <text class="empty-icon">📊</text>
-    <text class="empty-text">暂无健康报告</text>
-    <text class="empty-hint">完成心理测评后可查看报告</text>
+    <text class="empty-text">暂无历史记录</text>
   </view>
 
   <view wx:else class="reports-list">

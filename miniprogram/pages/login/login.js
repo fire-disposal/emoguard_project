@@ -1,174 +1,153 @@
 const userApi = require('../../api/user');
 const errorUtil = require('../../utils/error');
-const auth = require('../../utils/auth');
+const auth = require('../../utils/auth'); // 引入统一的 auth 工具
 const storage = require('../../utils/storage');
+const request = require('../../utils/request'); // 提前引入，避免函数内 require
+
+const app = getApp(); // 获取全局实例
 
 Page({
   data: {
     loading: false,
     redirectUrl: '',
-    isAgree: false, // 是否同意协议
+    isAgree: false, // 协议状态
   },
 
   onLoad(options) {
-    console.log('登录页加载', options);
-
-    // 获取重定向参数
+    // 1. 解析重定向参数
     if (options.redirect) {
-      this.setData({
-        redirectUrl: decodeURIComponent(options.redirect)
-      });
+      // 兼容处理：确保 url 解码正确
+      let url = decodeURIComponent(options.redirect);
+      // 补全斜杠（如果缺失）
+      if (!url.startsWith('/')) {
+        url = '/' + url;
+      }
+      this.setData({ redirectUrl: url });
+      console.log('登录后重定向目标:', url);
     }
 
-    // 登录校验已由 app.js 统一处理，无需在此重复判断
+    // 2. 恢复协议勾选状态
+    // 直接从 app.globalData 或方法获取，减少 storage 读取
+    const agreementStatus = app.getAgreementStatus();
+    this.setData({ isAgree: agreementStatus });
   },
 
   /**
-   * 微信登录
+   * 微信登录 (Async/Await 扁平化写法)
    */
-  handleWechatLogin() {
-    console.log('点击登录，协议状态:', this.data.isAgree);
-
+  async handleWechatLogin() {
+    // 1. 防抖与校验
+    if (this.data.loading) return; 
+    
     if (!this.data.isAgree) {
       wx.showToast({
-        title: '请先阅读并同意用户协议和隐私政策',
-        icon: 'none',
-        duration: 2000
+        title: '请阅读并勾选用户协议',
+        icon: 'none'
       });
+      // 震动反馈，提示用户
+      wx.vibrateShort({ type: 'medium' }); 
       return;
     }
 
     this.setData({ loading: true });
 
-    // 调用 wx.login 获取 code
-    wx.login({
-      success: async (loginRes) => {
-        console.log('获取 code 成功:', loginRes.code);
+    try {
+      // 2. 获取微信 Code (微信新版支持返回 Promise，如果不支持请看下方注释*)
+      const { code } = await wx.login();
+      
+      console.log('获取 Code 成功，准备登录...');
 
-        // 调用后端登录接口
-        try {
-          const res = await userApi.wechatLogin({
-            code: loginRes.code
-          });
-          console.log('登录成功:', res);
+      // 3. 调用后端登录
+      const res = await userApi.wechatLogin({ code });
 
-          // 保存 token
-          const storage = require('../../utils/storage');
-          const saveTokenResult = storage.setToken(res.access_token, res.refresh_token);
+      // 4. 保存 Token (使用 auth 工具封装的方法，或者直接 storage)
+      // 建议直接更新 globalData 和 storage
+      storage.setToken(res.access_token, res.refresh_token);
+      app.globalData.token = res.access_token;
+      app.globalData.refreshToken = res.refresh_token;
 
-          if (!saveTokenResult) {
-            wx.showToast({
-              title: '本地存储失败，请重试',
-              icon: 'none'
-            });
-            this.setData({ loading: false });
-            return;
-          }
+      // 5. 重置请求锁 (防止死锁)
+      if (request.resetRefreshState) {
+        request.resetRefreshState();
+      }
 
-          // 登录成功后，强制刷新全局用户信息
-          await getApp().refreshUserInfo();
+      // 6. 强制刷新用户信息 (并行处理提升速度，但需 await 确保数据到位)
+      await app.refreshUserInfo();
 
-          // 重置 request 刷新状态（只保留一次调用）
-          const request = require('../../utils/request');
-          request.resetRefreshState();
+      wx.showToast({ title: '登录成功', icon: 'success' });
 
-          wx.showToast({
-            title: '登录成功',
-            icon: 'success'
-          });
+      // 7. 执行跳转逻辑
+      this.handleLoginSuccess();
 
-          this.handleLoginSuccess();
-        } catch (error) {
-          errorUtil.handleError(error);
-
-        } finally {
-          // 无论 API 调用成功或失败，都关闭 loading 状态
-          this.setData({ loading: false });
-        }
-      }, // success 回调结束
-      fail: (error) => {
-        // wx.login 失败
-        errorUtil.handleError(error);
-        this.setData({ loading: false });
-      } // fail 回调结束
-    }); // wx.login 调用结束
-  },
-
-  // 协议勾选框变更
-  onAgreementChange(e) {
-    // 更可靠的勾选状态判断
-    const isChecked = e.detail.value && e.detail.value.includes('agree');
-    this.setData({
-      isAgree: isChecked
-    });
-    console.log('协议勾选状态:', isChecked);
-  },
-
-  // 跳转用户协议
-  openUserAgreement() {
-    wx.navigateTo({
-      url: '/pages/agreement/user-agreement/user-agreement'
-    });
-  },
-
-  // 跳转隐私政策
-  openPrivacyPolicy() {
-    wx.navigateTo({
-      url: '/pages/agreement/privacy-policy/privacy-policy'
-    });
+    } catch (error) {
+      console.error('登录流程异常:', error);
+      errorUtil.handleError(error);
+      this.setData({ loading: false }); // 只有出错才需要在这里重置，成功后页面会跳转
+    }
+    // 注意：成功时不设置 loading = false，防止跳转间隙用户重复点击
   },
 
   /**
-   * 登录成功后跳转
+   * 协议勾选变更
    */
-  async handleLoginSuccess() {
-    try {
-      // 直接使用全局 userInfo
-      const userInfo = getApp().globalData.userInfo;
-      console.log('获取用户信息:', userInfo);
-
-      // 检查信息是否完善
-      if (!userInfo || !userInfo.is_profile_complete) {
-        console.log('用户信息未完善，跳转到信息完善页面');
-        wx.reLaunch({
-          url: '/pages/profile/complete/complete'
-        });
-        return;
-      }
-
-      // 信息已完善，跳转到目标页面
-      const targetUrl = this.data.redirectUrl || '/pages/index/index';
-      console.log('登录成功，跳转到:', targetUrl);
-
-      setTimeout(() => {
-        if (this.data.redirectUrl) {
-          // 尝试使用 redirectTo (保留当前页面栈)
-          wx.redirectTo({
-            url: targetUrl,
-            fail: () => {
-              // 失败则尝试 switchTab
-              wx.switchTab({
-                url: targetUrl,
-                fail: () => {
-                  // 仍失败则使用 reLaunch (彻底重载)
-                  wx.reLaunch({ url: targetUrl });
-                }
-              });
-            }
-          });
-        } else {
-          // 没有重定向目标，直接使用 reLaunch 回到首页
-          wx.reLaunch({ url: targetUrl });
-        }
-      }, 500);
-
-    } catch (error) {
-      errorUtil.handleError(error);
-      // 如果获取用户信息失败，仍然跳转到目标页面
-      const targetUrl = this.data.redirectUrl || '/pages/index/index';
-      setTimeout(() => {
-        wx.reLaunch({ url: targetUrl });
-      }, 500);
+  onAgreementChange(e) {
+    const isChecked = e.detail.value.length > 0; // 只要数组不为空即为选中
+    this.setData({ isAgree: isChecked });
+    
+    // 同步状态到全局
+    app.setAgreementStatus(isChecked);
+    
+    // 只有勾选时才开启自动登录，取消勾选不一定需要关闭(看业务需求)，这里保持原逻辑
+    if (isChecked) {
+      app.setAutoLoginEnabled(true);
     }
+  },
+
+  openUserAgreement() {
+    wx.navigateTo({ url: '/pages/agreement/user-agreement/user-agreement' });
+  },
+
+  openPrivacyPolicy() {
+    wx.navigateTo({ url: '/pages/agreement/privacy-policy/privacy-policy' });
+  },
+
+  /**
+   * 登录成功后的智能跳转
+   */
+  handleLoginSuccess() {
+    const userInfo = app.globalData.userInfo;
+    
+    // 1. 检查信息完整性
+    if (!userInfo || !userInfo.is_profile_complete) {
+      console.log('信息未完善，跳转完善页');
+      wx.reLaunch({ url: '/pages/profile/complete/complete' });
+      return;
+    }
+
+    // 2. 确定目标页面
+    // 如果没有重定向地址，默认去首页
+    const targetUrl = this.data.redirectUrl || '/pages/index/index';
+    
+    console.log('准备跳转至:', targetUrl);
+
+    // 3. 智能跳转策略
+    // 优先尝试 switchTab (针对 TabBar 页面)
+    wx.switchTab({
+      url: targetUrl,
+      success: () => {
+        console.log('switchTab 成功');
+      },
+      fail: () => {
+        // 如果不是 TabBar 页面，switchTab 会失败，此时尝试 reLaunch
+        // 使用 reLaunch 而不是 redirectTo，是为了清除登录页的历史栈，防止安卓物理返回键回到登录页
+        wx.reLaunch({
+          url: targetUrl,
+          fail: (err) => {
+             console.error('跳转失败，回退到首页', err);
+             wx.reLaunch({ url: '/pages/index/index' });
+          }
+        });
+      }
+    });
   }
 });

@@ -12,7 +12,9 @@ Page({
     showCognitiveGuide: false, // 是否显示认知评估引导卡片
     hasCompletedAssessment: false, // 是否已完成认知评估
     morningFilled: false, // 早上情绪记录是否已填写
-    eveningFilled: false // 晚上情绪记录是否已填写
+    eveningFilled: false, // 晚上情绪记录是否已填写
+    isMorningOpen: false, // 早间测评是否开放
+    isEveningOpen: false // 晚间测评是否开放
   },
 
   onShow() {
@@ -102,10 +104,16 @@ Page({
       periodText = '晚间';
     }
 
+    // 判断测评开放时间
+    const isMorningOpen = hours >= 8 && hours < 10; // 早间测评 8:00-10:00
+    const isEveningOpen = hours >= 20 && hours < 22; // 晚间测评 20:00-22:00
+
     this.setData({
       currentTime: `${hours}:${minutes}`,
       currentPeriod: period,
-      currentPeriodText: periodText
+      currentPeriodText: periodText,
+      isMorningOpen: isMorningOpen,
+      isEveningOpen: isEveningOpen
     });
   },
 
@@ -159,28 +167,53 @@ Page({
   },
 
   /**
+   * 获取情绪测试状态
+   * @param {string} period - 时段: 'morning' 或 'evening'
+   * @returns {string} - 状态: 'completed', 'unopened', 'pending'
+   */
+  getEmotionTestStatus(period) {
+    const isFilled = (period === 'morning' && this.data.morningFilled) ||
+      (period === 'evening' && this.data.eveningFilled);
+    
+    if (isFilled) {
+      return 'completed';
+    }
+    
+    const isOpen = period === 'morning' ? this.data.isMorningOpen : this.data.isEveningOpen;
+    return isOpen ? 'pending' : 'unopened';
+  },
+
+  /**
    * 跳转到情绪测试
    * @param {Object} e - 事件对象，dataset.period 可用于指定早间/晚间
    */
   goToEmotionTest(e) {
     const period = e?.currentTarget?.dataset?.period || this.data.currentPeriod;
-    const isEveningRecord = period === 'evening';
     const now = new Date();
     const hours = now.getHours();
 
-    // 强制限制：晚间记录须在 14:00 (下午两点) 之后填写
-    if (isEveningRecord && hours < 14) {
-      wx.showToast({
-        title: '晚间记录请于 14:00 后填写',
-        icon: 'none'
-      });
-      return;
+    // 严格时间限制：早间测评 8:00-10:00，晚间测评 20:00-22:00
+    if (period === 'morning') {
+      if (hours < 8 || hours >= 10) {
+        wx.showToast({
+          title: '早间测评时间为 8:00-10:00',
+          icon: 'none'
+        });
+        return;
+      }
+    } else if (period === 'evening') {
+      if (hours < 20 || hours >= 22) {
+        wx.showToast({
+          title: '晚间测评时间为 20:00-22:00',
+          icon: 'none'
+        });
+        return;
+      }
     }
 
-    const isFilled = (period === 'morning' && this.data.morningFilled) ||
-      (period === 'evening' && this.data.eveningFilled);
+    const status = this.getEmotionTestStatus(period);
 
-    if (isFilled) {
+    if (status === 'completed') {
       // 已填写，弹窗确认是否重测
       wx.showModal({
         title: '提示',
@@ -194,7 +227,7 @@ Page({
         }
       });
     } else {
-      // 未填写，直接跳转
+      // 未填写或未开放，直接跳转
       wx.navigateTo({
         url: `/pages/mood/moodtest/moodtest?period=${period}`
       });

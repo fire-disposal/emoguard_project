@@ -8,11 +8,13 @@ function listJournals(params = {}) {
 
 // 创建情绪日记
 function createJournal(data) {
-  // 只提交 mood_score, mood_name, text
+  // 提交新版字段
   const payload = {
-    mood_score: data.mood_score,
-    mood_name: data.mood_name,
-    text: data.text || ''
+    mainMood: data.mainMood,
+    moodIntensity: data.moodIntensity,
+    mainMoodOther: data.mainMoodOther || '',
+    moodSupplementTags: data.moodSupplementTags || [],
+    moodSupplementText: data.moodSupplementText || ''
   };
   return request.post('/api/journals/', payload);
 }
@@ -24,11 +26,13 @@ function getJournal(journalId) {
 
 // 更新情绪日记
 function updateJournal(journalId, data) {
-  // 只提交 mood_score, mood_name, text
+  // 提交新版字段
   const payload = {};
-  if (typeof data.mood_score !== 'undefined') payload.mood_score = data.mood_score;
-  if (typeof data.mood_name !== 'undefined') payload.mood_name = data.mood_name;
-  if (typeof data.text !== 'undefined') payload.text = data.text;
+  if (typeof data.mainMood !== 'undefined') payload.mainMood = data.mainMood;
+  if (typeof data.moodIntensity !== 'undefined') payload.moodIntensity = data.moodIntensity;
+  if (typeof data.mainMoodOther !== 'undefined') payload.mainMoodOther = data.mainMoodOther;
+  if (typeof data.moodSupplementTags !== 'undefined') payload.moodSupplementTags = data.moodSupplementTags;
+  if (typeof data.moodSupplementText !== 'undefined') payload.moodSupplementText = data.moodSupplementText;
   return request.put(`/api/journals/${journalId}`, payload);
 }
 

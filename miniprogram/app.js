@@ -2,181 +2,273 @@ const auth = require('./utils/auth');
 const storage = require('./utils/storage');
 const userApi = require('./api/user');
 const { debounce, createCachedRequest } = require('./utils/debounce');
+const request = require('./utils/request'); // 引入 request 以便重置状态
+
+// 常量定义
+const AGREEMENT_STATUS_KEY = 'agreement_status';
+const AUTO_LOGIN_KEY = 'auto_login_enabled';
 
 App({
   globalData: {
     userInfo: null,
     token: null,
     refreshToken: null,
-    systemInfo: null
+    systemInfo: null,
+    agreementStatus: false,
+    autoLoginEnabled: true,
+    // [新增] 用于组件或页面判断当前是否正在进行静默登录
+    loginPromise: null
   },
 
-  // 用于防止 checkAuth 重复执行的内部标志
+  // 内部状态标识
   _checkingUserInfo: false,
-  // 缓存的获取用户信息函数实例
   cachedGetCurrentUser: null,
-  // 防抖的鉴权检查函数实例
   debouncedCheckAuth: null,
 
   onLaunch() {
     console.log('小程序启动');
 
-    // [优化点 1] 使用更标准的 wx.getSystemInfoSync 获取设备信息
+    // 1. 初始化系统信息
+    this.initSystemInfo();
+
+    // 2. 恢复本地存储数据
+    this.restoreLocalData();
+
+    // 3. 初始化工具函数（防抖与缓存）
+    this.initUtils();
+
+    // 4. 尝试自动登录
+    // 将 promise 挂载到 globalData，供 checkAuth 等待
+    this.globalData.loginPromise = this.tryAutoLogin();
+  },
+
+  onShow() {
+    // 每次切回前台时检查（使用防抖）
+    if (this.debouncedCheckAuth) {
+      this.debouncedCheckAuth();
+    }
+  },
+
+  // --- 初始化逻辑封装 ---
+
+  initSystemInfo() {
     try {
       this.globalData.systemInfo = wx.getSystemInfoSync();
     } catch (e) {
       console.error('获取系统信息失败:', e);
       this.globalData.systemInfo = {};
     }
+  },
 
-    // --- 本地数据恢复流程 ---
-    let userInfo = null, token = null, refreshToken = null;
-
+  restoreLocalData() {
     try {
-      userInfo = auth.getUserInfo();
-      if (userInfo) this.globalData.userInfo = userInfo;
-    } catch (error) {
-      console.warn('恢复用户信息失败:', error);
-    }
-    try {
-      token = storage.getToken();
+      // 恢复 Token
+      const token = storage.getToken();
+      const refreshToken = storage.getRefreshToken();
       if (token) this.globalData.token = token;
-    } catch (error) {
-      console.warn('恢复token失败:', error);
-    }
-    try {
-      refreshToken = storage.getRefreshToken();
       if (refreshToken) this.globalData.refreshToken = refreshToken;
+
+      // 恢复用户信息
+      const userInfo = auth.getUserInfo();
+      if (userInfo) this.globalData.userInfo = userInfo;
+
+      // 恢复配置状态
+      const agreement = storage.getItem(AGREEMENT_STATUS_KEY);
+      const autoLogin = storage.getItem(AUTO_LOGIN_KEY);
+
+      // 注意：从 storage 取出的 boolean 可能是字符串，需要根据实际 storage 逻辑确保类型
+      if (agreement !== null) this.globalData.agreementStatus = agreement;
+      if (autoLogin !== null) this.globalData.autoLoginEnabled = autoLogin;
+
+      console.log('本地数据恢复完成:', {
+        hasToken: !!token,
+        hasUser: !!userInfo,
+        agreement: this.globalData.agreementStatus
+      });
     } catch (error) {
-      console.warn('恢复refreshToken失败:', error);
+      console.warn('本地数据恢复异常:', error);
     }
+  },
 
-    console.log('登录状态初始化:', auth.isLogined());
-
-    // 创建防抖的鉴权检查函数 (避免 onShow 频繁触发)
+  initUtils() {
+    // checkAuth 防抖：500ms
     this.debouncedCheckAuth = debounce(this.checkAuth.bind(this), 500, false);
 
-    // 创建缓存的用户信息获取函数（缓存30秒，用于优化 checkAuth 和 getUserInfoAsync）
+    // 用户信息获取缓存：30s
     this.cachedGetCurrentUser = createCachedRequest(
       userApi.getCurrentUser,
       'getCurrentUser',
-      30000 // 缓存有效期 30 秒
+      30000
     );
   },
 
-  onShow() {
-    // 使用防抖的鉴权检查，确保进入小程序或从后台切回时进行状态检查
-    this.debouncedCheckAuth();
-  },
+  // --- 核心鉴权逻辑 ---
 
   /**
    * 检查登录状态和信息完善状态
+   * [关键优化]：增加对自动登录 Promise 的等待
    */
   async checkAuth() {
-    if (this._checkingUserInfo) {
-      console.log('正在检查用户信息，跳过本次并发调用');
-      return;
-    }
-    this._checkingUserInfo = true; // 设置锁
+    if (this._checkingUserInfo) return;
+    this._checkingUserInfo = true;
 
     try {
-      const pages = getCurrentPages();
-      if (pages.length === 0) {
-        return; // 页面栈为空时退出
+      // 1. 等待自动登录（如果有）
+      if (this.globalData.loginPromise) {
+        try { await this.globalData.loginPromise; } catch (e) { }
       }
 
-      const currentPage = pages[pages.length - 1];
-      const route = currentPage.route;
+      const pages = getCurrentPages();
+      if (pages.length === 0) return;
+      const route = pages[pages.length - 1].route;
 
-      // 登录页和信息完善页不需要检查，避免无限循环跳转
-      if (route === 'pages/login/login' || route === 'pages/profile/complete/complete') {
+      // 2. 白名单：如果在登录页或注册页，不需要检查“是否未登录”
+      // 因为这些页面本来就是给未登录用户看的
+      const whiteList = ['pages/login/login', 'pages/profile/complete/complete'];
+      if (whiteList.includes(route)) {
+        // [可选优化]：为了防止用户手动点分享链接进入登录页，
+        // 这里依然可以保留“如果已登录则踢回首页”的逻辑，但不是必须的了。
+        if (route === 'pages/login/login' && auth.isLogined()) {
+          wx.switchTab({ url: '/pages/index/index' });
+        }
         return;
       }
 
-      // --- 1. 检查是否登录 ---
+      // 3. 核心拦截：如果未登录，直接踢去登录页
       if (!auth.isLogined()) {
-        console.log('未登录，跳转登录页，并带上重定向路由:', route);
+        console.log('首页/内页检测到未登录，跳转登录页');
+        // redirect 参数设为当前页，方便登录后跳回来
         auth.navigateToLogin(route);
         return;
       }
 
-      // --- 2. 检查用户信息完整性 (本地/缓存获取) ---
+      // 4. 信息完善度检查 (保持不变)
       let userInfo = this.globalData.userInfo;
-
-      // 如果本地没有用户信息或信息不完整，从服务器获取（使用缓存）
       if (!userInfo || userInfo.is_profile_complete === undefined) {
-        console.log('本地用户信息缺失或不完整，尝试从服务器获取...');
-        const freshUserInfo = await this.cachedGetCurrentUser();
-
-        // 更新全局和本地存储
-        this.globalData.userInfo = freshUserInfo;
-        auth.setUserInfo(freshUserInfo);
-        userInfo = freshUserInfo;
+        userInfo = await this.cachedGetCurrentUser();
+        this.updateGlobalUserInfo(userInfo);
       }
-
-      // --- 3. 最终检查完善状态并跳转 ---
       if (userInfo && !userInfo.is_profile_complete) {
-        console.log('用户信息未完善，跳转信息完善页面');
-        wx.reLaunch({
-          url: '/pages/profile/complete/complete'
-        });
-        return;
+        wx.reLaunch({ url: '/pages/profile/complete/complete' });
       }
+
     } catch (error) {
-      console.error('检查用户信息或拉取失败:', error);
-
-      // 如果是401错误（token失效），执行登出并跳转登录页
-      if (error.message && error.message.includes('401')) {
-        console.log('捕获到 Token 失效错误 (401)，跳转登录页');
-        auth.clearAuth(); // 清除本地失效 Token
-
-        const pages = getCurrentPages();
-        const currentPage = pages[pages.length - 1];
-        auth.navigateToLogin(currentPage?.route);
-      }
-      // 其他错误允许继续使用，避免阻塞用户
+      console.error(error);
     } finally {
-      this._checkingUserInfo = false; // 释放锁
+      this._checkingUserInfo = false;
     }
   },
 
   /**
-   * 同步获取全局用户信息
-   * @returns {Object|null} 用户信息
+   * 尝试自动登录
+   * @returns {Promise} 无论成功失败，resolve，避免阻塞
    */
-  getUserInfoSync() {
-    return this.globalData.userInfo;
+  async tryAutoLogin() {
+    // 1. 前置检查：如果已登录 或 未开启自动登录 或 协议未勾选
+    if (auth.isLogined()) {
+      console.log('Token有效，跳过自动登录');
+      return Promise.resolve();
+    }
+
+    if (!this.globalData.autoLoginEnabled || !this.globalData.agreementStatus) {
+      console.log('自动登录条件不满足(未开启或未勾选协议)');
+      return Promise.resolve();
+    }
+
+    console.log('>>> 开始自动登录流程');
+
+    try {
+      // 2. 获取微信 Code
+      const { code } = await wx.login();
+
+      // 3. 换取 Token
+      const res = await userApi.wechatLogin({ code });
+      console.log('自动登录成功');
+
+      // 4. 存储 Token
+      storage.setToken(res.access_token, res.refresh_token);
+      this.globalData.token = res.access_token;
+      this.globalData.refreshToken = res.refresh_token;
+
+      // 5. 重置请求模块状态（如刷新锁）
+      if (request.resetRefreshState) request.resetRefreshState();
+
+      // 6. 获取最新用户信息
+      await this.refreshUserInfo();
+
+      // 7. 自动登录成功后，通常保留在当前页，不需要强制跳转首页
+      // 除非你在 login 页启动的自动登录。
+      // 如果非要跳转：
+      // wx.reLaunch({ url: '/pages/index/index' });
+
+    } catch (error) {
+      console.error('自动登录失败:', error);
+      // 失败了清除自动登录标记，防止死循环重试？视业务而定
+      // this.clearAutoLoginState(); 
+    } finally {
+      // 清除 promise 标记，释放 checkAuth
+      this.globalData.loginPromise = null;
+    }
   },
 
-  /**
-   * 异步获取用户信息（如无则用缓存接口拉取）
-   * @returns {Promise<Object>} 用户信息
-   */
+  // --- 通用 Helper ---
+
+  updateGlobalUserInfo(userInfo) {
+    this.globalData.userInfo = userInfo;
+    auth.setUserInfo(userInfo);
+  },
+
+  async refreshUserInfo() {
+    try {
+      const userInfo = await userApi.getCurrentUser();
+      this.updateGlobalUserInfo(userInfo);
+      return userInfo;
+    } catch (e) {
+      console.error('刷新用户信息失败', e);
+      return null;
+    }
+  },
+
+  handleTokenExpired() {
+    console.log('检测到 Token 失效，执行登出');
+    auth.clearAuth();
+    this.globalData.token = null;
+    this.globalData.userInfo = null;
+
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    auth.navigateToLogin(currentPage?.route);
+  },
+
+  // --- Getters / Setters ---
+
+  getUserInfoSync() { return this.globalData.userInfo; },
+
   async getUserInfoAsync() {
-    // 如果已存在完整信息，则直接返回
-    if (this.globalData.userInfo && this.globalData.userInfo.is_profile_complete !== undefined) {
+    if (this.globalData.userInfo?.is_profile_complete !== undefined) {
       return this.globalData.userInfo;
     }
-
-    // 否则使用缓存的 API 调用获取最新信息
     const userInfo = await this.cachedGetCurrentUser();
-
-    // 更新全局和本地存储
-    this.globalData.userInfo = userInfo;
-    require('./utils/auth').setUserInfo(userInfo);
-
+    this.updateGlobalUserInfo(userInfo);
     return userInfo;
   },
 
-  /**
-   * 强制刷新用户信息（不使用缓存）
-   * 用于登录成功或信息更新后
-   * @returns {Promise<Object>} 用户信息
-   */
-  async refreshUserInfo() {
-    const userInfo = await require('./api/user').getCurrentUser();
-    this.globalData.userInfo = userInfo;
-    require('./utils/auth').setUserInfo(userInfo);
-    return userInfo;
+  setAgreementStatus(status) {
+    this.globalData.agreementStatus = status;
+    storage.setItem(AGREEMENT_STATUS_KEY, status);
+  },
+
+  getAgreementStatus() { return this.globalData.agreementStatus; },
+
+  setAutoLoginEnabled(enabled) {
+    this.globalData.autoLoginEnabled = enabled;
+    storage.setItem(AUTO_LOGIN_KEY, enabled);
+  },
+
+  clearAutoLoginState() {
+    this.globalData.agreementStatus = false;
+    this.globalData.autoLoginEnabled = false;
+    storage.removeItem(AGREEMENT_STATUS_KEY);
+    storage.removeItem(AUTO_LOGIN_KEY);
   }
 });

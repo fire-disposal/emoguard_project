@@ -7,30 +7,38 @@
       <text class="date-text">{{currentDate}}</text>
     </view>
     <!-- 情绪测试入口 - 优化版本 -->
-    <view class="emotion-test-day" bindtap="goToEmotionTest" data-period="morning">
+    <view class="emotion-test-day {{morningFilled ? 'completed' : isMorningOpen ? 'pending' : 'unopened'}}"
+          bindtap="{{morningFilled || isMorningOpen ? 'goToEmotionTest' : ''}}"
+          data-period="morning">
       <view class="entry-content">
         <view class="entry-icon">☀️</view>
         <view class="entry-info">
           <text class="entry-title">早间情绪测试</text>
-          <text class="entry-subtitle">05:00 - 14:00</text>
+          <text class="entry-subtitle">08:00 - 10:00</text>
         </view>
         <view class="entry-status">
-          <view class="status-badge {{morningFilled ? 'completed' : 'pending'}}">
-            <text class="status-text">{{morningFilled ? '✓ 已完成' : '○ 未测试'}}</text>
+          <view class="status-badge {{morningFilled ? 'completed' : isMorningOpen ? 'pending' : 'unopened'}}">
+            <text class="status-text">
+              {{morningFilled ? '🌱 已完成' : isMorningOpen ? '🔔 未测试' : '🔒 未开放'}}
+            </text>
           </view>
         </view>
       </view>
     </view>
-    <view class="emotion-test-night" bindtap="goToEmotionTest" data-period="evening">
+    <view class="emotion-test-night {{eveningFilled ? 'completed' : isEveningOpen ? 'pending' : 'unopened'}}"
+          bindtap="{{eveningFilled || isEveningOpen ? 'goToEmotionTest' : ''}}"
+          data-period="evening">
       <view class="entry-content">
         <view class="entry-icon">🌙</view>
         <view class="entry-info">
           <text class="entry-title">晚间情绪测试</text>
-          <text class="entry-subtitle">14:00 - 次日05:00</text>
+          <text class="entry-subtitle">20:00 - 22:00</text>
         </view>
         <view class="entry-status">
-          <view class="status-badge {{eveningFilled ? 'completed' : 'pending'}}">
-            <text class="status-text">{{eveningFilled ? '✓ 已完成' : '○ 未测试'}}</text>
+          <view class="status-badge {{eveningFilled ? 'completed' : isEveningOpen ? 'pending' : 'unopened'}}">
+            <text class="status-text">
+              {{eveningFilled ? '🌱 已完成' : isMorningOpen ? '🔔 未测试' : '🔒 未开放'}}
+            </text>
           </view>
         </view>
       </view>
@@ -43,7 +51,7 @@
         <text class="guide-icon">🧠</text>
         <view class="guide-text">
           <text class="guide-title">智能认知评估</text>
-          <text class="guide-subtitle">AI推荐个性化测评方案</text>
+          <text class="guide-subtitle">流程化的认知状态快速测评</text>
         </view>
       </view>
       <view class="close-btn" catchtap="closeCognitiveGuide">
@@ -51,7 +59,7 @@
       </view>
     </view>
     <view class="guide-content">
-      <view class="guide-steps">
+      <!-- <view class="guide-steps">
         <view class="guide-step">
           <text class="step-num">1</text>
           <text class="step-text">AI智能分析</text>
@@ -66,7 +74,7 @@
           <text class="step-num">3</text>
           <text class="step-text">专业报告</text>
         </view>
-      </view>
+      </view> -->
       <view class="guide-actions">
         <button class="guide-btn" bindtap="startCognitiveFlow">立即开始</button>
       </view>
@@ -80,7 +88,7 @@
     </view>
     <view class="action-item" bindtap="goToReports">
       <view class="action-icon">📊</view>
-      <text class="action-text">健康报告</text>
+      <text class="action-text">历史记录</text>
     </view>
     <view class="action-item" bindtap="goToArticles">
       <view class="action-icon">📚</view>
@@ -94,8 +102,8 @@
     <view class="feature-card" bindtap="goToAssessment">
       <view class="feature-icon">🏥</view>
       <view class="feature-info">
-        <text class="feature-title">认知测评</text>
-        <text class="feature-desc">专业量表评估心理健康状况</text>
+        <text class="feature-title">其他测评</text>
+        <text class="feature-desc">其他量表测试</text>
       </view>
       <view class="feature-arrow">→</view>
     </view>

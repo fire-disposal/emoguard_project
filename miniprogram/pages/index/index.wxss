@@ -78,6 +78,13 @@
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
 }
 
+/* 悬停效果 */
+.emotion-test-day.pending:active,
+.emotion-test-night.pending:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
+}
+
 .entry-content {
   display: flex;
   align-items: center;
@@ -112,6 +119,9 @@
 }
 
 .entry-status {
+  display: block;
+  align-items: center;
+  justify-content: center;
   padding: 5rpx 5rpx;
   backdrop-filter: blur(8rpx);
   position: relative;
@@ -119,6 +129,9 @@
 }
 
 .status-badge {
+  display: block;
+  align-items: center;
+  justify-content: center;
   transition: all 0.3s ease;
   padding: 12rpx 18rpx;
   border-radius: 20rpx;
@@ -126,16 +139,23 @@
   color: white;
   font-weight: 600;
   text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+  min-height: 48rpx;
+  box-sizing: border-box;
 }
 
 .status-badge.completed {
-  background: rgba(82, 196, 26, 0.8); /* 调整颜色和透明度 */
-  box-shadow: 0 2rpx 8rpx rgba(82, 196, 26, 0.4); /* 调整阴影 */
+  background: rgba(82, 196, 26, 0.9);
+  box-shadow: 0 2rpx 8rpx rgba(82, 196, 26, 0.4);
 }
 
 .status-badge.pending {
-  background: rgba(250, 173, 20, 0.8); /* 调整颜色和透明度 */
-  box-shadow: 0 2rpx 8rpx rgba(250, 173, 20, 0.4); /* 调整阴影 */
+  background: rgba(250, 173, 20, 0.9);
+  box-shadow: 0 2rpx 8rpx rgba(250, 173, 20, 0.4);
+}
+
+.status-badge.unopened {
+  background: rgba(128, 128, 128, 0.8);
+  box-shadow: 0 2rpx 8rpx rgba(128, 128, 128, 0.3);
 }
 
 
@@ -144,6 +164,10 @@
   color: white;
   font-weight: 600;
   text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+  line-height: 30rpx;
+  display: inline-block;
+  margin: 5;
+  padding: 5;
 }
 
 /* 认知评估引导卡片 */
@@ -319,7 +343,7 @@
   text-align: center;
 }
 
-/* 功能卡片区 */
+
 .features-section .section-title {
   display: block;
   font-size: 32rpx;
