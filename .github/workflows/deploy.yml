@@ -142,8 +142,9 @@ jobs:
               docker compose logs redis --tail 20
               exit 1
             fi
-
-            echo "${GITHUB_SHA:0:8}" > ~/last_successful_version.txt
+            
+            echo "📦 记录成功部署的版本..."
+            echo "${{ steps.ver.outputs.TAG }}" > ~/last_successful_version.txt
             echo "✅ Deploy OK"
           EOF
       - name: ✅ Finish Deployment
