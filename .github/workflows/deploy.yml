@@ -128,7 +128,7 @@ jobs:
               if [ $i -eq 5 ] || [ $i -eq 10 ] || [ $i -eq 15 ]; then
                 echo "--- 诊断信息 ---"
                 docker ps -a | grep emoguard
-                docker compose logs backend --tail 20
+                docker compose logs backend --tail 50
                 echo "----------------"
               fi
               sleep 5
@@ -144,7 +144,7 @@ jobs:
             fi
 
             echo "${GITHUB_SHA:0:8}" > ~/last_successful_version.txt
-            echo "✅ Deploy OK — Image Tag: ${{ steps.ver.outputs.TAG }}"
+            echo "✅ Deploy OK"
           EOF
       - name: ✅ Finish Deployment
         run: "echo \"🚀 Deploy finished — Image: ${{ steps.ver.outputs.IMAGE }}\""

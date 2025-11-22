@@ -147,7 +147,7 @@ services:
 # ----------------------------------------------------
 volumes:
   pg_data:
-    name: emoguard_pg_data # 明确命名，避免冲突
+    name: emoguard_pg_data
   redis_data:
     name: emoguard_redis_data
   media_data:
