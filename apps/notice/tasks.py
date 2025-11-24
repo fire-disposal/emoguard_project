@@ -2,6 +2,7 @@
 定时任务：情绪测评提醒
 使用 Celery + django-celery-beat 实现
 """
+from django.conf import settings
 from celery import shared_task
 from django.utils import timezone
 from datetime import datetime, time, timedelta
@@ -40,8 +41,7 @@ def send_morning_reminder():
     
     # 获取所有有额度的用户
     users_with_quota = User.objects.filter(
-        notice_quotas__count__gt=0,
-        notice_quotas__template_id='5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI'
+        notice_quotas__count__gt=0
     ).distinct()
     
     for user in users_with_quota:
@@ -60,7 +60,7 @@ def send_morning_reminder():
         # 发送提醒
         send_template_msg(
             user=user,
-            template_id='5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI',
+            template_id=settings.WECHAT_SUBSCRIPTION_TEMPLATES['MOOD_REMINDER'],
             page_path='pages/mood/moodtest/moodtest?period=morning',
             data_dict={
                 'thing1': {'value': '早间情绪测评提醒'},
@@ -79,8 +79,7 @@ def send_evening_reminder():
     
     # 获取所有有额度的用户
     users_with_quota = User.objects.filter(
-        notice_quotas__count__gt=0,
-        notice_quotas__template_id='5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI'
+        notice_quotas__count__gt=0
     ).distinct()
     
     for user in users_with_quota:
@@ -99,7 +98,7 @@ def send_evening_reminder():
         # 发送提醒
         send_template_msg(
             user=user,
-            template_id='5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI',
+            template_id=settings.WECHAT_SUBSCRIPTION_TEMPLATES['MOOD_REMINDER'],
             page_path='pages/mood/moodtest/moodtest?period=evening',
             data_dict={
                 'thing1': {'value': '晚间情绪测评提醒'},

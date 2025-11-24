@@ -9,8 +9,8 @@ def get_wechat_access_token():
     获取微信access_token
     这里需要根据你的微信配置实现具体的获取逻辑
     """
-    appid = settings.WECHAT_APPID
-    secret = settings.WECHAT_SECRET
+    appid = settings.WECHAT_MINI_PROGRAM_APP_ID
+    secret = settings.WECHAT_MINI_PROGRAM_APP_SECRET
     
     url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}"
     
