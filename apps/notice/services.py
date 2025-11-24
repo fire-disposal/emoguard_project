@@ -34,12 +34,14 @@ def send_template_msg(user, template_id, page_path, data_dict):
     
     # 1. 检查并扣除额度 (使用事务保证原子性)
     # 注意：必须先检查额度，因为如果没额度，微信接口会报错，且我们不需要发请求
+    from django.db import transaction
     try:
-        quota = UserQuota.objects.select_for_update().get(
-            user=user, 
-            template_id=template_id, 
-            count__gt=0
-        )
+        with transaction.atomic():
+            quota = UserQuota.objects.select_for_update().get(
+                user=user,
+                template_id=template_id,
+                count__gt=0
+            )
     except UserQuota.DoesNotExist:
         # 记录一个失败日志，方便知道为什么没发
         NotificationLog.objects.create(
