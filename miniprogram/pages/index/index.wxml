@@ -8,7 +8,7 @@
     </view>
     <!-- 情绪测试入口 - 优化版本 -->
     <view class="emotion-test-day {{morningFilled ? 'completed' : isMorningOpen ? 'pending' : 'unopened'}}"
-          bindtap="{{morningFilled || isMorningOpen ? 'goToEmotionTest' : ''}}"
+          bindtap="goToEmotionTest"
           data-period="morning">
       <view class="entry-content">
         <view class="entry-icon">☀️</view>
@@ -26,7 +26,7 @@
       </view>
     </view>
     <view class="emotion-test-night {{eveningFilled ? 'completed' : isEveningOpen ? 'pending' : 'unopened'}}"
-          bindtap="{{eveningFilled || isEveningOpen ? 'goToEmotionTest' : ''}}"
+          bindtap="goToEmotionTest"
           data-period="evening">
       <view class="entry-content">
         <view class="entry-icon">🌙</view>
