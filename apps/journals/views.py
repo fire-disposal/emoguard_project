@@ -169,7 +169,7 @@ def get_daily_statistics(request, days: int = Query(30)):
         record_date__date__gte=start_date,
         record_date__date__lte=end_date
     ).values('record_date__date').annotate(
-        avg_score=Avg('mood_score'),
+        avg_score=Avg('moodIntensity'),
         mood_count=Count('id'),
         dominant_mood=Count('mainMood')
     ).order_by('record_date__date')
@@ -214,7 +214,7 @@ def get_mood_trends(request, days: int = Query(30)):
     
     for journal in journals:
         dates.append(journal.record_date.isoformat())
-        scores.append(journal.mood_score)
+        scores.append(journal.moodIntensity)
     
     return {
         "dates": dates,

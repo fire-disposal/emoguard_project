@@ -109,19 +109,21 @@ const globalRequestQueue = new RequestQueue();
  * @param {number} cacheTime - 缓存时间（毫秒）
  * @returns {Function} 带缓存的请求函数
  */
+const authCenter = require('./authCenter'); // 延迟引用
+
 function createCachedRequest(requestFunc, cacheKey, cacheTime = 60000) {
   let cache = null;
   let cacheTimestamp = 0;
 
   return async function cachedRequest(...args) {
-    const now = Date.now();
-    
-    // 检查缓存是否有效
-    if (cache && (now - cacheTimestamp) < cacheTime) {
-      return cache;
+    /* 熔断后不再发请求 */
+    if (authCenter.breakdown) {
+      throw new Error('Auth breakdown, stop requesting');
     }
 
-    // 使用全局队列避免重复请求
+    const now = Date.now();
+    if (cache && (now - cacheTimestamp) < cacheTime) return cache;
+
     return globalRequestQueue.add(cacheKey, async () => {
       const result = await requestFunc.apply(this, args);
       cache = result;

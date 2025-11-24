@@ -1,27 +1,29 @@
 /**
  * 本地存储封装
- * 提供类型安全的读写方法，支持 JSON 序列化/反序列化
+ * 1. 类型安全、JSON 自动序列化
+ * 2. 容量超限降级（warn 后返回 false）
+ * 3. 统一日志 tag，方便过滤
  */
+const TAG = '[Storage]';
 
 /**
- * 存储数据
+ * 存储数据（带容量降级）
  * @param {string} key - 存储键
  * @param {any} value - 存储值（自动序列化）
+ * @returns {boolean} 成功/失败
  */
 function setItem(key, value) {
   try {
-    // 仅对对象和数组序列化，字符串/数字/布尔直接存储
-    let data;
-    if (typeof value === 'object' && value !== null) {
-      data = JSON.stringify(value);
-    } else {
-      data = value;
-    }
+    const data = (typeof value === 'object' && value !== null) ? JSON.stringify(value) : value;
     wx.setStorageSync(key, data);
     return true;
-  } catch (error) {
-    console.error('Storage setItem error:', error);
-    // 仅警告，不抛出，避免主流程被阻断
+  } catch (e) {
+    // 容量超限会抛 e.errMsg.includes("quota")
+    if (e.errMsg && e.errMsg.includes('quota')) {
+      console.warn(TAG, '容量超限，写入失败', key);
+    } else {
+      console.error(TAG, 'setItem 异常', key, e);
+    }
     return false;
   }
 }

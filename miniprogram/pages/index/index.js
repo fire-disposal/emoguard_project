@@ -1,6 +1,7 @@
 const auth = require('../../utils/auth');
-const emotionApi = require('../../api/emotiontracker');
+  // 已全局获取，无需单独请求
 const errorUtil = require('../../utils/error');
+const subscribeUtil = require('../../utils/subscribeUtil');
 
 Page({
   data: {
@@ -14,14 +15,17 @@ Page({
     morningFilled: false, // 早上情绪记录是否已填写
     eveningFilled: false, // 晚上情绪记录是否已填写
     isMorningOpen: false, // 早间测评是否开放
-    isEveningOpen: false // 晚间测评是否开放
+    isEveningOpen: false, // 晚间测评是否开放
   },
 
   onShow() {
     // 统一调用全局防抖鉴权检查
     getApp().debouncedCheckAuth();
-    // 页面显示时加载情绪状态（从其他页面返回时会触发）
-    this.loadEmotionStatus();
+    // 页面显示时直接从全局获取填写状态
+    this.setData({
+      morningFilled: getApp().globalData.morningFilled,
+      eveningFilled: getApp().globalData.eveningFilled
+    });
   },
 
   onLoad() {
@@ -30,7 +34,6 @@ Page({
 
     // 初始化时间/时段并设置定时器
     this.updateTimeAndPeriod();
-    this.loadEmotionStatus();
 
     // 每分钟更新时间
     this.timer = setInterval(() => {
@@ -47,23 +50,7 @@ Page({
   /**
    * 加载今日情绪记录状态
    */
-  loadEmotionStatus() {
-    emotionApi.getTodayStatus().then(res => {
-      console.log('获取今日状态成功:', res);
-      this.setData({
-        morningFilled: !!res.morning_filled,
-        eveningFilled: !!res.evening_filled
-      });
-    }).catch((error) => {
-      errorUtil.handleError(error);
-      // 获取失败时，默认设置为未完成，避免前端逻辑错误
-      this.setData({
-        morningFilled: false,
-        eveningFilled: false
-      });
-      console.log('获取今日状态失败，使用默认状态: 均未完成');
-    });
-  },
+  // 已废弃，去除 status 请求
 
   /**
    * 获取当前日期
@@ -105,8 +92,8 @@ Page({
     }
 
     // 判断测评开放时间
-    const isMorningOpen = hours >= 8 && hours < 10; // 早间测评 8:00-10:00
-    const isEveningOpen = hours >= 20 && hours < 22; // 晚间测评 20:00-22:00
+    const isMorningOpen = hours >= 8 && hours < 10; 
+    const isEveningOpen = hours >= 20 && hours < 22;
 
     this.setData({
       currentTime: `${hours}:${minutes}`,
@@ -195,17 +182,33 @@ Page({
     // 严格时间限制：早间测评 8:00-10:00，晚间测评 20:00-22:00
     if (period === 'morning') {
       if (hours < 8 || hours >= 10) {
-        wx.showToast({
-          title: '早间测评时间为 8:00-10:00',
-          icon: 'none'
+        wx.showModal({
+          title: '测评未开放',
+          content: '早间测评时间为 8:00-10:00，您可预约下一次测评并订阅提醒。',
+          confirmText: '预约订阅',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              const templateId = '5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI';
+              subscribeUtil.subscribeMessage(templateId);
+            }
+          }
         });
         return;
       }
     } else if (period === 'evening') {
       if (hours < 20 || hours >= 22) {
-        wx.showToast({
-          title: '晚间测评时间为 20:00-22:00',
-          icon: 'none'
+        wx.showModal({
+          title: '测评未开放',
+          content: '晚间测评时间为 20:00-22:00，您可预约下一次测评并订阅提醒。',
+          confirmText: '预约订阅',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              const templateId = '5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI';
+              subscribeUtil.subscribeMessage(templateId);
+            }
+          }
         });
         return;
       }

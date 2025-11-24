@@ -1,5 +1,6 @@
 const emotionApi = require('../../../api/emotiontracker');
 const noticeApi = require('../../../api/notice');
+const subscribeUtil = require('../../../utils/subscribeUtil');
 
 // --- 常量配置：将配置数据独立出来，使代码更清晰 ---
 const COGNITIVE_QUESTIONS = [
@@ -261,6 +262,13 @@ Page({
       // 只显示完成页，不自动弹订阅，按钮由用户点击触发
       this.setData({ showSuccess: true, submitting: false });
 
+      // 提交成功后，直接更新全局填写状态
+      if (this.data.currentPeriod === 'morning') {
+        getApp().globalData.morningFilled = true;
+      } else if (this.data.currentPeriod === 'evening') {
+        getApp().globalData.eveningFilled = true;
+      }
+
     } catch (error) {
       console.error('提交失败:', error);
       let errorMessage = '提交失败，请重试';
@@ -275,55 +283,9 @@ Page({
 
   // 订阅按钮事件
   handleSubscribe() {
-    this.handleSubscribeMessage();
-  },
-
-  // 处理订阅消息
-  handleSubscribeMessage() {
     const templateId = '5er1e9forv8HdkH8X6mBYp0JbkFeo4kNPCRi0uKZEJI';
-    
-    wx.requestSubscribeMessage({
-      tmplIds: [templateId],
-      success: (res) => {
-        console.log('订阅消息结果:', res);
-        
-        // 如果用户同意订阅，同步到后端
-        if (res[templateId] === 'accept') {
-          this.syncSubscribeStatus(templateId, 'accept');
-        } else if (res[templateId] === 'reject') {
-          this.syncSubscribeStatus(templateId, 'reject');
-        } else if (res[templateId] === 'ban') {
-          this.syncSubscribeStatus(templateId, 'ban');
-        }
-      },
-      fail: (err) => {
-        console.error('订阅消息失败:', err);
-      }
-    });
+    subscribeUtil.subscribeMessage(templateId);
   },
-
-  // 同步订阅状态到后端
-  async syncSubscribeStatus(templateId, action) {
-    try {
-      const response = await noticeApi.syncSubscribeStatus({
-        template_id: templateId,
-        action: action
-      });
-
-      console.log('同步订阅状态成功:', response);
-      
-      if (response.status === 'success') {
-        wx.showToast({
-          title: '订阅成功',
-          icon: 'success'
-        });
-      }
-    } catch (error) {
-      console.error('同步订阅状态失败:', error);
-      // 不显示错误，避免影响用户体验
-    }
-  },
-  // 获取当前进度的百分比 (优化为基于总步数)
   getProgressPercent() {
     return ((this.data.currentStep + 1) / this.data.totalSteps) * 100;
   }
