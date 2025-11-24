@@ -397,3 +397,21 @@ class ScaleResultService:
         except Exception as e:
             logger.error(f"获取量表结果失败: {str(e)}")
             return None
+    @staticmethod
+    def flatten_scale_result(record, with_question_info=True):
+        """
+        展平量表结果为题目分数列，支持带题目信息或仅分数
+        返回 (titles, values)
+        """
+        config = ScaleConfig.objects.get(id=record.scale_config_id)
+        questions = config.questions
+        selected_options = getattr(record, "selected_options", [])
+        titles, values = [], []
+        for idx, question in enumerate(questions):
+            q_title = f"Q{idx+1}"
+            if with_question_info:
+                q_title += f": {question.get('question', '')}"
+            titles.append(q_title)
+            value = selected_options[idx] if idx < len(selected_options) else ""
+            values.append(value)
+        return titles, values

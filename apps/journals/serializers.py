@@ -17,7 +17,6 @@ class MoodJournalUpdateSchema(Schema):
 
 class MoodJournalResponseSchema(Schema):
     id: int
-    user_id: str
     mainMood: str
     moodIntensity: int
     mainMoodOther: str

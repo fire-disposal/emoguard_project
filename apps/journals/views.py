@@ -45,13 +45,13 @@ def list_journals(request, filters: MoodJournalListQuerySchema = Query(...)):
     return [
         MoodJournalResponseSchema(
             id=j.id,
-            user_id=str(j.user_id),
-            mood_score=j.mood_score,
-            mood_name=j.mood_name,
-            text=j.text,
+            mainMood=j.mainMood,
+            moodIntensity=j.moodIntensity,
+            mainMoodOther=j.mainMoodOther,
+            moodSupplementTags=j.moodSupplementTags,
+            moodSupplementText=j.moodSupplementText,
             record_date=j.record_date.isoformat(),
-            created_at=j.created_at.isoformat(),
-            updated_at=j.updated_at.isoformat()
+            created_at=j.created_at.isoformat()
         )
         for j in journals
     ]
@@ -64,7 +64,6 @@ def get_journal(request, journal_id: int):
     journal = get_object_or_404(MoodJournal, id=journal_id)
     return MoodJournalResponseSchema(
         id=journal.id,
-        user_id=str(journal.user_id),
         mainMood=journal.mainMood,
         moodIntensity=journal.moodIntensity,
         mainMoodOther=journal.mainMoodOther,
@@ -94,7 +93,6 @@ def create_journal(request, data: MoodJournalCreateSchema):
     
     return MoodJournalResponseSchema(
         id=journal.id,
-        user_id=str(journal.user_id),
         mainMood=journal.mainMood,
         moodIntensity=journal.moodIntensity,
         mainMoodOther=journal.mainMoodOther,
@@ -132,7 +130,6 @@ def update_journal(request, journal_id: int, data: MoodJournalUpdateSchema):
     
     return MoodJournalResponseSchema(
         id=journal.id,
-        user_id=str(journal.user_id),
         mainMood=journal.mainMood,
         moodIntensity=journal.moodIntensity,
         mainMoodOther=journal.mainMoodOther,
@@ -174,7 +171,7 @@ def get_daily_statistics(request, days: int = Query(30)):
     ).values('record_date__date').annotate(
         avg_score=Avg('mood_score'),
         mood_count=Count('id'),
-        dominant_mood=Count('mood_name')
+        dominant_mood=Count('mainMood')
     ).order_by('record_date__date')
     
     # 获取每个日期的主要情绪
@@ -184,7 +181,7 @@ def get_daily_statistics(request, days: int = Query(30)):
         dominant_mood = MoodJournal.objects.filter(
             user_id=current_user.id,
             record_date__date=stat['record_date__date']
-        ).values('mood_name').annotate(
+        ).values('mainMood').annotate(
             count=Count('id')
         ).order_by('-count').first()
         
@@ -192,7 +189,7 @@ def get_daily_statistics(request, days: int = Query(30)):
             date=stat['record_date__date'].isoformat(),
             avg_score=round(stat['avg_score'], 2),
             mood_count=stat['mood_count'],
-            dominant_mood=dominant_mood['mood_name'] if dominant_mood else '未知'
+            dominant_mood=dominant_mood['mainMood'] if dominant_mood else '未知'
         ))
     
     return result

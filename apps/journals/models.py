@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.users.models import User
 
 
@@ -38,4 +39,4 @@ class MoodJournal(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user.display_name} - {self.mood_name} - 分数{self.mood_score} - {self.record_date.strftime('%Y-%m-%d')}"
+        return f"{self.user.display_name} - {self.mainMood} - 强度{self.moodIntensity} - {self.record_date.strftime('%Y-%m-%d')}"

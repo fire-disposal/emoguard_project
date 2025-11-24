@@ -3,7 +3,6 @@
 """
 from django.contrib import admin
 from django.utils.html import format_html
-from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from import_export.admin import ExportActionModelAdmin
@@ -66,11 +65,12 @@ class ScaleResultAdmin(ExportActionModelAdmin):
     list_select_related = ('scale_config',)
     list_per_page = 25
     ordering = ('-created_at',)
-    actions = ['export_selected_excel', 'export_selected_csv', 'mark_as_reviewed', 'bulk_delete_results']
+    actions = [
+        'export_selected_excel_flat',
+        'export_selected_csv_flat'
+    ]
     date_hierarchy = 'created_at'
     
-    # 导出配置
-    # export_formats = ['xlsx', 'csv']  # 错误写法，已注释
     export_filename = '量表结果导出'
     
     class Media:
@@ -83,22 +83,12 @@ class ScaleResultAdmin(ExportActionModelAdmin):
         return super().get_queryset(request).select_related('scale_config')
     
     def quick_stats(self, obj):
-        """快速统计信息 - 原生风格"""
-        if not obj.analysis or not isinstance(obj.analysis, dict):
+        """快速统计信息"""
+        if not isinstance(obj.analysis, dict):
             return '无统计数据'
-        
         try:
-            # 直接显示分析数据的原始结构
-            preview_data = {
-                'score': obj.analysis.get('score'),
-                'level': obj.analysis.get('level'),
-                'is_abnormal': obj.analysis.get('is_abnormal'),
-                'risk_level': obj.analysis.get('risk_level')
-            }
-            
-            # 移除None值，保持简洁
+            preview_data = {k: obj.analysis.get(k) for k in ['score', 'level', 'is_abnormal', 'risk_level']}
             preview_data = {k: v for k, v in preview_data.items() if v is not None}
-            
             return format_html(
                 '<pre class="analysis-preview">{}</pre>',
                 json.dumps(preview_data, ensure_ascii=False, indent=2)
@@ -115,117 +105,190 @@ class ScaleResultAdmin(ExportActionModelAdmin):
     
     
     def analysis_preview(self, obj):
-        """预览分析结果（主题友好）"""
-        if not obj.analysis or not isinstance(obj.analysis, dict):
+        """分析结果预览"""
+        if not isinstance(obj.analysis, dict):
             return "无分析数据"
-        
         try:
-            # 显示关键信息
             preview_data = {
                 'score': obj.analysis.get('score'),
                 'level': obj.analysis.get('level'),
                 'max_score': obj.analysis.get('max_score'),
                 'is_abnormal': obj.analysis.get('is_abnormal'),
-                'recommendations': obj.analysis.get('recommendations', [])[:2]  # 只显示前2条建议
+                'recommendations': obj.analysis.get('recommendations', [])[:2]
             }
-            
-            # 移除None值
             preview_data = {k: v for k, v in preview_data.items() if v is not None}
-            
             formatted = json.dumps(preview_data, ensure_ascii=False, indent=2)
-            return format_html(
-                '<pre class="analysis-preview">{}</pre>',
-                formatted
-            )
+            return format_html('<pre class="analysis-preview">{}</pre>', formatted)
         except Exception as e:
             logger.error(f"预览分析结果失败: {str(e)}")
             return "分析数据格式错误"
     analysis_preview.short_description = '分析预览'
     
     # 批量操作
-    def export_selected_excel(self, request, queryset):
-        """导出为Excel格式 - 原生风格，保持数据库原样输出"""
-        import openpyxl
-        from openpyxl.styles import Font, PatternFill
-        from datetime import datetime
-        import json
-        
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "量表结果"
-        
-        # 设置标题行 - 直接映射数据库字段
-        headers = ['ID', '用户ID', '量表配置ID', '选项答案', '结论摘要', '答题时长(毫秒)', '开始时间', '完成时间', '状态', '分析结果', '创建时间', '更新时间']
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col, value=header)
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-            cell.font = Font(color="FFFFFF", bold=True)
-        
-        # 填充数据 - 保持数据库原样
-        for row, result in enumerate(queryset.select_related('scale_config'), 2):
-            ws.cell(row=row, column=1, value=result.id)
-            ws.cell(row=row, column=2, value=str(result.user_id))
-            ws.cell(row=row, column=3, value=result.scale_config_id)
-            ws.cell(row=row, column=4, value=json.dumps(result.selected_options, ensure_ascii=False) if result.selected_options else '')
-            ws.cell(row=row, column=5, value=result.conclusion or '')
-            ws.cell(row=row, column=6, value=result.duration_ms or 0)
-            ws.cell(row=row, column=7, value=result.started_at.strftime('%Y-%m-%d %H:%M:%S') if result.started_at else '')
-            ws.cell(row=row, column=8, value=result.completed_at.strftime('%Y-%m-%d %H:%M:%S') if result.completed_at else '')
-            ws.cell(row=row, column=9, value=result.status or '')
-            ws.cell(row=row, column=10, value=json.dumps(result.analysis, ensure_ascii=False) if result.analysis else '')
-            ws.cell(row=row, column=11, value=result.created_at.strftime('%Y-%m-%d %H:%M:%S') if result.created_at else '')
-            ws.cell(row=row, column=12, value=result.updated_at.strftime('%Y-%m-%d %H:%M:%S') if result.updated_at else '')
-        
-        # 调整列宽
-        for column in ws.columns:
-            max_length = 0
-            column_letter = column[0].column_letter
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
-        
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename="量表结果_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
-        
-        wb.save(response)
-        return response
-    export_selected_excel.short_description = '导出为Excel'
+    def export_selected_excel_flat(self, request, queryset):
+        """导出为Excel（人口学信息+展平题目分数，题目文本）"""
+        from apps.scales.admin.demographic_export import build_excel_with_demographics
+        from apps.scales.services.scale_result_service import ScaleResultService
+        def get_user_id(record):
+            return record.user_id
+        # 取第一个对象的题目结构
+        if queryset:
+            titles, _ = ScaleResultService.flatten_scale_result(queryset[0], with_question_info=True)
+            extra_field_order = [
+                "id", "conclusion", "duration_ms", "started_at", "completed_at",
+                "status", "analysis", "created_at", "updated_at"
+            ] + [f"q_{i}" for i in range(len(titles))]
+            extra_field_titles = [
+                "ID", "结论摘要", "答题时长(毫秒)", "开始时间", "完成时间",
+                "状态", "分析结果", "创建时间", "更新时间"
+            ] + titles
+        else:
+            extra_field_order = []
+            extra_field_titles = []
+        def build_row(user_info, extra_fields, extra_field_order):
+            record = extra_fields.get('record', None)
+            if record is None:
+                return [""] * len(extra_field_order)
+            row = [
+                str(getattr(record, "id", "")),
+                str(getattr(record, "conclusion", "")),
+                str(getattr(record, "duration_ms", "")),
+                str(getattr(record, "started_at", "")),
+                str(getattr(record, "completed_at", "")),
+                str(getattr(record, "status", "")),
+                str(getattr(record, "analysis", "")),
+                str(getattr(record, "created_at", "")),
+                str(getattr(record, "updated_at", ""))
+            ]
+            _, values = ScaleResultService.flatten_scale_result(record, with_question_info=True)
+            row += [str(v) if not isinstance(v, (int, float, type(None))) else v for v in values]
+            return row
+        import apps.scales.admin.demographic_export as dexp
+        dexp.build_row_with_demographics = build_row
+        return build_excel_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
+    export_selected_excel_flat.short_description = '导出Excel（展平题目）'
+
+    def export_selected_excel_plain(self, request, queryset):
+        """导出为Excel（题目展平，不带题目信息）"""
+        from apps.scales.admin.demographic_export import build_excel_with_demographics
+        from apps.scales.services.scale_result_service import ScaleResultService
+        def get_user_id(record):
+            return record.user_id
+        if queryset:
+            titles, _ = ScaleResultService.flatten_scale_result(queryset[0], with_question_info=False)
+            extra_field_order = [
+                "id", "scale_config_id", "conclusion", "duration_ms",
+                "started_at", "completed_at", "status", "analysis", "created_at", "updated_at", "user_snapshot"
+            ] + [f"q_{i}" for i in range(len(titles))]
+            extra_field_titles = [
+                "ID", "量表配置ID", "结论摘要", "答题时长(毫秒)",
+                "开始时间", "完成时间", "状态", "分析结果", "创建时间", "更新时间", "用户信息快照"
+            ] + titles
+        else:
+            extra_field_order = []
+            extra_field_titles = []
+        def build_row(user_info, extra_fields, extra_field_order):
+            record = extra_fields.get('record', None)
+            if record is None:
+                record = extra_fields if hasattr(extra_fields, 'scale_config_id') else user_info
+            if record is None or not hasattr(record, 'scale_config_id'):
+                return [""] * len(extra_field_order)
+            row = [getattr(record, k, "") for k in extra_field_order if not k.startswith("q_")]
+            _, values = ScaleResultService.flatten_scale_result(record, with_question_info=False)
+            row += values
+            row = [str(v) if not isinstance(v, (int, float, type(None))) else v for v in row]
+            return row
+        import apps.scales.admin.demographic_export as dexp
+        dexp.build_row_with_demographics = build_row
+        return build_excel_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
+    export_selected_excel_plain.short_description = '导出Excel（题目展平，不带题目信息）'
+
+    def export_selected_csv_flat(self, request, queryset):
+        """导出为CSV（人口学信息+展平题目分数，题目文本）"""
+        from apps.scales.admin.demographic_export import build_csv_with_demographics
+        from apps.scales.services.scale_result_service import ScaleResultService
+        def get_user_id(record):
+            return record.user_id
+        if queryset:
+            titles, _ = ScaleResultService.flatten_scale_result(queryset[0], with_question_info=True)
+            extra_field_order = [
+                "id", "conclusion", "duration_ms", "started_at", "completed_at",
+                "status", "analysis", "created_at", "updated_at"
+            ] + [f"q_{i}" for i in range(len(titles))]
+            extra_field_titles = [
+                "ID", "结论摘要", "答题时长(毫秒)", "开始时间", "完成时间",
+                "状态", "分析结果", "创建时间", "更新时间"
+            ] + titles
+        else:
+            extra_field_order = []
+            extra_field_titles = []
+        def build_row(user_info, extra_fields, extra_field_order):
+            record = extra_fields.get('record', None)
+            if record is None:
+                return [""] * len(extra_field_order)
+            row = [
+                str(getattr(record, "id", "")),
+                str(getattr(record, "conclusion", "")),
+                str(getattr(record, "duration_ms", "")),
+                str(getattr(record, "started_at", "")),
+                str(getattr(record, "completed_at", "")),
+                str(getattr(record, "status", "")),
+                str(getattr(record, "analysis", "")),
+                str(getattr(record, "created_at", "")),
+                str(getattr(record, "updated_at", ""))
+            ]
+            _, values = ScaleResultService.flatten_scale_result(record, with_question_info=True)
+            row += [str(v) if not isinstance(v, (int, float, type(None))) else v for v in values]
+            return row
+        import apps.scales.admin.demographic_export as dexp
+        dexp.build_row_with_demographics = build_row
+        return build_csv_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
+    export_selected_csv_flat.short_description = '导出CSV（展平题目）'
+
+    def export_selected_csv_plain(self, request, queryset):
+        """导出为CSV（题目展平，不带题目信息）"""
+        from apps.scales.admin.demographic_export import build_csv_with_demographics
+        from apps.scales.services.scale_result_service import ScaleResultService
+        def get_user_id(record):
+            return record.user_id
+        if queryset:
+            titles, _ = ScaleResultService.flatten_scale_result(queryset[0], with_question_info=False)
+            extra_field_order = [
+                "id", "scale_config_id", "conclusion", "duration_ms",
+                "started_at", "completed_at", "status", "analysis", "created_at", "updated_at", "user_snapshot"
+            ] + [f"q_{i}" for i in range(len(titles))]
+            extra_field_titles = [
+                "ID", "量表配置ID", "结论摘要", "答题时长(毫秒)",
+                "开始时间", "完成时间", "状态", "分析结果", "创建时间", "更新时间", "用户信息快照"
+            ] + titles
+        else:
+            extra_field_order = []
+            extra_field_titles = []
+        def build_row(user_info, extra_fields, extra_field_order):
+            record = extra_fields.get('record', None)
+            row = [getattr(record, k, "") for k in extra_field_order if not k.startswith("q_")]
+            _, values = ScaleResultService.flatten_scale_result(record, with_question_info=False)
+            row += values
+            return row
+        import apps.scales.admin.demographic_export as dexp
+        dexp.build_row_with_demographics = build_row
+        return build_csv_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
+    export_selected_csv_plain.short_description = '导出CSV（题目展平，不带题目信息）'
     
     def export_selected_csv(self, request, queryset):
-        """导出为CSV格式 - 原生风格，保持数据库原样输出"""
-        import csv
-        from datetime import datetime
-        import json
-        
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="量表结果_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-        
-        writer = csv.writer(response)
-        writer.writerow(['ID', '用户ID', '量表配置ID', '选项答案', '结论摘要', '答题时长(毫秒)', '开始时间', '完成时间', '状态', '分析结果', '创建时间', '更新时间'])
-        
-        for result in queryset.select_related('scale_config'):
-            writer.writerow([
-                result.id,
-                str(result.user_id),
-                result.scale_config_id,
-                json.dumps(result.selected_options, ensure_ascii=False) if result.selected_options else '',
-                result.conclusion or '',
-                result.duration_ms or 0,
-                result.started_at.strftime('%Y-%m-%d %H:%M:%S') if result.started_at else '',
-                result.completed_at.strftime('%Y-%m-%d %H:%M:%S') if result.completed_at else '',
-                result.status or '',
-                json.dumps(result.analysis, ensure_ascii=False) if result.analysis else '',
-                result.created_at.strftime('%Y-%m-%d %H:%M:%S') if result.created_at else '',
-                result.updated_at.strftime('%Y-%m-%d %H:%M:%S') if result.updated_at else ''
-            ])
-        
-        return response
+        """导出为CSV格式（人口学信息封装，用户信息快照字段原样导出）"""
+        from apps.scales.admin.demographic_export import build_csv_with_demographics
+        extra_field_order = [
+            "id", "scale_config_id", "selected_options", "conclusion", "duration_ms",
+            "started_at", "completed_at", "status", "analysis", "created_at", "updated_at", "user_snapshot"
+        ]
+        extra_field_titles = [
+            "ID", "量表配置ID", "选项答案", "结论摘要", "答题时长(毫秒)",
+            "开始时间", "完成时间", "状态", "分析结果", "创建时间", "更新时间", "用户信息快照"
+        ]
+        def get_user_id(record):
+            return record.user_id
+        return build_csv_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
     export_selected_csv.short_description = '导出为CSV'
     
     def mark_as_reviewed(self, request, queryset):
@@ -258,11 +321,9 @@ def format_duration(duration_ms):
     """格式化时长显示"""
     if not duration_ms:
         return "0秒"
-    
     seconds = duration_ms // 1000
     if seconds < 60:
         return f"{seconds}秒"
-    else:
-        minutes = seconds // 60
-        remaining_seconds = seconds % 60
-        return f"{minutes}分{remaining_seconds}秒"
+    minutes = seconds // 60
+    remaining_seconds = seconds % 60
+    return f"{minutes}分{remaining_seconds}秒"

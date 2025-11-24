@@ -23,12 +23,10 @@ const JOURNAL_QUESTIONS = [
     key: 'moodIntensity',
     title: '情绪强度',
     question: '您当前感受的强度如何？',
-    type: 'radio',
-    options: [
-      { value: 1, text: '轻微', desc: '情绪感受较弱' },
-      { value: 2, text: '中等', desc: '情绪感受适中' },
-      { value: 3, text: '明显', desc: '情绪感受较强' }
-    ]
+    type: 'slider',
+    min: 1,
+    max: 10,
+    step: 1
   },
   {
     key: 'moodSupplementTags',
@@ -102,14 +100,15 @@ Page({
     })
     .then((res) => {
       const journals = (res || []).map(item => {
-        const moodName = item.mood_name || item.label || '未知';
+        const moodName = item.mainMood || item.label || '未知';
         return {
-          ...item,
-          emoji: this.getEmojiByMoodName(moodName),
-          mood_name: moodName,
-          mood_score: item.mood_score || item.score || 5,
-          text: item.text || '',
-          created_at: item.created_at || new Date().toISOString()
+            ...item,
+            emoji: this.getEmojiByMoodName(moodName),
+            mainMood: moodName,
+            mainMoodText: this.getMoodText(item.mainMood, item.mainMoodOther),
+            mood_score: item.mood_score || item.score || item.moodIntensity || 5,
+            text: item.text || '',
+            created_at: item.created_at || new Date().toISOString()
         };
       });
       
@@ -133,18 +132,13 @@ Page({
    */
   getEmojiByMoodName(moodName) {
     const moodMap = {
-      '快乐': '😄',
-      '开心': '😊',
-      '平静': '😌',
-      '一般': '😐',
-      '难过': '😔',
-      '悲伤': '😢',
-      '焦虑': '😰',
-      '担心': '😟',
-      '烦躁': '😠',
-      '易怒': '😡',
-      '疲惫': '😫',
-      '无力': '😩'
+      'happy': '😄',
+      'calm': '😌',
+      'sad': '😢',
+      'anxious': '😰',
+      'angry': '😡',
+      'tired': '😫',
+      'other': '🤔'
     };
     
     for (let key in moodMap) {
@@ -155,6 +149,11 @@ Page({
     return '😐';
   },
 
+  // 滑动题事件处理
+  handleSliderChange(e) {
+    const { key } = e.currentTarget.dataset;
+    this.setData({ [key]: Number(e.detail.value) });
+  },
   // --- 数据绑定处理 ---
   
   // 处理单选变化
@@ -235,11 +234,11 @@ Page({
 
     // 构建提交数据
     const submitData = {
-      mainMood: this.data.mainMood,
-      moodIntensity: this.data.moodIntensity,
-      mainMoodOther: this.data.mainMoodOther,
-      moodSupplementTags: this.data.moodSupplementTags,
-      moodSupplementText: this.data.moodSupplementText.trim()
+      mainMood: this.data.mainMood || "",
+      moodIntensity: typeof this.data.moodIntensity === "number" ? this.data.moodIntensity : 0,
+      mainMoodOther: this.data.mainMoodOther || "",
+      moodSupplementTags: Array.isArray(this.data.moodSupplementTags) ? {} : (this.data.moodSupplementTags || {}),
+      moodSupplementText: this.data.moodSupplementText ? this.data.moodSupplementText.trim() : ""
     };
 
     journalApi.createJournal(submitData)

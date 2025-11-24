@@ -37,20 +37,18 @@
         <text class="question-subtitle">您当前感受的强度如何？</text>
       </view>
       <view class="question-content">
-        <radio-group class="radio-group" data-key="moodIntensity" bindchange="handleRadioChange">
-          <label 
-            wx:for="{{questions[1].options}}" 
-            wx:key="value" 
-            wx:for-item="item"
-            class="radio-option {{getOptionSelected(1, item.value) ? 'selected' : ''}}"
-          >
-            <radio value="{{item.value}}" checked="{{getOptionSelected(1, item.value)}}" />
-            <view class="option-content">
-              <text class="option-text">{{item.text}}</text>
-              <text class="option-desc">{{item.desc}}</text>
-            </view>
-          </label>
-        </radio-group>
+        <view class="slider-group">
+          <slider
+            min="{{questions[1].min}}"
+            max="{{questions[1].max}}"
+            step="{{questions[1].step}}"
+            value="{{moodIntensity || 5}}"
+            show-value="true"
+            data-key="moodIntensity"
+            bindchange="handleSliderChange"
+          />
+          <text class="slider-value">当前强度：{{moodIntensity || 5}}/10</text>
+        </view>
       </view>
     </view>
 
@@ -132,11 +130,11 @@
         <view class="item-emoji">{{item.emoji || '😐'}}</view>
         <view class="item-content">
           <view class="item-header">
-            <text class="item-mood-text">{{item.mood_name || item.label}}</text>
+            <text class="item-mood-text">{{item.mainMoodText || item.label}}</text>
             <text class="item-time">{{formatTime(item.created_at)}}</text>
           </view>
           <text wx:if="{{item.text}}" class="item-reason">{{item.text}}</text>
-          <text class="item-score" wx:if="{{item.mood_score || item.score}}">强度: {{item.mood_score || item.score}}/3</text>
+          <text class="item-score" wx:if="{{item.mood_score || item.score}}">强度: {{item.mood_score || item.score}}/10</text>
         </view>
       </view>
     </view>

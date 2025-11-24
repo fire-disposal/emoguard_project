@@ -6,59 +6,6 @@ class CognitiveAssessmentRecord(models.Model):
     """
     id = models.AutoField(primary_key=True)
     user_id = models.UUIDField(verbose_name='用户ID', db_index=True)
-    # 用户信息字段拷贝
-    real_name = models.CharField(
-        max_length=50,
-        blank=True,
-        default='',
-        verbose_name='真实姓名'
-    )
-    
-    gender = models.CharField(
-        max_length=10,
-        blank=True,
-        default='',
-        verbose_name='性别'
-    )
-    
-    age = models.IntegerField(
-        blank=True,
-        null=True,
-        verbose_name='年龄'
-    )
-    
-    education = models.CharField(
-        max_length=20,
-        blank=True,
-        default='',
-        verbose_name='学历'
-    )
-    
-    province = models.CharField(
-        max_length=50,
-        blank=True,
-        default='',
-        verbose_name='所在省份'
-    )
-    city = models.CharField(
-        max_length=50,
-        blank=True,
-        default='',
-        verbose_name='所在城市'
-    )
-    district = models.CharField(
-        max_length=50,
-        blank=True,
-        default='',
-        verbose_name='所在区县'
-    )
-
-    phone = models.CharField(
-        max_length=11,
-        blank=True,
-        null=True,
-    )
-
     # 预留所有常见量表的得分字段，均允许为空
     score_scd = models.FloatField(verbose_name='SCD得分', null=True, blank=True)
     score_mmse = models.FloatField(verbose_name='MMSE得分', null=True, blank=True)
@@ -76,5 +23,5 @@ class CognitiveAssessmentRecord(models.Model):
         verbose_name = "认知测评答卷"
         verbose_name_plural = "认知测评答卷"
         indexes = [
-            models.Index(fields=['user_id', 'province']),
+            models.Index(fields=['user_id']),
         ]

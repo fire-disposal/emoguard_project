@@ -2,15 +2,12 @@
 情绪记录管理后台
 """
 from django.contrib import admin
-from django.http import HttpResponse
 from django.utils.html import format_html
 from import_export.admin import ExportActionModelAdmin
 from import_export import resources, fields
 from apps.emotiontracker.models import EmotionRecord
 from apps.users.models import User
 import json
-import csv
-from datetime import datetime
 
 
 class EmotionRecordResource(resources.ModelResource):
@@ -121,10 +118,16 @@ class EmotionRecordAdmin(ExportActionModelAdmin):
     date_hierarchy = 'created_at'
     
     def user_info(self, obj):
-        """显示用户信息"""
-        from apps.scales.admin.utils import get_user_info, format_user_info_html
-        user_info = get_user_info(obj.user_id)
-        return format_user_info_html(user_info, show_full=False)
+        """显示用户人口学信息（复用 demographic_export 工具）"""
+        from apps.scales.admin.demographic_export import get_demographic_info
+        user_info = get_demographic_info(obj.user_id)
+        # 格式化展示
+        return format_html(
+            "<b>{}</b> | {} | {}岁",
+            user_info.get("real_name", "未知"),
+            user_info.get("gender", "未知"),
+            user_info.get("age", "未知"),
+        )
     user_info.short_description = '用户信息'
     
     def main_mood_display(self, obj):
@@ -174,96 +177,37 @@ class EmotionRecordAdmin(ExportActionModelAdmin):
     analysis_preview.short_description = '数据预览'
     
     def export_selected_excel(self, request, queryset):
-        """导出情绪记录为Excel格式"""
-        import openpyxl
-        from openpyxl.styles import Font, PatternFill
-        
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "情绪记录"
-        
-        # 设置标题行
-        headers = ['记录ID', '用户ID', '用户姓名', '性别', '年龄', '时段', 
-                  '抑郁得分', '焦虑得分', '精力得分', '睡眠得分',
-                  '主要情绪', '情绪强度', '情绪标签', '补充说明', '记录时间']
-        
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col, value=header)
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-            cell.font = Font(color="FFFFFF", bold=True)
-        
-        # 填充数据
-        for row, record in enumerate(queryset, 2):
-            user_info = self.get_user_info_simple(record.user_id)
-            
-            ws.cell(row=row, column=1, value=record.id)
-            ws.cell(row=row, column=2, value=str(record.user_id))
-            ws.cell(row=row, column=3, value=user_info.get('real_name', '未知'))
-            ws.cell(row=row, column=4, value=user_info.get('gender', '未知'))
-            ws.cell(row=row, column=5, value=user_info.get('age', '未知'))
-            ws.cell(row=row, column=6, value=self.get_period_display(record.period))
-            ws.cell(row=row, column=7, value=record.depression or 'N/A')
-            ws.cell(row=row, column=8, value=record.anxiety or 'N/A')
-            ws.cell(row=row, column=9, value=record.energy or 'N/A')
-            ws.cell(row=row, column=10, value=record.sleep or 'N/A')
-            ws.cell(row=row, column=11, value=self.get_mood_display(record.main_mood))
-            ws.cell(row=row, column=12, value=self.get_intensity_display(record.mood_intensity))
-            ws.cell(row=row, column=13, value=self.get_tags_display(record.mood_supplement_tags))
-            ws.cell(row=row, column=14, value=record.mood_supplement_text or '')
-            ws.cell(row=row, column=15, value=record.created_at.strftime('%Y-%m-%d %H:%M'))
-        
-        # 调整列宽
-        for column in ws.columns:
-            max_length = 0
-            column_letter = column[0].column_letter
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            adjusted_width = min(max_length + 2, 20)
-            ws.column_dimensions[column_letter].width = adjusted_width
-        
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename="情绪记录_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
-        
-        wb.save(response)
-        return response
+        """导出情绪记录为Excel格式（调用人口学信息导出工具）"""
+        from apps.scales.admin.demographic_export import build_excel_with_demographics
+
+        extra_field_order = [
+            "id", "period", "depression", "anxiety", "energy", "sleep",
+            "main_mood", "mood_intensity", "mood_supplement_tags", "mood_supplement_text", "created_at"
+        ]
+        extra_field_titles = [
+            "记录ID", "时段", "抑郁得分", "焦虑得分", "精力得分", "睡眠得分",
+            "主要情绪", "情绪强度", "情绪标签", "补充说明", "记录时间"
+        ]
+        def get_user_id(record):
+            return record.user_id
+        return build_excel_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
     export_selected_excel.short_description = '导出为Excel'
     
     def export_selected_csv(self, request, queryset):
-        """导出情绪记录为CSV格式"""
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="情绪记录_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-        
-        writer = csv.writer(response)
-        writer.writerow(['记录ID', '用户ID', '用户姓名', '性别', '年龄', '时段', 
-                        '抑郁得分', '焦虑得分', '精力得分', '睡眠得分',
-                        '主要情绪', '情绪强度', '情绪标签', '补充说明', '记录时间'])
-        
-        for record in queryset:
-            user_info = self.get_user_info_simple(record.user_id)
-            writer.writerow([
-                record.id,
-                str(record.user_id),
-                user_info.get('real_name', '未知'),
-                user_info.get('gender', '未知'),
-                user_info.get('age', '未知'),
-                self.get_period_display(record.period),
-                record.depression or 'N/A',
-                record.anxiety or 'N/A',
-                record.energy or 'N/A',
-                record.sleep or 'N/A',
-                self.get_mood_display(record.main_mood),
-                self.get_intensity_display(record.mood_intensity),
-                self.get_tags_display(record.mood_supplement_tags),
-                record.mood_supplement_text or '',
-                record.created_at.strftime('%Y-%m-%d %H:%M')
-            ])
-        
-        return response
+        """导出情绪记录为CSV格式（调用人口学信息导出工具）"""
+        from apps.scales.admin.demographic_export import build_csv_with_demographics
+
+        extra_field_order = [
+            "id", "period", "depression", "anxiety", "energy", "sleep",
+            "main_mood", "mood_intensity", "mood_supplement_tags", "mood_supplement_text", "created_at"
+        ]
+        extra_field_titles = [
+            "记录ID", "时段", "抑郁得分", "焦虑得分", "精力得分", "睡眠得分",
+            "主要情绪", "情绪强度", "情绪标签", "补充说明", "记录时间"
+        ]
+        def get_user_id(record):
+            return record.user_id
+        return build_csv_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
     export_selected_csv.short_description = '导出为CSV'
     
     def get_user_info_simple(self, user_id):

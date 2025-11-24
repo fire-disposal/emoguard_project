@@ -1,18 +1,55 @@
 """
 用户管理后台配置 - 适配单模型设计
 """
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
 from django.utils.html import format_html
 from .models import User
 from django.contrib import admin
+from import_export.admin import ExportActionModelAdmin
+from import_export import resources, fields
+from apps.scales.admin.demographic_export import build_excel_with_demographics, build_csv_with_demographics
 
 admin.site.site_title = "情绪监测系统"
 admin.site.site_header = "情绪监测系统"
 
 
+
+class UserResource(resources.ModelResource):
+    """用户导出资源（人口学信息与业务字段分离，避免重复）"""
+    id = fields.Field(column_name="用户ID", attribute="id")
+    username = fields.Field(column_name="用户名", attribute="username")
+    real_name = fields.Field(column_name="真实姓名", attribute="real_name")
+    gender = fields.Field(column_name="性别", attribute="gender")
+    age = fields.Field(column_name="年龄", attribute="age")
+    education = fields.Field(column_name="学历", attribute="education")
+    province = fields.Field(column_name="省份", attribute="province")
+    city = fields.Field(column_name="城市", attribute="city")
+    district = fields.Field(column_name="区县", attribute="district")
+    phone = fields.Field(column_name="手机号", attribute="phone")
+    is_profile_complete = fields.Field(column_name="信息已完善", attribute="is_profile_complete")
+    role = fields.Field(column_name="角色", attribute="role")
+    score_scd = fields.Field(column_name="SCD分数", attribute="score_scd")
+    score_mmse = fields.Field(column_name="MMSE分数", attribute="score_mmse")
+    score_moca = fields.Field(column_name="MoCA分数", attribute="score_moca")
+    score_gad7 = fields.Field(column_name="GAD7分数", attribute="score_gad7")
+    score_phq9 = fields.Field(column_name="PHQ9分数", attribute="score_phq9")
+    score_adl = fields.Field(column_name="ADL分数", attribute="score_adl")
+    last_mood_tested_at = fields.Field(column_name="上次情绪测试时间", attribute="last_mood_tested_at")
+
+    class Meta:
+        model = User
+        fields = [
+            "id", "username", "real_name", "gender", "age", "education", "province", "city", "district", "phone",
+            "is_profile_complete", "role", "score_scd", "score_mmse", "score_moca", "score_gad7", "score_phq9", "score_adl", "last_mood_tested_at"
+        ]
+        export_order = fields
+        skip_unchanged = True
+
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(ExportActionModelAdmin):
     """用户管理后台"""
+
+    resource_class = UserResource
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -28,9 +65,9 @@ class UserAdmin(BaseUserAdmin):
         "province",
         "city",
         "phone",
-        "score_scd", 
-        "score_mmse", 
-        "score_moca", 
+        "score_scd",
+        "score_mmse",
+        "score_moca",
         "is_profile_complete",
         "last_mood_tested_at",
     )
@@ -112,6 +149,34 @@ class UserAdmin(BaseUserAdmin):
 
     # 只读字段
     readonly_fields = ("date_joined", "last_login")
+
+    actions = ["export_selected_excel", "export_selected_csv"]
+
+    def export_selected_excel(self, request, queryset):
+        """导出用户为Excel格式（仅额外导出微信字段、信息完善状态和上次情绪测试时间）"""
+        extra_field_order = [
+            "wechat_openid", "wechat_unionid", "is_profile_complete", "last_mood_tested_at"
+        ]
+        extra_field_titles = [
+            "微信OpenID", "微信UnionID", "信息已完善", "上次情绪测试时间"
+        ]
+        def get_user_id(record):
+            return record.id
+        return build_excel_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
+    export_selected_excel.short_description = "导出为Excel"
+
+    def export_selected_csv(self, request, queryset):
+        """导出用户为CSV格式（仅额外导出微信字段、信息完善状态和上次情绪测试时间）"""
+        extra_field_order = [
+            "wechat_openid", "wechat_unionid", "is_profile_complete", "last_mood_tested_at"
+        ]
+        extra_field_titles = [
+            "微信OpenID", "微信UnionID", "信息已完善", "上次情绪测试时间"
+        ]
+        def get_user_id(record):
+            return record.id
+        return build_csv_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
+    export_selected_csv.short_description = "导出为CSV"
 
     @admin.display(description="用户类型")
     def user_type_display(self, obj):
