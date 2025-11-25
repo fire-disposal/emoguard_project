@@ -23,19 +23,18 @@
 }
 
 .section-icon {
-  font-size: 40rpx;
+  font-size: 60rpx;
   margin-right: 12rpx;
 }
 
 .section-title {
-  font-size: 34rpx;
+  font-size: 50rpx;
   font-weight: 700;
   color: #333;
 }
 
 /* 题目块样式 */
 .question-block {
-  margin-bottom: 40rpx;
   padding: 24rpx;
   background: #f8f9fa;
   border-radius: 16rpx;
@@ -47,7 +46,7 @@
 
 .question-title {
   display: block;
-  font-size: 30rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: #333;
   margin-bottom: 8rpx;
@@ -55,7 +54,7 @@
 
 .question-subtitle {
   display: block;
-  font-size: 26rpx;
+  font-size: 35rpx;
   color: #666;
 }
 
@@ -66,7 +65,7 @@
 /* 情绪选择样式 */
 .mood-options {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16rpx;
 }
 
@@ -89,14 +88,14 @@
 }
 
 .mood-emoji {
-  font-size: 48rpx;
+  font-size: 80rpx;
   margin-bottom: 8rpx;
   text-align: center;
 }
 
 
 .mood-text {
-  font-size: 22rpx;
+  font-size: 30rpx;
   color: #666;
   text-align: center;
 }
@@ -146,23 +145,7 @@
   margin-right: 16rpx;
 }
 
-.option-content {
-  flex: 1;
-}
 
-.option-text {
-  display: block;
-  font-size: 28rpx;
-  color: #333;
-  font-weight: 500;
-}
-
-.option-desc {
-  display: block;
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 4rpx;
-}
 
 /* 复选框样式 */
 .checkbox-group {
@@ -191,7 +174,7 @@
 }
 
 .checkbox-text {
-  font-size: 28rpx;
+  font-size: 35rpx;
   color: #333;
 }
 
@@ -229,7 +212,7 @@
   color: white;
   border-radius: 16rpx;
   padding: 28rpx;
-  font-size: 32rpx;
+  font-size: 45rpx;
   font-weight: 700;
   box-shadow: 0 6rpx 20rpx rgba(24, 144, 255, 0.3);
   transition: all 0.3s;
@@ -245,11 +228,11 @@
 }
 
 .btn-icon {
-  font-size: 28rpx;
+  font-size: 45rpx;
 }
 
 .btn-text {
-  font-size: 32rpx;
+  font-size: 40rpx;
 }
 
 /* 心情历史 */
@@ -267,23 +250,26 @@
 }
 
 .history-title {
-  font-size: 32rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: #333;
 }
 
 .history-count {
-  font-size: 24rpx;
-  color: #999;
+  font-size: 30rpx;
+  justify-content: end;
+  margin-right: 0rpx;
+  color: #535353;
   background: #f5f5f5;
   padding: 4rpx 16rpx;
   border-radius: 12rpx;
 }
 
 .toggle-icon {
-  font-size: 24rpx;
+  font-size: 35rpx;
   color: #999;
   transition: transform 0.3s;
+  margin-right: 35rpx;
 }
 
 .loading-state {
@@ -292,7 +278,7 @@
 }
 
 .loading-text {
-  font-size: 28rpx;
+  font-size: 35rpx;
   color: #999;
 }
 
@@ -333,7 +319,7 @@
 }
 
 .item-emoji {
-  font-size: 48rpx;
+  font-size: 80rpx;
   margin-right: 20rpx;
   flex-shrink: 0;
 }
@@ -350,26 +336,25 @@
 }
 
 .item-mood-text {
-  font-size: 28rpx;
+  font-size: 40rpx;
   color: #1890ff;
   font-weight: 700;
 }
 
 .item-time {
-  font-size: 22rpx;
+  font-size: 35rpx;
   color: #999;
 }
 
 .item-reason {
   display: block;
-  font-size: 26rpx;
+  font-size: 35rpx;
   color: #595959;
   line-height: 1.6;
-  margin-bottom: 12rpx;
 }
 
 .item-score {
   display: block;
-  font-size: 24rpx;
+  font-size: 35rpx;
   color: #8c8c8c;
 }

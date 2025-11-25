@@ -3,16 +3,22 @@
 <view class="container">
 
   <!-- 智能测评入口 -->
-  <view class="smart-section">
-    <button class="smart-btn" bindtap="startSmartAssessment">
-      <text class="smart-title">🧠 点击进行智能测评 </text>
-      <text class="smart-desc">AI智能推荐，个性化评估方案</text>
-    </button>
+  <view class="scales-section">
+    <text class="section-title">🌱 智能测评</text>
+    <view class="scales-list">
+      <view class="scale-item">
+        <view class="scale-info">
+          <text class="scale-name">认知障碍综合测评</text>
+          <text class="scale-desc">结合moca\scd-q9等综合评估认知状况</text>
+        </view>
+        <button class="scale-btn" bindtap="startSmartAssessment">开始</button>
+      </view>
+    </view>
   </view>
 
   <!-- 单问卷模式 -->
   <view class="scales-section">
-    <text class="section-title">单独测评</text>
+    <text class="section-title">📋 单独测评</text>
     
     <view wx:if="{{loading}}" class="loading">
       <text>加载中...</text>

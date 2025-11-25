@@ -5,13 +5,12 @@
   </view>
   <view wx:elif="{{userInfo}}" class="profile-content">
     <!-- 用户卡片 -->
-    <!-- 用户卡片 -->
     <view class="user-card">
       <view class="user-header">
         <!-- <view class="user-avatar">{{userInfo.real_name ? userInfo.real_name.charAt(0) : '用'}}</view> -->
         <view class="user-info">
           <text class="user-nickname">{{userInfo.real_name || '用户'}}</text>
-          <block wx:if="{{abnormalScores && abnormalScores.length}}">
+          <!-- <block wx:if="{{abnormalScores && abnormalScores.length}}">
             <view class="abnormal-capsule-list">
               <block wx:for="{{abnormalScores}}" wx:key="key">
                 <view class="abnormal-capsule abnormal-{{item.key}}">
@@ -21,13 +20,13 @@
                 </view>
               </block>
             </view>
-          </block>
+          </block> -->
         </view>
       </view>
     </view>
 
     <!-- 菜单区 -->
-    <view class="profile-section card">
+   
       <view class="menu-list">
         <view class="menu-item" bindtap="goToProfileManage">
           <text class="menu-title">个人信息管理</text>
@@ -49,13 +48,14 @@
           <text class="menu-title">用户协议</text>
           <text class="menu-arrow">›</text>
         </view>
-      </view>
-    </view>
-
-    <!-- 退出登录菜单项 -->
-    <view class="menu-item" bindtap="logout">
+        <view class="menu-item" bindtap="logout">
       <text class="menu-title" style="color:#ff4d4f;">退出登录</text>
       <text class="menu-arrow">›</text>
     </view>
+      </view>
+
+
+    <!-- 退出登录菜单项 -->
+    
   </view>
 </view>

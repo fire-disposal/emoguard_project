@@ -1,5 +1,5 @@
 <!-- pages/index/index.wxml -->
-<view class="home-container gradient-bg">
+<view class="home-container gradient-bg" bind:animationiteration="goToReports">
   <!-- 顶部欢迎区 -->
   <view class="welcome-section">
     <view class="welcome-time">
@@ -37,7 +37,7 @@
         <view class="entry-status">
           <view class="status-badge {{eveningFilled ? 'completed' : isEveningOpen ? 'pending' : 'unopened'}}">
             <text class="status-text">
-              {{eveningFilled ? '🌱 已完成' : isMorningOpen ? '🔔 未测试' : '🔒 未开放'}}
+              {{eveningFilled ? '🌱 已完成' : isEveningOpen ? '🔔 未测试' : '🔒 未开放'}}
             </text>
           </view>
         </view>
@@ -51,7 +51,7 @@
         <text class="guide-icon">🧠</text>
         <view class="guide-text">
           <text class="guide-title">智能认知评估</text>
-          <text class="guide-subtitle">流程化的认知状态快速测评</text>
+          <!-- <text class="guide-subtitle">流程化的认知状态快速测评</text> -->
         </view>
       </view>
       <view class="close-btn" catchtap="closeCognitiveGuide">

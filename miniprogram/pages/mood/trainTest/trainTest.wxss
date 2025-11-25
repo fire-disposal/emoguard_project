@@ -32,7 +32,7 @@
 
 .progress-text {
   color: #6c757d;
-  font-size: var(--font-date-size);
+  font-size: 35rpx;
   font-weight: 500;
   min-width: 60rpx;
   text-align: right;
@@ -73,7 +73,7 @@
   align-items: center;
   justify-content: center;
   color: #6c757d;
-  font-size: var(--font-date-size);
+  font-size: 30rpx;
   font-weight: 600;
   transition: all 0.3s ease;
 }
@@ -90,7 +90,7 @@
 
 .step-title {
   color: #495057;
-  font-size: var(--font-small-size);
+  font-size: 22rpx;
   text-align: center;
   font-weight: 500;
 }
@@ -114,7 +114,7 @@
 
 .question-title {
   display: block;
-  font-size: var(--font-title-size);
+  font-size: 40rpx;
   font-weight: 600;
   color: #212529;
   margin-bottom: 16rpx;
@@ -123,7 +123,7 @@
 
 .question-subtitle {
   display: block;
-  font-size: var(--font-subtitle-size);
+  font-size: 35rpx;
   color: #6c757d;
   line-height: 1.6;
 }
@@ -163,14 +163,14 @@
 }
 
 .option-text {
-  font-size: var(--font-subtitle-size);
+  font-size: 40rpx;
   font-weight: 500;
   line-height: 1.4;
   color: #212529;
 }
 
 .option-desc {
-  font-size: var(--font-date-size);
+  font-size: 35rpx;
   color: #6c757d;
   line-height: 1.4;
 }
@@ -188,7 +188,7 @@
 
 .scale-min-text,
 .scale-max-text {
-  font-size: var(--font-date-size);
+  font-size: 35rpx;
   color: #6c757d;
   font-weight: 500;
 }
@@ -201,7 +201,7 @@
 .scale-desc {
   display: block;
   text-align: center;
-  font-size: var(--font-date-size);
+  font-size: 35rpx;
   color: #6c757d;
   margin-top: 20rpx;
 }
@@ -233,13 +233,13 @@
 .mood-icon {
   width: 60rpx;
   height: 60rpx;
-  margin-bottom: 10rpx;
-  font-size: var(--font-icon-size);
+  margin-bottom: 30rpx;
+  font-size: 50rpx;
   text-align: center;
 }
 
 .mood-text {
-  font-size: var(--font-date-size);
+  font-size: 35rpx;
   color: #495057;
   text-align: center;
 }
@@ -254,7 +254,7 @@
   background: #f8f9fa;
   border-radius: 8rpx;
   border: 2rpx solid #e9ecef;
-  font-size: var(--font-subtitle-size);
+  font-size: 35rpx;
 }
 
 /* 复选框样式 */
@@ -285,19 +285,21 @@
 }
 
 .checkbox-text {
-  font-size: var(--font-subtitle-size);
+  font-size: 35rpx;
   color: #212529;
 }
 
 /* 文本输入样式 */
 .text-input {
-  width: 100%;
+  width: auto;
   padding: 24rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
   border: 2rpx solid #e9ecef;
-  font-size: var(--font-subtitle-size);
+  font-size: 35rpx;
+  min-height: 400rpx;
   color: #212529;
+  text-align: start;
 }
 
 .text-input:focus {
@@ -325,9 +327,9 @@
 
 .btn {
   flex: 1;
-  padding: 24rpx 0;
+  padding: 18rpx 0;
   border-radius: 12rpx;
-  font-size: var(--font-subtitle-size);
+  font-size: 40rpx;
   font-weight: 600;
   text-align: center;
   transition: all 0.3s ease;
@@ -397,19 +399,19 @@
   margin-bottom: 20rpx;
 }
 .success-title {
-  font-size: var(--font-title-size);
+  font-size: 42rpx;
   font-weight: 700;
   color: #007aff;
   margin-bottom: 8rpx;
 }
 .success-desc {
-  font-size: var(--font-subtitle-size);
+  font-size: 35rpx;
   color: #495057;
   margin-bottom: 40rpx;
 }
 .submit-success .btn.btn-primary {
   width: 80%;
   margin: 0 auto;
-  font-size: var(--font-button-size);
+  font-size: 37rpx;
   border-radius: 12rpx;
 }

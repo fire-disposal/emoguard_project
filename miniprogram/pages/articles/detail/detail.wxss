@@ -1,39 +1,74 @@
 /* pages/articles/detail/detail.wxss */
 .article-detail-container {
   min-height: 100vh;
+  /* 确保背景为白色，提供最高对比度 */
   background: #fff;
 }
 
 .article-detail {
-  padding: 32rpx;
+  /* 增加整体内边距，提供更多留白 */
+  padding: 40rpx;
 }
 
 .article-header {
-  margin-bottom: 32rpx;
+  /* 增加标题下方的间距 */
+  margin-bottom: 40rpx;
+  /* 可选：添加底部分割线，视觉上区分标题和正文 */
+  border-bottom: 1rpx solid #eee;
+  padding-bottom: 30rpx;
 }
 
 .article-title {
   display: block;
-  font-size: 40rpx;
+  /* 核心优化：标题字号增大 */
+  font-size: 56rpx; 
   font-weight: 700;
-  color: #333;
-  line-height: 1.5;
-  margin-bottom: 16rpx;
+  /* 核心优化：使用更深的颜色，提高对比度 */
+  color: #222; 
+  /* 增加行高 */
+  line-height: 1.3;
+  margin-bottom: 20rpx;
 }
 
 .article-time {
   display: block;
-  font-size: 24rpx;
-  color: #999;
+  /* 核心优化：时间字号增大 */
+  font-size: 32rpx; 
+  color: #666;
 }
 
 .article-content {
-  font-size: 30rpx;
-  line-height: 1.8;
+  /* 核心优化：正文字号增大至 36rpx 或以上 */
+  font-size: 38rpx; 
+  /* 核心优化：大幅增加行高，提升阅读舒适度 */
+  line-height: 1.8; 
+  /* 核心优化：使用高对比度的深色 */
   color: #333;
-  margin-top: 32rpx;
+  margin-top: 0;
+  /* 增加字间距，让字符更清晰（可选）*/
+  /* letter-spacing: 0.05em; */ 
 }
 
 .article-content rich-text {
   width: 100%;
+}
+
+/* 状态提示样式优化 */
+.loading-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+.loading-text, .empty-text {
+  font-size: 36rpx; 
+  color: #666;
+  margin-top: 20rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx; 
+  margin-bottom: 10rpx;
 }

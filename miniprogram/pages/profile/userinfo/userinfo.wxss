@@ -29,24 +29,22 @@
 }
 .user-nickname {
   display: block;
-  font-size: 36rpx;
+  font-size: 45rpx;
   font-weight: 700;
   color: #333;
-  margin-bottom: 8rpx;
 }
 .profile-section {
   background: #fff;
   border-radius: 16rpx;
   box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.06);
   padding: 0 0 8rpx 0;
-  margin-bottom: 24rpx;
 }
 .info-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 32rpx 24rpx;
-  font-size: 32rpx;
+  font-size: 40rpx;
   color: #333;
   border-bottom: 1rpx solid #f5f5f5;
 }
@@ -63,7 +61,6 @@
   color: #333;
 }
 .btn-group {
-  margin-top: 40rpx;
   text-align: center;
 }
 .edit-btn {
@@ -84,7 +81,6 @@
 }
 
 .edit-form {
-  background: #fff;
   border-radius: 16rpx;
   box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.06);
   padding: 40rpx;
@@ -101,7 +97,7 @@
 
 .label {
   display: block;
-  font-size: 32rpx;
+  font-size: 35rpx;
   color: #333;
   margin-bottom: 16rpx;
   font-weight: 500;
@@ -115,10 +111,10 @@
 .input {
   width: 100%;
   height: 88rpx;
-  border: 2rpx solid #e0e0e0;
+  border: 2rpx solid #161616;
   border-radius: 12rpx;
   padding: 0 24rpx;
-  font-size: 30rpx;
+  font-size: 35rpx;
   box-sizing: border-box;
   transition: border-color 0.3s;
 }
@@ -130,8 +126,8 @@
 .picker {
   width: 100%;
   height: 88rpx;
-  border: 2rpx solid #e0e0e0;
   border-radius: 12rpx;
+  border: 2rpx solid #161616;
   padding: 0 24rpx;
   font-size: 30rpx;
   line-height: 88rpx;
@@ -151,7 +147,7 @@
 }
 
 .arrow {
-  color: #999;
+  color: #292727;
   font-size: 24rpx;
 }
 

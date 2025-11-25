@@ -1,24 +1,18 @@
-<!--pages/articles/detail/detail.wxml-->
 <view class="article-detail-container">
   <view wx:if="{{loading}}" class="loading-state">
     <text class="loading-text">加载中...</text>
   </view>
 
   <view wx:elif="{{article}}" class="article-detail">
-    <!-- 文章标题 -->
     <view class="article-header">
       <text class="article-title">{{article.title}}</text>
-      <text class="article-time">发布于 {{formatTime(article.created_at)}}</text>
-    </view>
+      </view>
 
-    <!-- 文章内容 -->
     <view class="article-content">
       <rich-text nodes="{{article.content}}"></rich-text>
     </view>
   </view>
 
   <view wx:else class="empty-state">
-    <text class="empty-icon">📄</text>
-    <text class="empty-text">文章不存在</text>
-  </view>
+    <text class="empty-icon">❌</text> <text class="empty-text">文章不存在或已删除</text> </view>
 </view>

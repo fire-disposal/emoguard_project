@@ -15,7 +15,7 @@
 }
 
 .header-title {
-  font-size: 36rpx;
+  font-size: 48rpx;
   font-weight: 600;
   color: #333;
   line-height: 1.4;
@@ -38,7 +38,7 @@
 
 .progress-text {
   text-align: right;
-  font-size: 24rpx;
+  font-size: 35rpx;
   color: #666;
   margin-bottom: 32rpx;
 }
@@ -48,15 +48,16 @@
 }
 
 .question-number {
-  font-size: 24rpx;
+  font-size: 32rpx;
   color: #1890ff;
+  font-weight: 600;
   margin-bottom: 16rpx;
 }
 
 .question-text {
   display: block;
-  font-size: 32rpx;
-  font-weight: 600;
+  font-size: 40rpx;
+  font-weight: 660;
   color: #333;
   line-height: 1.6;
   margin-bottom: 32rpx;
@@ -108,7 +109,8 @@
 
 .option-text {
   flex: 1;
-  font-size: 28rpx;
+  font-size: 40rpx;
+  font-weight: 540;
   color: #333;
   line-height: 1.5;
 }
@@ -125,7 +127,7 @@
   justify-content: center;
   padding: 28rpx;
   border-radius: 16rpx;
-  font-size: 32rpx;
+  font-size: 40rpx;
   font-weight: 600;
   transition: all 0.3s;
 }
@@ -156,7 +158,7 @@
 }
 
 .empty-text {
-  font-size: 28rpx;
+  font-size: 45rpx;
   color: #999;
   line-height: 1.6;
 }

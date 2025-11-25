@@ -1,26 +1,17 @@
-<!--pages/login/login.wxml-->
+<!-- pages/login/login.wxml -->
 <view class="login-container">
-  <!-- Logo 区域 -->
-  <view class="logo-section">
-    <text class="app-name">智情守护</text>
-    <text class="app-desc">守护您的认知健康 · 关注情绪变化</text>
-  </view>
-
+  
   <!-- 登录卡片 -->
   <view class="login-card">
-    <view class="card-header">
-      <text class="card-title">欢迎使用</text>
-      <text class="card-subtitle">{{redirectUrl ? '请先登录继续' : '请使用微信登录继续'}}</text>
-      <text wx:if="{{redirectUrl}}" class="redirect-hint">登录后将返回您之前访问的页面</text>
-    </view>
+    <view class="logo-section">
+    <text class="logo">🧠</text>
+    <text class="app-name">智情守护</text>
+    <text class="app-desc">关注情绪变化 守护认知健康</text>
+  </view>
 
     <view class="card-content">
       <!-- 微信登录按钮 -->
-      <button 
-        class="wechat-btn {{loading ? 'loading' : ''}}" 
-        disabled="{{loading}}"
-        bindtap="handleWechatLogin"
-       style="position: relative; left: -6rpx; top: -1rpx">
+      <button class="wechat-btn {{loading ? 'loading' : ''}}" disabled="{{loading}}" bindtap="handleWechatLogin" style="position: relative; left: -6rpx; top: -1rpx">
         <view wx:if="{{loading}}" class="btn-loading">
           <text class="loading-icon">⏳</text>
           <text class="loading-text">登录中...</text>
@@ -31,25 +22,18 @@
         </view>
       </button>
     </view>
-
     <view class="card-footer">
-      <view class="info-item">
-        <text class="info-icon">🔒</text>
-        <text class="info-text">您的隐私安全受到保护</text>
+      <view class="agreement-check">
+        <checkbox-group bindchange="onAgreementChange">
+          <label class="agreement-label">
+            <checkbox value="agree" checked="{{isAgree}}" />
+            <text class="agreement-text">我已阅读并同意</text>
+          </label>
+        </checkbox-group>
+        <text class="agreement-link" bindtap="openUserAgreement">《用户协议》</text>
+        <text class="agreement-text">和</text>
+        <text class="agreement-link" bindtap="openPrivacyPolicy">《隐私政策》</text>
       </view>
     </view>
-  </view>
-
-  <!-- 协议勾选框及文本 -->
-  <view class="agreement-check">
-    <checkbox-group bindchange="onAgreementChange">
-      <label class="agreement-label">
-        <checkbox value="agree" checked="{{isAgree}}"/>
-        <text class="agreement-text">我已阅读并同意</text>
-      </label>
-    </checkbox-group>
-    <text class="agreement-link" bindtap="openUserAgreement">《用户协议》</text>
-    <text class="agreement-text">和</text>
-    <text class="agreement-link" bindtap="openPrivacyPolicy">《隐私政策》</text>
   </view>
 </view>

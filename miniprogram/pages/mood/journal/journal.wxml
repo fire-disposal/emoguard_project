@@ -2,7 +2,9 @@
 <view class="mood-container gradient-bg">
   <!-- 心情记录模块 -->
   <view class="mood-record-section card">
-
+    <view class="history-header" bindtap="toggleHistory">
+      <text class="history-title">情绪记录</text>
+ </view>
     <!-- 题目1：主观情绪 -->
     <view class="question-block">
       <view class="question-header">
@@ -105,7 +107,7 @@
   <!-- 心情历史 -->
   <view class="mood-history-section card">
     <view class="history-header" bindtap="toggleHistory">
-      <text class="history-title">心情历史</text>
+      <text class="history-title">情绪历史</text>
       <text class="history-count">{{journals.length}}条记录</text>
       <text class="toggle-icon">{{showHistory ? '▲' : '▼'}}</text>
     </view>

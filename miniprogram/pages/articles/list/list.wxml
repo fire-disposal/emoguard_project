@@ -2,7 +2,6 @@
 <view class="articles-container gradient-bg">
   <view class="articles-header">
     <text class="header-title">健康科普</text>
-    <text class="header-subtitle">了解心理健康知识</text>
   </view>
 
   <view wx:if="{{loading && articles.length === 0}}" class="loading-state">

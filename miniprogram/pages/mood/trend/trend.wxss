@@ -6,27 +6,7 @@
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
 }
 
-/* 页面头部 */
-.page-header {
-  padding: 40rpx 30rpx 20rpx;
-  text-align: center;
-  background: #fff;
-  border-bottom: 1rpx solid #e9ecef;
-}
 
-.page-title {
-  display: block;
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #212529;
-  margin-bottom: 8rpx;
-}
-
-.page-subtitle {
-  display: block;
-  font-size: 26rpx;
-  color: #6c757d;
-}
 
 /* 控制面板 */
 .control-panel {
@@ -49,10 +29,10 @@
 
 .selector-label {
   display: block;
-  font-size: 28rpx;
+  font-size: 40rpx;
   font-weight: 600;
   color: #495057;
-  margin-bottom: 16rpx;
+  margin-bottom: 20rpx;
 }
 
 .range-buttons,
@@ -64,9 +44,9 @@
 
 .range-btn,
 .metric-btn {
-  padding: 12rpx 24rpx;
+
   border-radius: 8rpx;
-  font-size: 24rpx;
+  font-size: 35rpx;
   font-weight: 500;
   border: 2rpx solid #e9ecef;
   background: #fff;
@@ -169,7 +149,7 @@
 }
 
 .chart-title {
-  font-size: 28rpx;
+  font-size: 40rpx;
   font-weight: 600;
   color: #495057;
 }
@@ -183,9 +163,8 @@
   display: flex;
   align-items: center;
   gap: 8rpx;
-  padding: 12rpx 20rpx;
   border-radius: 8rpx;
-  font-size: 24rpx;
+  font-size: 35rpx;
   font-weight: 500;
   background: #f8f9fa;
   color: #495057;
@@ -214,49 +193,6 @@
   height: 100%;
 }
 
-/* 数据说明 */
-.data-info {
-  background: white;
-  border-radius: 20rpx;
-  margin: 0 0 32rpx 0;
-  padding: 32rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
-}
-
-.info-title {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 20rpx;
-}
-
-.info-items {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.info-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12rpx;
-}
-
-.info-label {
-  font-size: 24rpx;
-  font-weight: 600;
-  color: #495057;
-  min-width: 120rpx;
-}
-
-.info-value {
-  flex: 1;
-  font-size: 24rpx;
-  color: #6c757d;
-  line-height: 1.5;
-}
-
 /* 加载状态 */
 .loading-container {
   position: fixed;
@@ -280,7 +216,7 @@
 }
 
 .loading-text {
-  font-size: 26rpx;
+  font-size: 35rpx;
   color: #6c757d;
   font-weight: 500;
 }
@@ -341,13 +277,13 @@
 }
 
 .history-title {
-  font-size: 32rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: #212529;
 }
 
 .history-count {
-  font-size: 24rpx;
+  font-size: 35rpx;
   color: #6c757d;
   font-weight: 500;
 }
@@ -372,7 +308,7 @@
 }
 
 .record-date {
-  font-size: 28rpx;
+  font-size: 35rpx;
   font-weight: 600;
   color: #495057;
   margin-bottom: 16rpx;
@@ -395,14 +331,14 @@
 }
 
 .score-label {
-  font-size: 22rpx;
+  font-size: 35rpx;
   color: #6c757d;
   margin-bottom: 8rpx;
   font-weight: 500;
 }
 
 .score-value {
-  font-size: 32rpx;
+  font-size: 35rpx;
   font-weight: 700;
   border-radius: 50%;
   width: 60rpx;
@@ -442,7 +378,7 @@
 }
 
 .placeholder-text {
-  font-size: 28rpx;
+  font-size: 35rpx;
   color: #6c757d;
   font-weight: 500;
 }

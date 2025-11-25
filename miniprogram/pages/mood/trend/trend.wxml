@@ -25,10 +25,6 @@
           <text class="icon">↻</text>
           刷新
         </button>
-        <button class="action-btn" bindtap="showAdvice">
-          <text class="icon">💡</text>
-          建议
-        </button>
       </view>
     </view>
     
