@@ -18,7 +18,8 @@ scales_router = Router(tags=["scales"])
 
 class ScaleResultViewHelper:
     """量表结果视图辅助类 - 处理数据转换和格式化"""
-    
+
+
     @staticmethod
     def format_scale_config_data(scale_config) -> Optional[Dict[str, Any]]:
         """格式化量表配置数据"""
@@ -168,3 +169,34 @@ def get_single_result(request, result_id: int):
     except Exception as e:
         logger.error(f"获取单量表结果失败: {str(e)}")
         return {"error": f"获取结果失败: {str(e)}"}
+
+@scales_router.get("/results/history", auth=jwt_auth, response=List[ScaleResultResponseSchema])
+def get_user_results_history(request):
+    """
+    获取当前用户的所有量表历史结果（仅返回自己的，按创建时间倒序，字段精简）
+    """
+    user_id = str(request.user.id)
+    # 获取所有结果，不限制数量
+    results = ScaleResultService.get_user_scale_results(user_id, limit=1000)
+    # 格式化为响应结构
+    response = []
+    for result in results:
+        # 只保留指定字段
+        response.append(
+            ScaleResultResponseSchema(
+                id=result.id,
+                scale_config=result.scale_config,
+                selected_options=result.selected_options,
+                conclusion=result.conclusion,
+                duration_ms=result.duration_ms,
+                started_at=result.started_at.isoformat() if result.started_at else "",
+                completed_at=result.completed_at.isoformat() if result.completed_at else "",
+                status=result.status,
+                analysis=result.analysis,
+                created_at=result.created_at.isoformat() if hasattr(result, "created_at") else "",
+            )
+        )
+    # 按创建时间倒序（数据库已排序，保险起见再排序一次）
+    response.sort(key=lambda x: x.created_at, reverse=True)
+    return response
+    

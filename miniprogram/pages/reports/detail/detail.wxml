@@ -5,6 +5,25 @@
   </view>
 
   <view wx:elif="{{report}}" class="report-detail">
+    <!-- 历史记录类型切换区 -->
+    <view class="history-switch">
+      <view class="switch-btn {{historyType === 'flow' ? 'active' : ''}}" bindtap="onSwitchType" data-type="flow">测评流程</view>
+      <view class="switch-btn {{historyType === 'scale' ? 'active' : ''}}" bindtap="onSwitchType" data-type="scale">单量表</view>
+    </view>
+    <!-- 历史记录列表 -->
+    <view class="history-list card">
+      <view wx:for="{{historyList}}" wx:key="id" class="history-item">
+        <view class="history-main">
+          <text class="history-type">{{item.type === 'flow' ? '流程' : '量表'}}</text>
+          <text class="history-name">{{item.name}}</text>
+        </view>
+        <view class="history-info">
+          <text class="history-date">{{item.date}}</text>
+          <text class="history-score">分数：{{item.score}}</text>
+        </view>
+      </view>
+      <view wx:if="{{historyList.length === 0}}" class="empty-history">暂无历史记录</view>
+    </view>
     <!-- 报告标题 -->
     <view class="report-header card">
       <view class="header-top">

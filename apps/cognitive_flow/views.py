@@ -1,24 +1,31 @@
+from typing import List
 from ninja import Router
 from apps.cognitive_flow.models import CognitiveAssessmentRecord
 from apps.cognitive_flow.serializers import (
-    CognitiveAssessmentSubmitSchema, CognitiveAssessmentResultSchema
+    CognitiveAssessmentSubmitSchema,
+    CognitiveAssessmentResultSchema,
 )
 import logging
 from config.jwt_auth_adapter import jwt_auth
 
 cognitive_router = Router(tags=["cognitive_flow"])
 
-@cognitive_router.post("/submit", response=CognitiveAssessmentResultSchema, auth=jwt_auth)
+
+@cognitive_router.post(
+    "/submit", response=CognitiveAssessmentResultSchema, auth=jwt_auth
+)
 def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
     logger = logging.getLogger("cognitive_flow.submit")
     try:
         from django.utils.dateparse import parse_datetime
+
         # 兼容ISO字符串与datetime对象
         def parse_iso(dt):
             if isinstance(dt, str):
                 val = parse_datetime(dt)
                 if val is None:
                     from datetime import datetime
+
                     try:
                         val = datetime.fromisoformat(dt)
                     except Exception:
@@ -43,12 +50,15 @@ def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
             score_adl=getattr(data, "score_adl", None),
             analysis=getattr(data, "analysis", {}) or {},
             started_at=parse_iso(getattr(data, "started_at", None)),
-            completed_at=parse_iso(getattr(data, "completed_at", None))
+            completed_at=parse_iso(getattr(data, "completed_at", None)),
         )
         # 更新用户认知评估完成状态
         try:
             from apps.users.models import User
-            User.objects.filter(id=current_user.id).update(has_completed_cognitive_assessment=True)
+
+            User.objects.filter(id=current_user.id).update(
+                has_completed_cognitive_assessment=True
+            )
         except Exception as update_exc:
             logger.error(f"更新用户认知评估完成状态失败: {update_exc}", exc_info=True)
         logger.info(f"创建测评记录成功: id={record.id}")
@@ -63,19 +73,60 @@ def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
             score_adl=record.score_adl,
             analysis=record.analysis,
             started_at=record.started_at.isoformat() if record.started_at else None,
-            completed_at=record.completed_at.isoformat() if record.completed_at else None,
+            completed_at=record.completed_at.isoformat()
+            if record.completed_at
+            else None,
             created_at=record.created_at.isoformat(),
-            updated_at=record.updated_at.isoformat()
+            updated_at=record.updated_at.isoformat(),
         )
     except Exception as e:
         logger.error(f"认知测评提交异常: {e}", exc_info=True)
         raise
 
-@cognitive_router.get("/result/{record_id}", response=CognitiveAssessmentResultSchema, auth=jwt_auth)
+
+@cognitive_router.get(
+    "/history", response=List[CognitiveAssessmentResultSchema], auth=jwt_auth
+)
+def get_assessment_history(request):
+    """
+    获取当前用户的认知测评历史记录（仅返回自己的记录，按创建时间倒序，字段精简）
+    """
+    current_user = request.auth
+    records = CognitiveAssessmentRecord.objects.filter(
+        user_id=current_user.id
+    ).order_by("-created_at")
+    result = []
+    for record in records:
+        result.append(
+            CognitiveAssessmentResultSchema(
+                id=record.id,
+                user_id=str(record.user_id),
+                score_scd=record.score_scd,
+                score_mmse=record.score_mmse,
+                score_moca=record.score_moca,
+                score_gad7=record.score_gad7,
+                score_phq9=record.score_phq9,
+                score_adl=record.score_adl,
+                analysis={},  # 字段精简，analysis留空
+                started_at=record.started_at.isoformat() if record.started_at else None,
+                completed_at=record.completed_at.isoformat()
+                if record.completed_at
+                else None,
+                created_at=record.created_at.isoformat(),
+            )
+        )
+    return result
+
+
+@cognitive_router.get(
+    "/result/{record_id}", response=CognitiveAssessmentResultSchema, auth=jwt_auth
+)
 def get_assessment_result(request, record_id: int):
     try:
         current_user = request.auth
-        record = CognitiveAssessmentRecord.objects.get(id=record_id, user_id=current_user.id)
+        record = CognitiveAssessmentRecord.objects.get(
+            id=record_id, user_id=current_user.id
+        )
         return CognitiveAssessmentResultSchema(
             id=record.id,
             user_id=str(record.user_id),
@@ -87,13 +138,17 @@ def get_assessment_result(request, record_id: int):
             score_adl=record.score_adl,
             analysis=record.analysis,
             started_at=record.started_at.isoformat() if record.started_at else None,
-            completed_at=record.completed_at.isoformat() if record.completed_at else None,
+            completed_at=record.completed_at.isoformat()
+            if record.completed_at
+            else None,
             created_at=record.created_at.isoformat(),
-            updated_at=record.updated_at.isoformat()
+            updated_at=record.updated_at.isoformat(),
         )
     except CognitiveAssessmentRecord.DoesNotExist:
         logger = logging.getLogger("cognitive_flow.result")
-        logger.error(f"记录不存在或无权访问: record_id={record_id}, user_id={current_user.id}")
+        logger.error(
+            f"记录不存在或无权访问: record_id={record_id}, user_id={current_user.id}"
+        )
         raise
     except Exception as e:
         logger = logging.getLogger("cognitive_flow.result")
