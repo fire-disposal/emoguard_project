@@ -101,7 +101,7 @@ async function refreshToken() {
       if (!refresh) throw new Error('no refresh token');
       const { request } = require('./request');
       const res = await request({
-        url: '/api/token/refresh',
+        url: '/api/token/refresh/',
         method: 'POST',
         data: { refresh },
         skipAuth: true

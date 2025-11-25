@@ -61,3 +61,24 @@ admin_login_rate_limit = rate_limit(
     max_requests=getattr(settings, 'ADMIN_LOGIN_RATE_LIMIT_COUNT', 5),
     window_seconds=getattr(settings, 'ADMIN_LOGIN_RATE_LIMIT_WINDOW', 60)
 )
+refresh_token_rate_limit = rate_limit(
+    key_prefix='refresh_token',
+    max_requests=getattr(settings, 'REFRESH_TOKEN_RATE_LIMIT_COUNT', 10),
+    window_seconds=getattr(settings, 'REFRESH_TOKEN_RATE_LIMIT_WINDOW', 60)
+)
+class RefreshTokenRateLimitMiddleware:
+    """
+    针对 /api/token/refresh/ 的限流中间件
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path == "/api/token/refresh/":
+            # 直接调用装饰器内部逻辑
+            try:
+                refresh_token_rate_limit(lambda req: None)(request)
+            except Exception:
+                from django.http import JsonResponse
+                return JsonResponse({"detail": "请求过于频繁，请稍后重试"}, status=429)
+        return self.get_response(request)

@@ -83,6 +83,7 @@ INSTALLED_APPS = [
 # 中间件
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "apps.users.rate_limit.RefreshTokenRateLimitMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
