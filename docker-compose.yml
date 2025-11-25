@@ -147,8 +147,7 @@ services:
   # 6. Nginx Reverse Proxy (New Edge Service)
   # ----------------------------------------------------
   nginx:
-    build:
-      context: ./nginx_build
+    image: __NGINX__
     container_name: emoguard-nginx
     restart: unless-stopped
     depends_on:

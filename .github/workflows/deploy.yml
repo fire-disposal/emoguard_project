@@ -10,6 +10,7 @@ on:
 
 env:
   IMAGE_BASE: ghcr.io/${{ github.repository }}/emoguard-backend
+  NGINX_IMAGE_BASE: ghcr.io/${{ github.repository }}/emoguard-nginx
 
 jobs:
   deploy:
@@ -54,6 +55,27 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Get Nginx Version Tag
+        id: nginx_ver
+        run: |
+          set -euo pipefail
+          TAG_SHORT=$(echo "${GITHUB_SHA:0:8}")
+          TAG_FINAL="${TAG_SHORT:-latest}"
+          echo "IMAGE=${{ env.NGINX_IMAGE_BASE }}:$TAG_FINAL" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG_FINAL" >> $GITHUB_OUTPUT
+
+      - name: Build & Push Nginx Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx_build
+          file: ./nginx_build/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.nginx_ver.outputs.IMAGE }}
+            ${{ env.NGINX_IMAGE_BASE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Setup SSH Key
         run: |
           set -euo pipefail
@@ -66,7 +88,7 @@ jobs:
         run: |
           set -euo pipefail
           
-          sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g" \
+          sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g; s|__NGINX__|${{ steps.nginx_ver.outputs.IMAGE }}|g" \
             docker-compose.yml > docker-compose.rendered.yml
 
           cat > .env <<EOF

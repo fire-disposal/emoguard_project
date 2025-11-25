@@ -10,3 +10,9 @@ services:
   celery-beat:
     build: .
     image: emoguard-backend:local
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx_build\Dockerfile
+    image: emoguard-nginx:local
