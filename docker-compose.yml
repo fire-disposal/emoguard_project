@@ -1,4 +1,7 @@
 services:
+  # ----------------------------------------------------
+  # 1. Django Backend Service (backend)
+  # ----------------------------------------------------
   backend:
     image: __IMAGE__
     container_name: emoguard-backend
@@ -8,8 +11,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    ports:
-      - "8000:8000"
     environment:
       # Django Secrets and environment variables
       SECRET_KEY: ${SECRET_KEY}
@@ -141,6 +142,27 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+      
+  # ----------------------------------------------------
+  # 6. Nginx Reverse Proxy (New Edge Service)
+  # ----------------------------------------------------
+  nginx:
+    image: nginx:stable-alpine
+    container_name: emoguard-nginx
+    restart: unless-stopped
+    # 🌟 确保只有在 backend 容器健康时才启动 Nginx 🌟
+    depends_on:
+      backend:
+        condition: service_healthy 
+    ports:
+      - "8080:80" 
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # 🌟 挂载媒体卷和静态文件卷，以便 Nginx 直接提供服务 🌟
+      - media_data:/app/media:ro 
+      - staticfiles_data:/app/staticfiles:ro
+    networks:
+      - emoguard-net
 
 # ----------------------------------------------------
 # Named Volumes and Network Configuration
