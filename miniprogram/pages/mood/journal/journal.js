@@ -59,6 +59,7 @@ Page({
     moodIntensity: 0,
     moodSupplementTags: {},
     moodSupplementText: "",
+    supplementMoodList: [],
     
     // 页面状态
     submitting: false,
@@ -182,6 +183,18 @@ Page({
     });
   },
 
+  // 处理补充情绪多选
+  handleSupplementMoodSelect(e) {
+    const value = e.currentTarget.dataset.value;
+    let list = this.data.supplementMoodList || [];
+    if (list.includes(value)) {
+      list = list.filter(v => v !== value);
+    } else {
+      list = [...list, value];
+    }
+    this.setData({ supplementMoodList: list });
+  },
+
   // 获取选项选中状态
   getOptionSelected(questionIndex, optionValue) {
     const question = this.data.questions[questionIndex];
@@ -238,7 +251,8 @@ Page({
       moodIntensity: this.data.moodIntensity,
       mainMoodOther: this.data.mainMoodOther,
       moodSupplementTags: moodSupplementTagsText,
-      moodSupplementText: this.data.moodSupplementText.trim()
+      moodSupplementText: this.data.moodSupplementText.trim(),
+      supplementMoodList: this.data.supplementMoodList || []
     };
 
     journalApi.createJournal(submitData)

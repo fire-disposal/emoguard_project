@@ -90,7 +90,7 @@ Page({
     }
 
     // 判断测评开放时间
-    const isMorningOpen = hours >= 8 && hours < 10; 
+    const isMorningOpen = hours >= 8 && hours < 10;
     const isEveningOpen = hours >= 20 && hours < 22;
 
     this.setData({
@@ -142,22 +142,37 @@ Page({
   /**
    * 跳转到测评页面
    */
-  goToAssessment() {
+  goToAssessment(e) {
+    wx.vibrateShort();
+
     wx.navigateTo({ url: '/pages/assessment/select/select' });
   },
 
   /**
    * 跳转到文章列表
    */
-  goToArticles() {
+  goToArticles(e) {
+    wx.vibrateShort();
+
     wx.navigateTo({ url: '/pages/articles/list/list' });
   },
 
   /**
    * 跳转到健康报告
    */
-  goToReports() {
+  goToReports(e) {
+    wx.vibrateShort();
+
     wx.navigateTo({ url: '/pages/reports/list/list' });
+  },
+
+  /**
+   * 跳转到训练模式
+   */
+  goToTrainTest(e) {
+    wx.vibrateShort();
+
+    wx.navigateTo({ url: '/pages/mood/trainTest/trainTest' });
   },
 
   /**
@@ -168,11 +183,11 @@ Page({
   getEmotionTestStatus(period) {
     const isFilled = (period === 'morning' && this.data.morningFilled) ||
       (period === 'evening' && this.data.eveningFilled);
-    
+
     if (isFilled) {
       return 'completed';
     }
-    
+
     const isOpen = period === 'morning' ? this.data.isMorningOpen : this.data.isEveningOpen;
     return isOpen ? 'pending' : 'unopened';
   },
@@ -182,6 +197,8 @@ Page({
    * @param {Object} e - 事件对象，dataset.period 可用于指定早间/晚间
    */
   goToEmotionTest(e) {
+    wx.vibrateShort();
+
     const period = e?.currentTarget?.dataset?.period || this.data.currentPeriod;
     const now = new Date();
     const hours = now.getHours();
@@ -244,10 +261,14 @@ Page({
     }
   },
 
+
+
   /**
    * 开始认知评估流程 - 直接跳转到智能测评
    */
-  startCognitiveFlow() {
+  startCognitiveFlow(e) {
+    wx.vibrateShort();
+
     wx.navigateTo({
       url: '/pages/assessment/flow/flow'
     });
@@ -260,5 +281,6 @@ Page({
     this.setData({
       showCognitiveGuide: false
     });
-  }
+  },
+
 });

@@ -73,23 +73,26 @@
       </view>
     </view>
 
-    <!-- 题目4：补充说明 -->
+    <!-- 题目4：补充说明（多选情绪） -->
     <view class="question-block">
       <view class="question-header">
         <text class="question-title">补充说明</text>
-        <text class="question-subtitle">请简短写下导致此情绪的事情</text>
+        <text class="question-subtitle">请选择补充情绪（可多选）</text>
       </view>
       <view class="question-content">
-        <textarea 
-          class="text-input"
-          placeholder="{{questions[3].placeholder}}"
-          value="{{moodSupplementText}}"
-          data-key="moodSupplementText"
-          bindinput="handleTextChange"
-          maxlength="200"
-          auto-height
-        />
-        <text class="text-count">{{moodSupplementText.length}}/200</text>
+        <view class="mood-options">
+          <view
+            wx:for="{{questions[3].options}}"
+            wx:key="value"
+            class="mood-option {{supplementMoodList && supplementMoodList.includes(item.value) ? 'selected' : ''}}"
+            bindtap="handleSupplementMoodSelect"
+            data-value="{{item.value}}"
+          >
+            <view class="mood-emoji">{{item.emoji}}</view>
+            <text class="mood-text">{{item.text}}</text>
+          </view>
+        </view>
+        <text class="text-count">已选：{{supplementMoodList.length}}项</text>
       </view>
     </view>
 

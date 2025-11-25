@@ -1,0 +1,415 @@
+/* 情绪四维度记录页面样式 - 简洁高可读性设计 */
+.page {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 0;
+}
+
+/* 进度条容器 */
+.progress-container {
+  background: #fff;
+  padding: 20rpx 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  border-bottom: 1rpx solid #e9ecef;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8rpx;
+  background: #e9ecef;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #007aff;
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  color: #6c757d;
+  font-size: var(--font-date-size);
+  font-weight: 500;
+  min-width: 60rpx;
+  text-align: right;
+}
+
+/* 步骤指示器 */
+.step-indicators {
+  display: flex;
+  justify-content: space-around;
+  padding: 30rpx 20rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #e9ecef;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.step-item.active {
+  opacity: 1;
+}
+
+.step-item.completed {
+  opacity: 0.8;
+}
+
+.step-circle {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  font-size: var(--font-date-size);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.step-item.active .step-circle {
+  background: #007aff;
+  color: #fff;
+}
+
+.step-item.completed .step-circle {
+  background: #28a745;
+  color: #fff;
+}
+
+.step-title {
+  color: #495057;
+  font-size: var(--font-small-size);
+  text-align: center;
+  font-weight: 500;
+}
+
+/* 内容区域 */
+.content-area {
+  flex: 1;
+  padding: 40rpx 30rpx;
+}
+
+.question-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.question-header {
+  margin-bottom: 32rpx;
+}
+
+.question-title {
+  display: block;
+  font-size: var(--font-title-size);
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 16rpx;
+  line-height: 1.4;
+}
+
+.question-subtitle {
+  display: block;
+  font-size: var(--font-subtitle-size);
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+/* 单选题样式 */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s ease;
+}
+
+.radio-option.selected {
+  background: #e7f3ff;
+  border-color: #007aff;
+}
+
+.radio-option .wx-radio {
+  margin-right: 20rpx;
+  transform: scale(1.2);
+}
+
+.option-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.option-text {
+  font-size: var(--font-subtitle-size);
+  font-weight: 500;
+  line-height: 1.4;
+  color: #212529;
+}
+
+.option-desc {
+  font-size: var(--font-date-size);
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+/* 滑块题样式 */
+.scale-container {
+  padding: 20rpx 0;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.scale-min-text,
+.scale-max-text {
+  font-size: var(--font-date-size);
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.scale-slider {
+  width: 100%;
+  margin: 30rpx 0;
+}
+
+.scale-desc {
+  display: block;
+  text-align: center;
+  font-size: var(--font-date-size);
+  color: #6c757d;
+  margin-top: 20rpx;
+}
+
+/* 情绪选择样式 */
+.mood-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+  margin: 30rpx 0;
+}
+
+.mood-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30rpx 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s ease;
+}
+
+.mood-option.selected {
+  background: #e7f3ff;
+  border-color: #007aff;
+}
+
+.mood-icon {
+  width: 60rpx;
+  height: 60rpx;
+  margin-bottom: 10rpx;
+  font-size: var(--font-icon-size);
+  text-align: center;
+}
+
+.mood-text {
+  font-size: var(--font-date-size);
+  color: #495057;
+  text-align: center;
+}
+
+.other-mood-input {
+  margin-top: 20rpx;
+}
+
+.other-mood-input input {
+  width: 100%;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 8rpx;
+  border: 2rpx solid #e9ecef;
+  font-size: var(--font-subtitle-size);
+}
+
+/* 复选框样式 */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s ease;
+}
+
+.checkbox-option.selected {
+  background: #e7f3ff;
+  border-color: #007aff;
+}
+
+.checkbox-option .wx-checkbox {
+  margin-right: 20rpx;
+  transform: scale(1.2);
+}
+
+.checkbox-text {
+  font-size: var(--font-subtitle-size);
+  color: #212529;
+}
+
+/* 文本输入样式 */
+.text-input {
+  width: 100%;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 2rpx solid #e9ecef;
+  font-size: var(--font-subtitle-size);
+  color: #212529;
+}
+
+.text-input:focus {
+  border-color: #007aff;
+  background: #fff;
+}
+
+/* 情绪图标样式 */
+.mood-icon.smile::before { content: '😊'; }
+.mood-icon.calm::before { content: '😌'; }
+.mood-icon.cry::before { content: '😢'; }
+.mood-icon.nervous::before { content: '😰'; }
+.mood-icon.angry::before { content: '😠'; }
+.mood-icon.tired::before { content: '😴'; }
+.mood-icon.other::before { content: '❓'; }
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+  padding: 30rpx;
+  background: #fff;
+  border-top: 1rpx solid #e9ecef;
+}
+
+.btn {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 12rpx;
+  font-size: var(--font-subtitle-size);
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+}
+
+.btn-primary {
+  background: #007aff;
+  color: #fff;
+}
+
+.btn-primary:active {
+  opacity: 0.8;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: #fff;
+}
+
+.btn-secondary:active {
+  opacity: 0.8;
+}
+
+.btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 响应式设计 */
+@media (max-height: 800rpx) {
+  .content-area {
+    padding: 20rpx 30rpx;
+  }
+  
+  .question-card {
+    padding: 30rpx;
+  }
+  
+  .radio-option {
+    padding: 20rpx;
+  }
+}
+/* 提交成功卡片美化 */
+.submit-success.question-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 60rpx auto 0;
+  max-width: 600rpx;
+  text-align: center;
+  box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 48rpx 32rpx 40rpx 32rpx;
+}
+.success-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background: #e7f3ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20rpx;
+}
+.success-title {
+  font-size: var(--font-title-size);
+  font-weight: 700;
+  color: #007aff;
+  margin-bottom: 8rpx;
+}
+.success-desc {
+  font-size: var(--font-subtitle-size);
+  color: #495057;
+  margin-bottom: 40rpx;
+}
+.submit-success .btn.btn-primary {
+  width: 80%;
+  margin: 0 auto;
+  font-size: var(--font-button-size);
+  border-radius: 12rpx;
+}

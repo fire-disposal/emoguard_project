@@ -6,6 +6,7 @@
     "pages/agreement/privacy-policy/privacy-policy",
     "pages/mood/journal/journal",
     "pages/mood/moodtest/moodtest",
+    "pages/mood/trainTest/trainTest",
     "pages/mood/trend/trend",
     "pages/articles/list/list",
     "pages/articles/detail/detail",
