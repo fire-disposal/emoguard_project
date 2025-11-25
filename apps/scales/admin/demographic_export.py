@@ -117,6 +117,9 @@ def build_excel_with_demographics(queryset, get_user_id, extra_field_order, extr
         extra_fields['record'] = record
         data_row = build_row_with_demographics(user_info, extra_fields, extra_field_order)
         for col, value in enumerate(data_row, 1):
+            import uuid
+            if isinstance(value, uuid.UUID):
+                value = str(value)
             if isinstance(value, datetime) and getattr(value, "tzinfo", None) is not None:
                 value = value.replace(tzinfo=None)
             ws.cell(row=row, column=col, value=value)
@@ -173,7 +176,9 @@ def build_csv_with_demographics(queryset, get_user_id, extra_field_order, extra_
     for record in queryset:
         user_info = get_demographic_info(get_user_id(record))
         extra_fields = {k: getattr(record, k, "") for k in extra_field_order}
+        import uuid
         row = build_row_with_demographics(user_info, extra_fields, extra_field_order)
+        row = [str(v) if isinstance(v, uuid.UUID) else v for v in row]
         writer.writerow(row)
 
     return response
