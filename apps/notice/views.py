@@ -29,5 +29,9 @@ def sync_subscribe(request, data: SubscribeSyncSchema):
         )
         quota.count = F('count') + 1
         quota.save()
+        quota.refresh_from_db()
+        import logging
+        logger = logging.getLogger("notice.views")
+        logger.info(f"用户 {request.user.username} 模板 {template_id} 订阅额度变更: 当前额度 {quota.count}")
         return SubscribeSyncResponseSchema(status="success", msg="订阅次数已增加")
     return SubscribeSyncResponseSchema(status="ignored", msg="用户拒绝或被封禁")

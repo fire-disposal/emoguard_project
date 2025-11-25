@@ -25,6 +25,15 @@ class UserQuotaAdmin(admin.ModelAdmin):
         # 通常不建议手动添加，通过API自动管理
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        # 禁止后台删除额度，防止误操作
+        return False
+
+    def get_queryset(self, request):
+        # 只展示有额度的用户，提升安全性
+        qs = super().get_queryset(request)
+        return qs.filter(count__gt=0)
+
 
 @admin.register(NotificationLog)
 class NotificationLogAdmin(admin.ModelAdmin):
@@ -53,4 +62,10 @@ class NotificationLogAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         # 只允许查看，不允许修改
-        return False
+        return False
+
+    def get_queryset(self, request):
+        # 日志只展示最近30天，提升可用性
+        from django.utils import timezone
+        qs = super().get_queryset(request)
+        return qs.filter(created_at__gte=timezone.now()-timezone.timedelta(days=30))

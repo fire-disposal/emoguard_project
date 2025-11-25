@@ -37,7 +37,7 @@ def send_mood_reminder(period="morning"):
     """
     now = timezone.localtime()
     today = now.date()
-    template_id = settings.WECHAT_SUBSCRIPTION_TEMPLATES.get("MOOD_REMINDER")
+    template_id = settings.WECHAT_SUBSCRIPTION_TEMPLATES
     page_path = f"pages/mood/moodtest/moodtest?period={period}"
     thing = "早间情绪测评提醒" if period == "morning" else "晚间情绪测评提醒"
 

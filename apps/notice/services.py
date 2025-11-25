@@ -19,7 +19,9 @@ def get_wechat_access_token():
         result = response.json()
         return result.get('access_token')
     except Exception as e:
-        print(f"获取access_token失败: {e}")
+        import logging
+        logger = logging.getLogger("notice.services")
+        logger.error(f"获取access_token失败: {e}")
         return None
 
 
@@ -42,12 +44,13 @@ def send_template_msg(user, template_id, page_path, data_dict):
                 template_id=template_id,
                 count__gt=0
             )
+            logger.info(f"推送前额度检查通过: 用户 {user.username} 模板 {template_id} 当前额度 {quota.count}")
     except UserQuota.DoesNotExist:
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
             status='failed', error_response='无可用订阅额度'
         )
-        logger.warning(f"用户 {user.username} 模板 {template_id} 无可用订阅额度")
+        logger.warning(f"推送失败: 用户 {user.username} 模板 {template_id} 无可用订阅额度")
         return False
 
     access_token = get_wechat_access_token()
@@ -61,7 +64,7 @@ def send_template_msg(user, template_id, page_path, data_dict):
 
     url = f"https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token={access_token}"
     payload = {
-        "touser": user.openid,
+        "touser": user.wechat_openid,
         "template_id": template_id,
         "page": page_path,
         "miniprogram_state": "formal",
@@ -84,6 +87,8 @@ def send_template_msg(user, template_id, page_path, data_dict):
         from django.db.models import F
         quota.count = F('count') - 1
         quota.save()
+        quota.refresh_from_db()
+        logger.info(f"推送成功: 用户 {user.username} 模板 {template_id} 额度扣减，当前额度 {quota.count}")
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
             status='success', wechat_msg_id=res_json.get('msgid'), sent_at=timezone.now()
