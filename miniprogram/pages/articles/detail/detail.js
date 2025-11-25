@@ -22,6 +22,11 @@ Page({
 
     articleApi.getArticle(id)
       .then((res) => {
+        // 替换富文本图片路径为完整静态资源 URL
+        const BASE_URL = 'https://cg.aoxintech.com';
+        if (res.content) {
+          res.content = res.content.replace(/src="\/media\/summernote\/([^"]+)"/g, `src="${BASE_URL}/media/summernote/$1"`);
+        }
         this.setData({
           article: res
         });

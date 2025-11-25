@@ -111,17 +111,17 @@
     <view class="feature-card" bindtap="goToReports">
       <view class="feature-icon">📊</view>
       <view class="feature-info">
-        <text class="feature-title">健康报告</text>
-        <text class="feature-desc">查看测评结果与专业建议</text>
+        <text class="feature-title">历史记录</text>
+        <text class="feature-desc">查看历次记录</text>
       </view>
       <view class="feature-arrow">→</view>
     </view>
     <!-- 健康科普 -->
-    <view class="feature-card" bindtap="goToArticles">
+    <view class="feature-card" bindtap="goToArticles">  
       <view class="feature-icon">📚</view>
       <view class="feature-info">
         <text class="feature-title">健康科普</text>
-        <text class="feature-desc">心理健康知识与康复指导</text>
+        <text class="feature-desc">心理健康知识科普</text>
       </view>
       <view class="feature-arrow">→</view>
     </view>
