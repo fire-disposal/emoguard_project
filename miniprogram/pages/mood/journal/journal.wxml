@@ -1,13 +1,13 @@
 <!--pages/mood/journal/journal.wxml-->
 <view class="mood-container gradient-bg">
-  <!-- 心情记录模块 - 重构为题目形式 -->
+  <!-- 心情记录模块 -->
   <view class="mood-record-section card">
 
     <!-- 题目1：主观情绪 -->
     <view class="question-block">
       <view class="question-header">
-        <text class="question-title">主观情绪</text>
-        <text class="question-subtitle">您现在主要是什么感觉？</text>
+        <text class="question-title">{{questions[0].title}}</text>
+        <text class="question-subtitle">{{questions[0].question}}</text>
       </view>
       <view class="question-content">
         <view class="mood-options">
@@ -23,7 +23,7 @@
             <text class="mood-text">{{item.text}}</text>
           </view>
         </view>
-        <view wx:if="{{mainMood === 'other'}}" class="other-mood-input">
+        <view wx:if="{{mainMood === '其他'}}" class="other-mood-input">
           <input placeholder="请填写其他情绪" value="{{mainMoodOther}}"
                  data-key="mainMoodOther" bindinput="handleTextChange"/>
         </view>
@@ -31,10 +31,10 @@
     </view>
 
     <!-- 题目2：情绪强度 -->
-    <view class="question-block">
+    <view wx:if="{{mainMood}}" class="question-block">
       <view class="question-header">
-        <text class="question-title">情绪强度</text>
-        <text class="question-subtitle">您当前感受的强度如何？</text>
+        <text class="question-title">{{questions[1].title}}</text>
+        <text class="question-subtitle">{{questions[1].question}}</text>
       </view>
       <view class="question-content">
         <view class="slider-group">
@@ -42,64 +42,60 @@
             min="{{questions[1].min}}"
             max="{{questions[1].max}}"
             step="{{questions[1].step}}"
-            value="{{moodIntensity || 5}}"
+            value="{{moodIntensity}}"
             show-value="true"
             data-key="moodIntensity"
             bindchange="handleSliderChange"
           />
-          <text class="slider-value">当前强度：{{moodIntensity || 5}}/10</text>
+          <text class="slider-value">当前强度：{{moodIntensity}}/10</text>
         </view>
       </view>
     </view>
 
-    <!-- 题目3：情绪原因 -->
-    <view class="question-block">
+    <!-- 题目3：情绪原因 (多选) -->
+    <view wx:if="{{mainMood && moodIntensity !== undefined && moodIntensity !== null}}" class="question-block">
       <view class="question-header">
-        <text class="question-title">情绪原因</text>
-        <text class="question-subtitle">导致此情绪的原因（可多选）</text>
+        <text class="question-title">{{questions[2].title}}</text>
+        <text class="question-subtitle">{{questions[2].question}}</text>
       </view>
       <view class="question-content">
         <checkbox-group class="checkbox-group" data-key="moodSupplementTags" bindchange="handleCheckboxChange">
-          <label 
-            wx:for="{{questions[2].options}}" 
-            wx:key="value" 
-            wx:for-item="item"
-            class="checkbox-option {{getCheckboxSelected(2, item.value) ? 'selected' : ''}}"
+          <label
+            wx:for="{{questions[2].options}}"
+            wx:key="value"
+            class="checkbox-option {{isCheckboxSelected('moodSupplementTags', item.value) ? 'selected' : ''}}"
           >
-            <checkbox value="{{item.value}}" checked="{{getCheckboxSelected(2, item.value)}}" />
+            <checkbox value="{{item.value}}" checked="{{isCheckboxSelected('moodSupplementTags', item.value)}}" />
             <text class="checkbox-text">{{item.text}}</text>
           </label>
         </checkbox-group>
       </view>
     </view>
 
-    <!-- 题目4：补充说明（多选情绪） -->
-    <view class="question-block">
+    <!-- 题目4：补充说明 (文本输入) -->
+    <view wx:if="{{moodSupplementTags.length > 0}}" class="question-block">
       <view class="question-header">
-        <text class="question-title">补充说明</text>
-        <text class="question-subtitle">请选择补充情绪（可多选）</text>
+        <text class="question-title">{{questions[3].title}}</text>
+        <text class="question-subtitle">{{questions[3].question}}</text>
       </view>
       <view class="question-content">
-        <view class="mood-options">
-          <view
-            wx:for="{{questions[3].options}}"
-            wx:key="value"
-            class="mood-option {{supplementMoodList && supplementMoodList.includes(item.value) ? 'selected' : ''}}"
-            bindtap="handleSupplementMoodSelect"
-            data-value="{{item.value}}"
-          >
-            <view class="mood-emoji">{{item.emoji}}</view>
-            <text class="mood-text">{{item.text}}</text>
-          </view>
-        </view>
-        <text class="text-count">已选：{{supplementMoodList.length}}项</text>
+        <textarea
+          class="supplement-textarea"
+          placeholder="{{questions[3].placeholder}}"
+          value="{{moodSupplementText}}"
+          bindinput="handleSupplementTextInput"
+          maxlength="200"
+        />
       </view>
     </view>
 
     <!-- 提交按钮 -->
-    <view 
-      class="submit-mood-btn {{mainMood && moodIntensity ? '' : 'btn-disabled'}}" 
+    <view
+      wx:if="{{moodSupplementTags.length > 0}}"
+      class="submit-mood-btn {{mainMood && moodIntensity > 0 ? '' : 'btn-disabled'}}"
       bindtap="submitMoodRecord"
+      hover-class="submit-mood-btn-hover"
+      hover-stay-time="150"
     >
       <text class="btn-icon">✓</text>
       <text class="btn-text">记录心情</text>
@@ -107,37 +103,41 @@
   </view>
 
   <!-- 心情历史 -->
-  <view class="mood-history-section card" wx:if="{{showHistory}}">
+  <view class="mood-history-section card">
     <view class="history-header" bindtap="toggleHistory">
       <text class="history-title">心情历史</text>
       <text class="history-count">{{journals.length}}条记录</text>
-      <text class="toggle-icon">▼</text>
+      <text class="toggle-icon">{{showHistory ? '▲' : '▼'}}</text>
     </view>
 
-    <view wx:if="{{loading}}" class="loading-state">
-      <text class="loading-text">加载中...</text>
-    </view>
+    <view wx:if="{{showHistory}}" class="history-content">
+      <view wx:if="{{loading}}" class="loading-state">
+        <text class="loading-text">加载中...</text>
+      </view>
 
-    <view wx:elif="{{journals.length === 0}}" class="empty-state">
-      <text class="empty-icon">💭</text>
-      <text class="empty-text">还没有心情记录</text>
-      <text class="empty-hint">完成上方题目记录你的第一条心情吧</text>
-    </view>
+      <view wx:elif="{{journals.length === 0}}" class="empty-state">
+        <text class="empty-icon">💭</text>
+        <text class="empty-text">还没有心情记录</text>
+        <text class="empty-hint">完成上方题目记录你的第一条心情吧</text>
+      </view>
 
-    <view wx:else class="history-list">
-      <view 
-        wx:for="{{journals}}" 
-        wx:key="id" 
-        class="history-item"
-      >
-        <view class="item-emoji">{{item.emoji || '😐'}}</view>
-        <view class="item-content">
-          <view class="item-header">
-            <text class="item-mood-text">{{item.mainMoodText || item.label}}</text>
-            <text class="item-time">{{formatTime(item.created_at)}}</text>
+      <view wx:else class="history-list">
+        <view 
+          wx:for="{{journals}}" 
+          wx:key="id" 
+          class="history-item"
+        >
+          <view class="item-emoji">{{item.emoji}}</view>
+          <view class="item-content">
+            <view class="item-header">
+              <text class="item-mood-text">{{item.mainMoodText}}</text>
+              <text class="item-time">{{formatTime(item.created_at)}}</text>
+            </view>
+            <view class="item-detail">
+                <text wx:if="{{item.text}}" class="item-reason">{{item.text}}</text>
+                <text class="item-score">强度: {{item.mood_score}}/10</text>
+            </view>
           </view>
-          <text wx:if="{{item.text}}" class="item-reason">{{item.text}}</text>
-          <text class="item-score" wx:if="{{item.mood_score || item.score}}">强度: {{item.mood_score || item.score}}/10</text>
         </view>
       </view>
     </view>
