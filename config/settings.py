@@ -178,11 +178,11 @@ USE_TZ = True
 # =============================================================================
 
 # 静态文件
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # 媒体文件
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # 默认主键字段类型
@@ -346,11 +346,6 @@ WECHAT_USER_NICKNAME_PREFIX = '微信用户'
 API_VERSION = 'v1'
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
-
-# 文件上传配置
-AVATAR_UPLOAD_PATH = 'avatars/'
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-ALLOWED_IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'gif', 'webp']
 
 # =============================================================================
 # Django Summernote 配置
