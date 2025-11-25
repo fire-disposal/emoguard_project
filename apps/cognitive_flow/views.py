@@ -71,13 +71,11 @@ def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
             score_gad7=record.score_gad7,
             score_phq9=record.score_phq9,
             score_adl=record.score_adl,
-            analysis=record.analysis,
-            started_at=record.started_at.isoformat() if record.started_at else None,
-            completed_at=record.completed_at.isoformat()
-            if record.completed_at
-            else None,
-            created_at=record.created_at.isoformat(),
-            updated_at=record.updated_at.isoformat(),
+            analysis=dict(record.analysis) if record.analysis else {},
+            started_at=record.started_at.isoformat() if record.started_at else "",
+            completed_at=record.completed_at.isoformat() if record.completed_at else "",
+            created_at=record.created_at.isoformat() if record.created_at else "",
+            updated_at=record.updated_at.isoformat() if record.updated_at else "",
         )
     except Exception as e:
         logger.error(f"认知测评提交异常: {e}", exc_info=True)
@@ -107,12 +105,10 @@ def get_assessment_history(request):
                 score_gad7=record.score_gad7,
                 score_phq9=record.score_phq9,
                 score_adl=record.score_adl,
-                analysis={},  # 字段精简，analysis留空
-                started_at=record.started_at.isoformat() if record.started_at else None,
-                completed_at=record.completed_at.isoformat()
-                if record.completed_at
-                else None,
-                created_at=record.created_at.isoformat(),
+                analysis={},
+                started_at=record.started_at.isoformat() if record.started_at else "",
+                completed_at=record.completed_at.isoformat() if record.completed_at else "",
+                created_at=record.created_at.isoformat() if record.created_at else "",
             )
         )
     return result
@@ -136,13 +132,11 @@ def get_assessment_result(request, record_id: int):
             score_gad7=record.score_gad7,
             score_phq9=record.score_phq9,
             score_adl=record.score_adl,
-            analysis=record.analysis,
-            started_at=record.started_at.isoformat() if record.started_at else None,
-            completed_at=record.completed_at.isoformat()
-            if record.completed_at
-            else None,
-            created_at=record.created_at.isoformat(),
-            updated_at=record.updated_at.isoformat(),
+            analysis=dict(record.analysis) if record.analysis else {},
+            started_at=record.started_at.isoformat() if record.started_at else "",
+            completed_at=record.completed_at.isoformat() if record.completed_at else "",
+            created_at=record.created_at.isoformat() if record.created_at else "",
+            updated_at=record.updated_at.isoformat() if record.updated_at else "",
         )
     except CognitiveAssessmentRecord.DoesNotExist:
         logger = logging.getLogger("cognitive_flow.result")

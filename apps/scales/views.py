@@ -7,6 +7,7 @@ from apps.scales.assessment_core import ScaleResultService
 from apps.scales.models import ScaleConfig
 from apps.scales.serializers import (
     ScaleConfigResponseSchema, ScaleResultCreateSchema, ScaleResultResponseSchema,
+    QuestionSchema, QuestionOptionSchema
 )
 from config.jwt_auth_adapter import jwt_auth
 import logging
@@ -81,16 +82,30 @@ def list_configs(request, status: Optional[str] = Query(None)):
                         if 'value' in option:
                             option['value'] = str(option['value'])
             
-            result.append({
-                'id': config.id,
-                'name': config.name,
-                'code': config.code,
-                'version': config.version,
-                'description': config.description,
-                'type': config.type,
-                'questions': questions,
-                'status': config.status
-            })
+            # 用schema实例化，确保类型一致
+            result.append(
+                ScaleConfigResponseSchema(
+                    id=config.id,
+                    name=config.name,
+                    code=config.code,
+                    version=config.version,
+                    description=config.description,
+                    type=config.type,
+                    questions=[
+                        QuestionSchema(
+                            id=q.get('id', 0),
+                            question=q.get('question', ''),
+                            options=[
+                                QuestionOptionSchema(
+                                    text=o.get('text', ''),
+                                    value=str(o.get('value', ''))
+                                ) for o in q.get('options', [])
+                            ]
+                        ) for q in questions
+                    ],
+                    status=config.status
+                )
+            )
         
         return result
         
@@ -112,16 +127,28 @@ def get_config(request, config_id: int):
                     if 'value' in option:
                         option['value'] = str(option['value'])
         
-        return {
-            'id': config.id,
-            'name': config.name,
-            'code': config.code,
-            'version': config.version,
-            'description': config.description,
-            'type': config.type,
-            'questions': questions,
-            'status': config.status
-        }
+        # 用schema实例化，确保类型一致
+        return ScaleConfigResponseSchema(
+            id=config.id,
+            name=config.name,
+            code=config.code,
+            version=config.version,
+            description=config.description,
+            type=config.type,
+            questions=[
+                QuestionSchema(
+                    id=q.get('id', 0),
+                    question=q.get('question', ''),
+                    options=[
+                        QuestionOptionSchema(
+                            text=o.get('text', ''),
+                            value=str(o.get('value', ''))
+                        ) for o in q.get('options', [])
+                    ]
+                ) for q in questions
+            ],
+            status=config.status
+        )
     except ScaleConfig.DoesNotExist:
         return {"error": "量表配置不存在"}
     except Exception as e:
@@ -164,7 +191,19 @@ def get_single_result(request, result_id: int):
             return {"error": "结果不存在"}
         
         # 使用辅助类进行数据格式化
-        return ScaleResultViewHelper.format_scale_result_data(raw_data)
+        # 用schema实例化，确保类型一致
+        formatted = ScaleResultViewHelper.format_scale_result_data(raw_data)
+        return ScaleResultResponseSchema(
+            id=formatted['id'],
+            scale_config=ScaleConfigResponseSchema(**formatted['scale_config']) if formatted['scale_config'] else None,
+            selected_options=[int(x) for x in formatted.get('selected_options', [])],
+            conclusion=formatted.get('conclusion', ''),
+            duration_ms=int(formatted.get('duration_ms', 0)),
+            started_at=str(formatted.get('started_at', '')),
+            completed_at=str(formatted.get('completed_at', '')),
+            status=formatted.get('status', ''),
+            analysis=formatted.get('analysis', {}),
+        )
         
     except Exception as e:
         logger.error(f"获取单量表结果失败: {str(e)}")
@@ -185,14 +224,14 @@ def get_user_results_history(request):
         response.append(
             ScaleResultResponseSchema(
                 id=result.id,
-                scale_config=result.scale_config,
-                selected_options=result.selected_options,
-                conclusion=result.conclusion,
-                duration_ms=result.duration_ms,
+                scale_config=ScaleConfigResponseSchema(**result.scale_config) if isinstance(result.scale_config, dict) else result.scale_config,
+                selected_options=[int(x) for x in getattr(result, 'selected_options', [])],
+                conclusion=getattr(result, 'conclusion', ''),
+                duration_ms=int(getattr(result, 'duration_ms', 0)),
                 started_at=result.started_at.isoformat() if result.started_at else "",
                 completed_at=result.completed_at.isoformat() if result.completed_at else "",
-                status=result.status,
-                analysis=result.analysis,
+                status=getattr(result, 'status', ''),
+                analysis=getattr(result, 'analysis', {}),
                 created_at=result.created_at.isoformat() if hasattr(result, "created_at") else "",
             )
         )

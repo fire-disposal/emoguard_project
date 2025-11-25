@@ -30,11 +30,21 @@ function getResult(resultId) {
   return request.get(`/api/scales/results/${resultId}`);
 }
 
+// 获取量表历史结果
+function getResultsHistory() {
+  return request.get('/api/scales/results/history')
+    .then(response => response || [])
+    .catch(error => {
+      console.error('量表历史结果请求失败:', error);
+      return [];
+    });
+}
 
 
 module.exports = {
   listConfigs,
   getConfig,
   createResult,
+  getResultsHistory,
   getResult,
 };

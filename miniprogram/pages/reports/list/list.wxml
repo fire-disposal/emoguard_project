@@ -1,39 +1,40 @@
 <!--pages/reports/list/list.wxml-->
 <view class="reports-container gradient-bg">
 
-  <view wx:if="{{loading && reports.length === 0}}" class="loading-state">
+  <view class="tab-bar">
+    <view class="tab {{activeTab === 0 ? 'active' : ''}}" data-tab="0" bindtap="switchTab">报告历史</view>
+    <view class="tab {{activeTab === 1 ? 'active' : ''}}" data-tab="1" bindtap="switchTab">量表历史</view>
+  </view>
+
+  <view wx:if="{{(loading && ((activeTab === 0 && reports.length === 0) || (activeTab === 1 && scales.length === 0)))}}" class="loading-state">
     <text class="loading-text">加载中...</text>
   </view>
-
-  <view wx:elif="{{reports.length === 0}}" class="empty-state">
-    <text class="empty-icon">📊</text>
-    <text class="empty-text">暂无历史记录</text>
-  </view>
-
-  <view wx:else class="reports-list">
-    <view 
-      wx:for="{{reports}}" 
-      wx:key="id" 
-      class="report-card card"
-      data-id="{{item.id}}"
-      bindtap="viewDetail"
-    >
-      <view class="report-header">
-        <text class="report-type">{{item.report_type}}</text>
-        <view class="risk-badge risk-{{item.overall_risk}}">
-          {{item.overall_risk}}
+  <view wx:else>
+    <view wx:if="{{activeTab === 0}}" class="reports-list">
+      <view wx:for="{{reports}}" wx:key="id" class="report-card card" data-id="{{item.id}}" data-type="report" bindtap="viewDetail">
+        <view class="report-header">
+          <text class="report-type">{{item.report_type}}</text>
+          <view class="risk-badge risk-{{item.overall_risk}}">{{item.overall_risk}}</view>
         </view>
+        <text class="report-summary">{{item.summary}}</text>
+        <text class="report-time">{{formatTime(item.created_at)}}</text>
       </view>
-      <text class="report-summary">{{item.summary}}</text>
-      <text class="report-time">{{formatTime(item.created_at)}}</text>
     </view>
-
+    <view wx:elif="{{activeTab === 1}}" class="scales-list">
+      <view wx:for="{{scales}}" wx:key="id" class="report-card card" data-id="{{item.id}}" data-type="scale" bindtap="viewDetail">
+        <view class="report-header">
+          <text class="report-type">量表</text>
+        </view>
+        <text class="report-summary">{{item.name}}</text>
+        <text class="report-time">{{formatTime(item.created_at)}}</text>
+      </view>
+    </view>
     <view wx:if="{{loading}}" class="load-more">
       <text class="load-more-text">加载中...</text>
     </view>
-
     <view wx:elif="{{!hasMore}}" class="load-more">
-      <text class="load-more-text">没有更多了</text>
+      <text class="empty-icon">📊</text>
+    <text class="empty-text">暂无历史记录</text>
     </view>
   </view>
 </view>
