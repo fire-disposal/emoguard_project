@@ -118,7 +118,12 @@ function createCachedRequest(requestFunc, cacheKey, cacheTime = 60000) {
   return async function cachedRequest(...args) {
     /* 熔断后不再发请求 */
     if (authCenter.breakdown) {
+      // 熔断后直接拒绝请求，防止401风暴
       throw new Error('Auth breakdown, stop requesting');
+    }
+    // 防止重复401风暴：如有pending的同类请求，直接返回pending promise
+    if (globalRequestQueue.pending.has(cacheKey)) {
+      return globalRequestQueue.pending.get(cacheKey);
     }
 
     const now = Date.now();

@@ -1,92 +1,49 @@
 /**
- * 本地存储封装
- * 1. 类型安全、JSON 自动序列化
- * 2. 容量超限降级（warn 后返回 false）
- * 3. 统一日志 tag，方便过滤
+ * 极简本地存储（适配新版authCenter）
+ * 1. 仅支持JSON序列化
+ * 2. 只暴露必要API
+ * 3. Token操作与用户信息操作分离
  */
-const TAG = '[Storage]';
+const TOKEN_KEY = 'access_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+const USER_INFO_KEY = 'user_info';
 
-/**
- * 存储数据（带容量降级）
- * @param {string} key - 存储键
- * @param {any} value - 存储值（自动序列化）
- * @returns {boolean} 成功/失败
- */
 function setItem(key, value) {
   try {
-    const data = (typeof value === 'object' && value !== null) ? JSON.stringify(value) : value;
-    wx.setStorageSync(key, data);
+    wx.setStorageSync(key, JSON.stringify(value));
     return true;
   } catch (e) {
-    // 容量超限会抛 e.errMsg.includes("quota")
-    if (e.errMsg && e.errMsg.includes('quota')) {
-      console.warn(TAG, '容量超限，写入失败', key);
-    } else {
-      console.error(TAG, 'setItem 异常', key, e);
-    }
+    console.warn('[Storage] setItem error', key, e);
     return false;
   }
 }
 
-/**
- * 读取数据
- * @param {string} key - 存储键
- * @returns {any} 存储值（自动反序列化）
- */
 function getItem(key) {
   try {
     const data = wx.getStorageSync(key);
     if (data === undefined || data === null) return null;
-    // 优先尝试解析 JSON
-    if (typeof data === 'string') {
-      try {
-        return JSON.parse(data);
-      } catch {
-        return data;
-      }
-    }
-    return data;
-  } catch (error) {
-    console.error('Storage getItem error:', error);
+    return JSON.parse(data);
+  } catch (e) {
     return null;
   }
 }
 
-/**
- * 删除数据
- * @param {string} key - 存储键
- */
 function removeItem(key) {
   try {
     wx.removeStorageSync(key);
-  } catch (error) {
-    console.warn('Storage removeItem error:', error);
-    // 不抛出异常，避免影响主流程
-  }
+  } catch (e) {}
 }
 
-/**
- * 清空所有存储
- */
 function clear() {
   try {
     wx.clearStorageSync();
-  } catch (error) {
-    console.warn('Storage clear error:', error);
-    // 不抛出异常，避免影响主流程
-  }
+  } catch (e) {}
 }
 
-/**
- * token 专用操作
- */
-const TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
-
-function setToken(accessToken, refreshToken) {
-  const result1 = setItem(TOKEN_KEY, accessToken);
-  const result2 = refreshToken ? setItem(REFRESH_TOKEN_KEY, refreshToken) : true;
-  return result1 && result2;
+// Token专用
+function setToken(access, refresh) {
+  setItem(TOKEN_KEY, access);
+  if (refresh) setItem(REFRESH_TOKEN_KEY, refresh);
 }
 function getToken() {
   return getItem(TOKEN_KEY);
@@ -99,6 +56,17 @@ function clearToken() {
   removeItem(REFRESH_TOKEN_KEY);
 }
 
+// 用户信息专用
+function setUserInfo(userInfo) {
+  setItem(USER_INFO_KEY, userInfo);
+}
+function getUserInfo() {
+  return getItem(USER_INFO_KEY);
+}
+function clearUserInfo() {
+  removeItem(USER_INFO_KEY);
+}
+
 module.exports = {
   setItem,
   getItem,
@@ -107,5 +75,8 @@ module.exports = {
   setToken,
   getToken,
   getRefreshToken,
-  clearToken
+  clearToken,
+  setUserInfo,
+  getUserInfo,
+  clearUserInfo
 };

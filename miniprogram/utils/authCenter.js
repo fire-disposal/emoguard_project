@@ -1,130 +1,142 @@
 /**
- * 认证中心
+ * 认证中心（极简重构版，不兼容旧接口）
  * 1. 唯一可信源：token + refreshToken
- * 2. 全局单例锁，防止并发刷新
- * 3. 失败熔断，3 次刷新失败即标记“永久失效”
- * 4. 统一跳转，只跳一次登录页
+ * 2. 全局锁防并发刷新
+ * 3. 熔断：3次刷新失败即永久失效
+ * 4. 用户信息统一管理
+ * 5. 只暴露必要API
  */
 const storage = require('./storage');
+const USER_INFO_KEY = 'user_info';
 
-// --------- 私有变量 ---------
-let _access = null;               // 内存 token
-let _refresh = null;              // 内存 refresh
-let _refreshLock = false;         // 刷新锁
-let _refreshFailCount = 0;        // 连续刷新失败次数
-const MAX_REFRESH_FAIL = 3;       // 熔断阈值
-let _loginPromise = null;         // 刷新 promise（队列复用）
-let _hasNavigated = false;        // 本次生命周期是否已跳转登录页
+let access = null;
+let refresh = null;
+let refreshLock = false;
+let refreshFailCount = 0;
+const MAX_REFRESH_FAIL = 3;
+let loginPromise = null;
+let hasNavigated = false;
 
-// --------- 私有方法 ---------
-const KEY_ACCESS = 'access_token';
-const KEY_REFRESH = 'refresh_token';
-
-/* 统一跳登录页（仅一次） */
-function _navigateToLogin() {
-  if (_hasNavigated) return;
-  _hasNavigated = true;
+function navigateToLogin() {
+  if (hasNavigated) return;
+  hasNavigated = true;
   wx.reLaunch({ url: '/pages/login/login' });
 }
 
-/* 熔断处理 */
-function _breakdown() {
-  _refreshFailCount = MAX_REFRESH_FAIL;
-  storage.clearToken();
-  _access = null;
-  _refresh = null;
-  _navigateToLogin();
-}
-
-/* 同时写内存 + storage */
-function _persist(access, refresh) {
-  _access = access;
-  if (refresh) _refresh = refresh;
+function persistTokens(newAccess, newRefresh) {
+  access = newAccess;
+  refresh = newRefresh || refresh;
   storage.setToken(access, refresh);
 }
 
-// --------- 对外 API ---------
-const authCenter = {
-  /* 初始读缓存 */
-  init() {
-    if (_access === null) _access = storage.getToken();
-    if (_refresh === null) _refresh = storage.getRefreshToken();
-  },
+function breakdown() {
+  refreshFailCount = MAX_REFRESH_FAIL;
+  storage.clearToken();
+  access = null;
+  refresh = null;
+  navigateToLogin();
+}
 
-  get access() {
-    return _access;
-  },
-
-  get refresh() {
-    return _refresh;
-  },
-
-  get logined() {
-    return !!_access;
-  },
-
-  /* 供上层短路：是否已熔断 */
-  get breakdown() {
-    return _refreshFailCount >= MAX_REFRESH_FAIL;
-  },
-
-  /* 登录成功后写入 */
-  login(access, refresh) {
-    _refreshFailCount = 0;
-    _hasNavigated = false;
-    _persist(access, refresh);
-  },
-
-  /* 退出 / 失效清理 */
-  logout(localOnly = false) {
-    _access = null;
-    _refresh = null;
-    storage.clearToken();
-    if (!localOnly) _navigateToLogin();
-  },
-
-  /* 刷新 token（带锁 + 队列 + 熔断） */
-  async refreshToken() {
-    authCenter.init(); // 兜底读缓存
-    if (_refreshFailCount >= MAX_REFRESH_FAIL) throw new Error('refresh breakdown');
-
-    // 复用同一刷新 promise
-    if (_refreshLock) return _loginPromise;
-    _refreshLock = true;
-
-    _loginPromise = new Promise(async (resolve, reject) => {
-      try {
-        const refreshToken = _refresh;
-        if (!refreshToken) throw new Error('no refresh token');
-
-        const { request } = require('./request'); // 延迟引用，避免循环
-        const res = await request({
-          url: '/api/token/refresh',
-          method: 'POST',
-          data: { refresh: refreshToken },
-          skipAuth: true
-        });
-        const { access, refresh } = res;
-        _persist(access, refresh || refreshToken);
-        _refreshFailCount = 0;
-        resolve(access);
-      } catch (e) {
-        _refreshFailCount++;
-        if (_refreshFailCount >= MAX_REFRESH_FAIL) {
-          _breakdown();
-        } else {
-          // 立即标记熔断，防止后续并发请求继续重试
-          _refreshFailCount = MAX_REFRESH_FAIL;
-        }
-        reject(e);
-      } finally {
-        _refreshLock = false;
-        _loginPromise = null;
-      }
-    });
-
-    return _loginPromise;
+function getUserInfo() {
+  const app = getApp();
+  if (app && app.globalData && app.globalData.userInfo) {
+    return app.globalData.userInfo;
   }
-};
+  try {
+    return storage.getItem(USER_INFO_KEY);
+  } catch {
+    return null;
+  }
+}
 
-module.exports = authCenter;
+function setUserInfo(userInfo) {
+  storage.setItem(USER_INFO_KEY, userInfo);
+  const app = getApp();
+  if (app && app.globalData) app.globalData.userInfo = userInfo;
+}
+
+function clearUserInfo() {
+  storage.removeItem(USER_INFO_KEY);
+  const app = getApp();
+  if (app && app.globalData) app.globalData.userInfo = null;
+}
+
+function clearAuth() {
+  logout(true);
+  clearUserInfo();
+  const app = getApp();
+  if (app && app.globalData) {
+    app.globalData.token = null;
+    app.globalData.refreshToken = null;
+    app.globalData.loginPromise = null;
+  }
+}
+
+function init() {
+  if (access === null) access = storage.getToken();
+  if (refresh === null) refresh = storage.getRefreshToken();
+}
+
+function login(newAccess, newRefresh) {
+  refreshFailCount = 0;
+  hasNavigated = false;
+  persistTokens(newAccess, newRefresh);
+}
+
+function logout(localOnly = false) {
+  access = null;
+  refresh = null;
+  storage.clearToken();
+  if (!localOnly) navigateToLogin();
+}
+
+async function refreshToken() {
+  init();
+  if (refreshFailCount >= MAX_REFRESH_FAIL) throw new Error('refresh breakdown');
+  if (refreshLock) return loginPromise;
+  refreshLock = true;
+
+  loginPromise = new Promise(async (resolve, reject) => {
+    try {
+      if (!refresh) throw new Error('no refresh token');
+      const { request } = require('./request');
+      const res = await request({
+        url: '/api/token/refresh',
+        method: 'POST',
+        data: { refresh },
+        skipAuth: true
+      });
+      persistTokens(res.access, res.refresh || refresh);
+      refreshFailCount = 0;
+      resolve(access);
+    } catch (e) {
+      refreshFailCount++;
+      if (refreshFailCount >= MAX_REFRESH_FAIL) {
+        breakdown();
+      } else {
+        refreshFailCount = MAX_REFRESH_FAIL;
+      }
+      reject(e);
+    } finally {
+      refreshLock = false;
+      loginPromise = null;
+    }
+  });
+
+  return loginPromise;
+}
+
+module.exports = {
+  get access() { return access; },
+  get refresh() { return refresh; },
+  get logined() { return !!access; },
+  get breakdown() { return refreshFailCount >= MAX_REFRESH_FAIL; },
+  init,
+  login,
+  logout,
+  refreshToken,
+  getUserInfo,
+  setUserInfo,
+  clearUserInfo,
+  clearAuth
+};

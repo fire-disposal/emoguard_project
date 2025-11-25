@@ -88,7 +88,10 @@ App({
       if (whiteList.includes(route)) return;
 
       /* 熔断后不再请求，防止 401 风暴 */
-      if (authCenter.breakdown) return;
+      if (authCenter.breakdown) {
+        wx.showToast({ title: '认证失效，请重新登录', icon: 'none' });
+        return;
+      }
 
       if (!authCenter.logined) {
         authCenter.logout();
@@ -97,8 +100,17 @@ App({
 
       let userInfo = this.globalData.userInfo;
       if (!userInfo || userInfo.is_profile_complete === undefined) {
-        userInfo = await this.cachedGetCurrentUser();
-        this.updateGlobalUserInfo(userInfo);
+        try {
+          userInfo = await this.cachedGetCurrentUser();
+          this.updateGlobalUserInfo(userInfo);
+        } catch (e) {
+          // 捕获401/CSRF异常，主动登出并跳转登录页
+          if (e?.message?.includes('401') || e?.message?.includes('Unauthorized')) {
+            authCenter.logout();
+            wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
+            return;
+          }
+        }
       }
       if (userInfo && !userInfo.is_profile_complete) {
         wx.reLaunch({ url: '/pages/profile/complete/complete' });

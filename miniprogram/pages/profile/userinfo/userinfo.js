@@ -1,6 +1,6 @@
 // pages/profile/userinfo/userinfo.js
 const userApi = require('../../../api/user');
-const auth = require('../../../utils/auth');
+const authCenter = require('../../../utils/authCenter');
 
 Page({
   data: {
@@ -18,8 +18,9 @@ Page({
   },
 
   onShow() {
-    if (!auth.isLogined()) {
-      auth.navigateToLogin();
+    if (!authCenter.logined) {
+      authCenter.logout();
+      wx.reLaunch({ url: '/pages/login/login' });
       return;
     }
     this.loadUserInfo();
@@ -162,7 +163,7 @@ Page({
         phone: this.data.formData.phone
       };
       const result = await userApi.updateProfile(submitData);
-      auth.setUserInfo(result);
+      authCenter.setUserInfo(result);
       wx.showToast({
         title: '保存成功',
         icon: 'success',

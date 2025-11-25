@@ -1,6 +1,3 @@
-const auth = require('../../utils/auth');
-  // 已全局获取，无需单独请求
-const errorUtil = require('../../utils/error');
 const subscribeUtil = require('../../utils/subscribeUtil');
 
 Page({
@@ -12,15 +9,21 @@ Page({
     currentPeriodText: '', // 当前时段中文: '早间', '下午', '晚间'
     showCognitiveGuide: false, // 是否显示认知评估引导卡片
     hasCompletedAssessment: false, // 是否已完成认知评估
-    morningFilled: false, // 早上情绪记录是否已填写
-    eveningFilled: false, // 晚上情绪记录是否已填写
     isMorningOpen: false, // 早间测评是否开放
     isEveningOpen: false, // 晚间测评是否开放
   },
 
   onShow() {
     // 统一调用全局防抖鉴权检查
-    getApp().debouncedCheckAuth();
+    // 首页鉴权检查，熔断时直接提示并跳转登录页
+    const app = getApp();
+    if (app.globalData && app.globalData.userInfo && app.globalData.userInfo.is_profile_complete === false) {
+      wx.reLaunch({ url: '/pages/profile/complete/complete' });
+      return;
+    }
+    if (app && app.debouncedCheckAuth) {
+      app.debouncedCheckAuth();
+    }
     // 页面显示时直接从全局获取填写状态
     this.setData({
       morningFilled: getApp().globalData.morningFilled,
@@ -46,11 +49,6 @@ Page({
       clearInterval(this.timer);
     }
   },
-
-  /**
-   * 加载今日情绪记录状态
-   */
-  // 已废弃，去除 status 请求
 
   /**
    * 获取当前日期
@@ -111,7 +109,16 @@ Page({
     let userInfo = getApp().globalData.userInfo;
     if (!userInfo || userInfo.is_profile_complete === undefined) {
       // 若无全局用户信息则异步获取
-      userInfo = await getApp().getUserInfoAsync();
+      try {
+        userInfo = await getApp().getUserInfoAsync();
+      } catch (e) {
+        // 捕获401/CSRF异常，主动登出并跳转登录页
+        if (e?.message?.includes('401') || e?.message?.includes('Unauthorized')) {
+          wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
+          wx.reLaunch({ url: '/pages/login/login' });
+          return;
+        }
+      }
     }
 
     // 检查是否完成认知评估

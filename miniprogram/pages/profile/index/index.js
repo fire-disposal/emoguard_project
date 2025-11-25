@@ -1,6 +1,6 @@
 // pages/profile/index/index.js
 const userApi = require('../../../api/user');
-const auth = require('../../../utils/auth');
+const authCenter = require('../../../utils/authCenter');
 
 Page({
   data: {
@@ -11,8 +11,9 @@ Page({
   },
 
   onShow() {
-    if (!auth.isLogined()) {
-      auth.navigateToLogin();
+    if (!authCenter.logined) {
+      authCenter.logout();
+      wx.reLaunch({ url: '/pages/login/login' });
       return;
     }
     this.loadUserInfo();
@@ -132,7 +133,7 @@ Page({
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          auth.logout();
+          authCenter.logout();
         }
       }
     });

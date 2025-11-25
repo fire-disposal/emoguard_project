@@ -3,7 +3,7 @@
  * 统一管理错误处理逻辑
  */
 
-const auth = require('./auth');
+const authCenter = require('./authCenter');
 
 /**
  * 通用的错误处理函数
@@ -26,7 +26,7 @@ function handleError(error) {
 
   // 如果是401错误（token失效），跳转登录页
   if (errorMessage.includes('401')) {
-    auth.navigateToLogin();
+    authCenter.logout();
   }
 }
 

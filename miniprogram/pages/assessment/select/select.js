@@ -1,6 +1,6 @@
 // 测评选择页面 - 支持单问卷和智能测评模式
 const scaleApi = require('../../../api/scale');
-const auth = require('../../../utils/auth');
+const authCenter = require('../../../utils/authCenter');
 
 Page({
   data: {
@@ -38,7 +38,7 @@ Page({
   // 开始智能测评
   async startSmartAssessment() {
     try {
-      const userInfo = auth.getUserInfo();
+      const userInfo = authCenter.getUserInfo();
       if (!userInfo) {
         wx.showToast({ title: '请先登录', icon: 'none' });
         return;

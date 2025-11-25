@@ -1,6 +1,6 @@
 // 答题详情页面 - 支持单问卷、流程、智能测评模式
 const scaleApi = require('../../../api/scale');
-const auth = require('../../../utils/auth');
+const authCenter = require('../../../utils/authCenter');
 
 Page({
   data: {
@@ -16,7 +16,7 @@ Page({
   },
 
   onLoad(options) {
-    const { id, groupId, assessmentId, mode } = options;
+    const { id } = options;
     
     if (!id) {
       wx.showToast({ title: '缺少参数', icon: 'none' });
@@ -114,7 +114,7 @@ Page({
       return;
     }
 
-    const userInfo = auth.getUserInfo();
+    const userInfo = authCenter.getUserInfo();
     if (!userInfo) {
       wx.showToast({ title: '请先登录', icon: 'none' });
       return;

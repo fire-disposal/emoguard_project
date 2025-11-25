@@ -25,15 +25,15 @@ def get_wechat_access_token():
 
 def send_template_msg(user, template_id, page_path, data_dict):
     """
-    发送模板消息的核心业务逻辑
+    发送模板消息的核心业务逻辑，日志更详细
     :param user: User对象
     :param template_id: 微信模板ID
     :param page_path: 点击卡片跳转的小程序页面
     :param data_dict: 具体的字段内容 {'thing1': {'value': '...'}, ...}
     """
-    
-    # 1. 检查并扣除额度 (使用事务保证原子性)
-    # 注意：必须先检查额度，因为如果没额度，微信接口会报错，且我们不需要发请求
+    import logging
+    logger = logging.getLogger("notice.services")
+
     from django.db import transaction
     try:
         with transaction.atomic():
@@ -43,34 +43,32 @@ def send_template_msg(user, template_id, page_path, data_dict):
                 count__gt=0
             )
     except UserQuota.DoesNotExist:
-        # 记录一个失败日志，方便知道为什么没发
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
             status='failed', error_response='无可用订阅额度'
         )
+        logger.warning(f"用户 {user.username} 模板 {template_id} 无可用订阅额度")
         return False
 
-    # 2. 准备发送
     access_token = get_wechat_access_token()
     if not access_token:
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
             status='failed', error_response='无法获取access_token'
         )
+        logger.error(f"用户 {user.username} 模板 {template_id} 获取access_token失败")
         return False
-        
+
     url = f"https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token={access_token}"
-    
     payload = {
-        "touser": user.openid,  # 确保你的User表里有openid字段
+        "touser": user.openid,
         "template_id": template_id,
         "page": page_path,
-        "miniprogram_state": "formal",  # developer为开发版，formal为正式版
+        "miniprogram_state": "formal",
         "lang": "zh_CN",
         "data": data_dict
     }
 
-    # 3. 调用微信接口
     try:
         response = requests.post(url, json=payload, timeout=5)
         res_json = response.json()
@@ -79,25 +77,23 @@ def send_template_msg(user, template_id, page_path, data_dict):
             user=user, template_id=template_id, message_data=data_dict,
             status='failed', error_response=str(e)
         )
+        logger.error(f"用户 {user.username} 模板 {template_id} 微信接口异常: {e}")
         return False
 
-    # 4. 处理结果
     if res_json.get('errcode') == 0:
-        # 发送成功：扣减额度，记录日志
         from django.db.models import F
         quota.count = F('count') - 1
         quota.save()
-        
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
             status='success', wechat_msg_id=res_json.get('msgid'), sent_at=timezone.now()
         )
+        logger.info(f"用户 {user.username} 模板 {template_id} 推送成功，msgid={res_json.get('msgid')}")
         return True
     else:
-        # 发送失败：额度不扣（或者根据策略扣除），记录错误
-        # 常见错误：43101(用户拒绝接受消息)，40001(token过期)
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
             status='failed', error_response=res_json.get('errmsg')
         )
+        logger.error(f"用户 {user.username} 模板 {template_id} 推送失败: {res_json.get('errmsg')}")
         return False

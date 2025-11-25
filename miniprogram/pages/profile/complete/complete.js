@@ -1,6 +1,6 @@
 // pages/profile/complete/complete.js
 const userApi = require('../../../api/user');
-const auth = require('../../../utils/auth');
+const authCenter = require('../../../utils/authCenter');
 
 Page({
   data: {
@@ -23,8 +23,9 @@ Page({
 
   onLoad(options) {
     // 检查是否已登录
-    if (!auth.isLogined()) {
-      auth.navigateToLogin('/pages/profile/complete/complete');
+    if (!authCenter.logined) {
+      authCenter.logout();
+      wx.reLaunch({ url: '/pages/login/login' });
       return;
     }
 
@@ -38,8 +39,9 @@ Page({
   },
 
   onShow() {
-    if (!auth.isLogined()) {
-      auth.navigateToLogin('/pages/profile/complete/complete');
+    if (!authCenter.logined) {
+      authCenter.logout();
+      wx.reLaunch({ url: '/pages/login/login' });
       return;
     }
   },
@@ -207,7 +209,7 @@ Page({
       console.log('更新成功:', result);
   
       // 更新本地用户信息
-      auth.setUserInfo(result);
+      authCenter.setUserInfo(result);
   
       wx.showToast({
         title: '信息完善成功',

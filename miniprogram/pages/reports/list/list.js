@@ -1,6 +1,6 @@
 // pages/reports/list/list.js
 const reportApi = require('../../../api/report');
-const auth = require('../../../utils/auth');
+const authCenter = require('../../../utils/authCenter');
 
 Page({
   data: {
@@ -12,8 +12,9 @@ Page({
   },
 
   onShow() {
-    if (!auth.isLogined()) {
-      auth.navigateToLogin();
+    if (!authCenter.logined) {
+      authCenter.logout();
+      wx.reLaunch({ url: '/pages/login/login' });
       return;
     }
   },
@@ -33,7 +34,7 @@ Page({
    * 加载报告列表
    */
   loadReports() {
-    const userInfo = auth.getUserInfo();
+    const userInfo = authCenter.getUserInfo();
     if (!userInfo) return;
 
     if (this.data.loading) return;

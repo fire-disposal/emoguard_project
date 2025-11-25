@@ -1,8 +1,5 @@
 const userApi = require('../../api/user');
 const errorUtil = require('../../utils/error');
-const auth = require('../../utils/auth'); // 引入统一的 auth 工具
-const storage = require('../../utils/storage');
-const request = require('../../utils/request'); // 提前引入，避免函数内 require
 
 const app = getApp(); // 获取全局实例
 
@@ -37,15 +34,15 @@ Page({
    */
   async handleWechatLogin() {
     // 1. 防抖与校验
-    if (this.data.loading) return; 
-    
+    if (this.data.loading) return;
+
     if (!this.data.isAgree) {
       wx.showToast({
         title: '请阅读并勾选用户协议',
         icon: 'none'
       });
       // 震动反馈，提示用户
-      wx.vibrateShort({ type: 'medium' }); 
+      wx.vibrateShort({ type: 'medium' });
       return;
     }
 
@@ -54,25 +51,35 @@ Page({
     try {
       // 2. 获取微信 Code (微信新版支持返回 Promise，如果不支持请看下方注释*)
       const { code } = await wx.login();
-      
+
       console.log('获取 Code 成功，准备登录...');
 
       // 3. 调用后端登录
       const res = await userApi.wechatLogin({ code });
 
-      // 4. 保存 Token (使用 auth 工具封装的方法，或者直接 storage)
-      // 建议直接更新 globalData 和 storage
-      storage.setToken(res.access_token, res.refresh_token);
-      app.globalData.token = res.access_token;
-      app.globalData.refreshToken = res.refresh_token;
-
-      // 5. 重置请求锁 (防止死锁)
-      if (request.resetRefreshState) {
-        request.resetRefreshState();
+      // 4. 保存 Token 交由认证中心处理 token 持久化和同步
+      const authCenter = require('../../utils/authCenter');
+      await authCenter.login(res.access_token, res.refresh_token);
+      // 熔断后直接跳转登录页，防止401风暴
+      if (authCenter.breakdown) {
+        wx.showToast({ title: '认证失效，请重新登录', icon: 'none' });
+        wx.reLaunch({ url: '/pages/login/login' });
+        return;
       }
 
       // 6. 强制刷新用户信息 (并行处理提升速度，但需 await 确保数据到位)
-      await app.refreshUserInfo();
+      let userInfo = null;
+      try {
+        userInfo = await app.refreshUserInfo();
+        app.globalData.userInfo = userInfo;
+      } catch (e) {
+        // 捕获401/CSRF异常，主动登出并跳转登录页
+        if (e?.message?.includes('401') || e?.message?.includes('Unauthorized')) {
+          wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
+          wx.reLaunch({ url: '/pages/login/login' });
+          return;
+        }
+      }
 
       wx.showToast({ title: '登录成功', icon: 'success' });
 
@@ -93,10 +100,10 @@ Page({
   onAgreementChange(e) {
     const isChecked = e.detail.value.length > 0; // 只要数组不为空即为选中
     this.setData({ isAgree: isChecked });
-    
+
     // 同步状态到全局
     app.setAgreementStatus(isChecked);
-    
+
     // 只有勾选时才开启自动登录，取消勾选不一定需要关闭(看业务需求)，这里保持原逻辑
     if (isChecked) {
       app.setAutoLoginEnabled(true);
@@ -116,7 +123,7 @@ Page({
    */
   handleLoginSuccess() {
     const userInfo = app.globalData.userInfo;
-    
+
     // 1. 检查信息完整性
     if (!userInfo || !userInfo.is_profile_complete) {
       console.log('信息未完善，跳转完善页');
@@ -127,7 +134,7 @@ Page({
     // 2. 确定目标页面
     // 如果没有重定向地址，默认去首页
     const targetUrl = this.data.redirectUrl || '/pages/index/index';
-    
+
     console.log('准备跳转至:', targetUrl);
 
     // 3. 智能跳转策略
@@ -143,8 +150,8 @@ Page({
         wx.reLaunch({
           url: targetUrl,
           fail: (err) => {
-             console.error('跳转失败，回退到首页', err);
-             wx.reLaunch({ url: '/pages/index/index' });
+            console.error('跳转失败，回退到首页', err);
+            wx.reLaunch({ url: '/pages/index/index' });
           }
         });
       }

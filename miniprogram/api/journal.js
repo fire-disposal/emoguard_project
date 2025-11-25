@@ -13,7 +13,7 @@ function createJournal(data) {
     mainMood: data.mainMood,
     moodIntensity: data.moodIntensity,
     mainMoodOther: data.mainMoodOther || '',
-    moodSupplementTags: data.moodSupplementTags || [],
+    moodSupplementTags: typeof data.moodSupplementTags === 'object' && !Array.isArray(data.moodSupplementTags) ? data.moodSupplementTags : {},
     moodSupplementText: data.moodSupplementText || ''
   };
   return request.post('/api/journals/', payload);
