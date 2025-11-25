@@ -89,6 +89,7 @@ App({
 
       /* 熔断后不再请求，防止 401 风暴 */
       if (authCenter.breakdown) {
+        wx.reLaunch({ url: '/pages/login/login' });
         wx.showToast({ title: '认证失效，请重新登录', icon: 'none' });
         return;
       }
@@ -107,6 +108,7 @@ App({
           // 捕获401/CSRF异常，主动登出并跳转登录页
           if (e?.message?.includes('401') || e?.message?.includes('Unauthorized')) {
             authCenter.logout();
+            wx.reLaunch({ url: '/pages/login/login' });
             wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
             return;
           }
