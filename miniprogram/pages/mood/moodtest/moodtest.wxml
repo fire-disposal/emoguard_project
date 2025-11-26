@@ -1,10 +1,6 @@
 <!-- 情绪测评页面 - 整合版本 -->
 <block wx:if="{{!showSuccess}}">
   <view class="page">
-    <!-- 训练测试入口按钮 -->
-    <view class="train-test-entry">
-      <button type="primary" class="train-test-btn" bindtap="goToTrainTest">训练测试</button>
-    </view>
     <!-- 进度条 -->
     <view class="progress-container" wx:if="{{questions.length > 0}}">
       <view class="progress-bar">
