@@ -4,6 +4,7 @@ from apps.cognitive_flow.models import CognitiveAssessmentRecord
 from apps.cognitive_flow.serializers import (
     CognitiveAssessmentSubmitSchema,
     CognitiveAssessmentResultSchema,
+    SimpleAssessmentHistorySchema,
 )
 import logging
 from config.jwt_auth_adapter import jwt_auth
@@ -83,35 +84,35 @@ def submit_assessment(request, data: CognitiveAssessmentSubmitSchema):
 
 
 @cognitive_router.get(
-    "/history", response=List[CognitiveAssessmentResultSchema], auth=jwt_auth
+    "/history", response=List[SimpleAssessmentHistorySchema], auth=jwt_auth
 )
 def get_assessment_history(request):
     """
-    获取当前用户的认知测评历史记录（仅返回自己的记录，按创建时间倒序，字段精简）
+    获取当前用户的认知测评历史记录（极简，仅展示必要字段，按创建时间倒序）
     """
-    current_user = request.auth
-    records = CognitiveAssessmentRecord.objects.filter(
-        user_id=current_user.id
-    ).order_by("-created_at")
-    result = []
-    for record in records:
-        result.append(
-            CognitiveAssessmentResultSchema(
-                id=record.id,
-                user_id=str(record.user_id),
-                score_scd=record.score_scd,
-                score_mmse=record.score_mmse,
-                score_moca=record.score_moca,
-                score_gad7=record.score_gad7,
-                score_phq9=record.score_phq9,
-                score_adl=record.score_adl,
-                analysis={},
-                started_at=record.started_at.isoformat() if record.started_at else "",
-                completed_at=record.completed_at.isoformat() if record.completed_at else "",
-                created_at=record.created_at.isoformat() if record.created_at else "",
+    try:
+        from apps.cognitive_flow.models import CognitiveAssessmentRecord
+        user_id = request.auth.id
+        records = CognitiveAssessmentRecord.objects.filter(user_id=user_id).order_by("-created_at")
+        result = []
+        for record in records:
+            result.append(
+                SimpleAssessmentHistorySchema(
+                    id=record.id,
+                    score_scd=record.score_scd,
+                    score_mmse=record.score_mmse,
+                    score_moca=record.score_moca,
+                    started_at=record.started_at.isoformat() if record.started_at else "",
+                    completed_at=record.completed_at.isoformat() if record.completed_at else "",
+                    created_at=record.created_at.isoformat() if record.created_at else "",
+                )
             )
-        )
-    return result
+        return result
+    except Exception as e:
+        import logging
+        logger = logging.getLogger("cognitive_flow.history")
+        logger.error(f"认知测评历史接口异常: {e}", exc_info=True)
+        return []
 
 
 @cognitive_router.get(

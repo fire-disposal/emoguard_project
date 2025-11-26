@@ -34,7 +34,7 @@
           <text class="scale-name">{{item.name}}</text>
           <text class="scale-desc">{{item.description}}</text>
         </view>
-        <button class="scale-btn" data-id="{{item.id}}" data-name="{{item.name}}" bindtap="startSingleScale">开始</button>
+        <button class="scale-btn" data-code="{{item.code}}" data-name="{{item.name}}" bindtap="startSingleScale">开始</button>
       </view>
     </view>
   </view>

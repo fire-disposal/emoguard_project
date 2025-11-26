@@ -1,72 +1,82 @@
-// 答题详情页面 - 支持单问卷、流程、智能测评模式
+// 网络量表专用测评详情页
 const scaleApi = require('../../../api/scale');
 const authCenter = require('../../../utils/authCenter');
 
 Page({
   data: {
-    scaleConfig: null,
+    scaleCode: '', // 量表唯一标识
+    scaleInfo: null, // 量表元信息
     questions: [],
     selectedOptions: [],
     currentQuestionIndex: 0,
     startTime: 0,
     loading: true,
-    // 只保留单问卷模式
-    mode: 'single',
-    assessmentId: null
+    submitting: false
   },
 
-  onLoad(options) {
+  async onLoad(options) {
     const { id } = options;
-    
     if (!id) {
       wx.showToast({ title: '缺少参数', icon: 'none' });
       wx.navigateBack();
       return;
     }
-
     this.setData({
-      // 强制单问卷模式
-      mode: 'single',
-      assessmentId: null
+      scaleCode: id,
+      startTime: Date.now(),
+      loading: true
     });
-
-    this.loadScale(id);
+    await this.loadScaleInfo();
+    await this.loadQuestions();
   },
 
-  // 加载量表
-  async loadScale(id) {
+  // 加载量表元信息
+  async loadScaleInfo() {
     try {
-      // 加载量表配置
-      const res = await scaleApi.getConfig(id);
+      const info = await scaleApi.getScale(this.data.scaleCode);
+      this.setData({ scaleInfo: info });
+    } catch (error) {
+      wx.showToast({ title: '量表信息加载失败', icon: 'none' });
+    }
+  },
 
-      // 校验问题数据
-      const questions = Array.isArray(res.questions) ? res.questions : [];
-      const selectedOptions = new Array(questions.length).fill(-1);
-
+  // 加载题目
+  async loadQuestions() {
+    try {
+      const questions = await scaleApi.getQuestions(this.data.scaleCode);
+      const formatted = Array.isArray(questions)
+        ? questions.map(q => ({
+            id: q.id || '',
+            text: q.text || '',
+            options: Array.isArray(q.options) ? q.options : [],
+            type: q.type || 'single',
+            required: typeof q.required === 'boolean' ? q.required : true,
+            order: typeof q.order === 'number' ? q.order : 0
+          }))
+        : [];
       this.setData({
-        scaleConfig: res,
-        questions,
-        selectedOptions,
-        startTime: Date.now(),
+        questions: formatted,
+        selectedOptions: new Array(formatted.length).fill(-1),
+        currentQuestionIndex: 0,
         loading: false
       });
     } catch (error) {
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      wx.showToast({ title: '题目加载失败', icon: 'none' });
       this.setData({ loading: false });
     }
   },
 
   // 选择答案
   selectOption(e) {
-    const { index } = e.currentTarget.dataset;
     const { currentQuestionIndex, selectedOptions } = this.data;
+    const value = Number(e.detail.value); // radio-group change事件返回选中的value
     if (
       Array.isArray(selectedOptions) &&
       currentQuestionIndex >= 0 &&
       currentQuestionIndex < selectedOptions.length
     ) {
       const updatedOptions = [...selectedOptions];
-      updatedOptions[currentQuestionIndex] = index;
+      updatedOptions[currentQuestionIndex] = value;
       this.setData({ selectedOptions: updatedOptions });
     }
   },
@@ -108,41 +118,25 @@ Page({
       wx.showToast({ title: '请完成所有题目', icon: 'none' });
       return;
     }
-
-    if (!this.data.scaleConfig || !this.data.scaleConfig.id) {
-      wx.showToast({ title: '量表ID异常', icon: 'none' });
-      return;
-    }
-
     const userInfo = authCenter.getUserInfo();
     if (!userInfo) {
       wx.showToast({ title: '请先登录', icon: 'none' });
       return;
     }
-
+    this.setData({ submitting: true });
     wx.showLoading({ title: '提交中...' });
-
     try {
       const now = new Date();
-      const data = {
-        scale_config_id: this.data.scaleConfig.id,
+      const payload = {
+        scale_code: this.data.scaleCode,
         selected_options: this.data.selectedOptions,
-        duration_ms: now.getTime() - this.data.startTime,
         started_at: new Date(this.data.startTime).toISOString(),
         completed_at: now.toISOString()
       };
-
-      // 只保留单问卷模式
-      let result;
-      result = await scaleApi.createResult({
-        ...data,
-        user_id: userInfo.id
-      });
-
+      const result = await scaleApi.createResult(payload);
       wx.hideLoading();
-
+      this.setData({ submitting: false });
       if (result.success) {
-        // 跳转到结果页面
         wx.redirectTo({
           url: `/pages/assessment/result/result?id=${result.id}`
         });
@@ -151,7 +145,7 @@ Page({
       }
     } catch (error) {
       wx.hideLoading();
-      console.error('提交失败:', error);
+      this.setData({ submitting: false });
       wx.showToast({ title: '提交失败', icon: 'none' });
     }
   }

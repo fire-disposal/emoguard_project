@@ -1,11 +1,16 @@
-"""
-量表管理后台 - 模块化设计，主入口文件
-"""
-# 从 admin 包导入所有管理类
-from apps.scales.admin import (
-    ScaleConfigAdmin,
-    ScaleResultAdmin,
-)
+from django.contrib import admin
+from apps.scales.models import ScaleResult
 
-# 确保这些类在模块级别可用，便于 Django 发现
-__all__ = ['ScaleConfigAdmin', 'ScaleResultAdmin']
+@admin.register(ScaleResult)
+class ScaleResultAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user_id",
+        "scale_code",
+        "score",
+        "started_at",
+        "completed_at",
+        "created_at",
+    )
+    search_fields = ("user_id", "scale_code")
+    list_filter = ("scale_code", "started_at", "completed_at", "created_at")

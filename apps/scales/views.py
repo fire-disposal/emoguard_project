@@ -1,13 +1,14 @@
 """
 量表API视图 - 改进版本，更好的代码组织和可维护性
 """
-from ninja import Router, Query
-from typing import List, Optional, Dict, Any
-from apps.scales.assessment_core import ScaleResultService
-from apps.scales.models import ScaleConfig
+
+from ninja import Router
+from typing import List, Dict, Any
+from apps.scales.definitions.registry import ScaleRegistry
 from apps.scales.serializers import (
-    ScaleConfigResponseSchema, ScaleResultCreateSchema, ScaleResultResponseSchema,
-    QuestionSchema, QuestionOptionSchema
+    ScaleResultCreateSchema,
+    ScaleResultResponseSchema,
+    ScaleResultHistorySchema,
 )
 from config.jwt_auth_adapter import jwt_auth
 import logging
@@ -20,222 +21,192 @@ scales_router = Router(tags=["scales"])
 class ScaleResultViewHelper:
     """量表结果视图辅助类 - 处理数据转换和格式化"""
 
-
-    @staticmethod
-    def format_scale_config_data(scale_config) -> Optional[Dict[str, Any]]:
-        """格式化量表配置数据"""
-        if not scale_config:
-            return None
-            
-        return {
-            'id': getattr(scale_config, 'id', 0) or 0,
-            'name': getattr(scale_config, 'name', '') or '',
-            'code': getattr(scale_config, 'code', '') or '',
-            'version': getattr(scale_config, 'version', '') or '',
-            'description': getattr(scale_config, 'description', '') or '',
-            'type': getattr(scale_config, 'type', '') or '',
-            'questions': getattr(scale_config, 'questions', []) or [],
-            'status': getattr(scale_config, 'status', '') or '',
-        }
-    
-    @staticmethod
-    def format_scale_result_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
-        """格式化量表结果数据"""
-        if not raw_data:
-            return {}
-            
-        scale_config = raw_data.get('scale_config')
-        
-        return {
-            'id': raw_data.get('id', 0) or 0,
-            'scale_config': ScaleResultViewHelper.format_scale_config_data(scale_config),
-            'selected_options': raw_data.get('selected_options', []) or [],
-            'conclusion': raw_data.get('conclusion', '') or '',
-            'duration_ms': raw_data.get('duration_ms', 0) or 0,
-            'started_at': raw_data.get('started_at', '') or '',
-            'completed_at': raw_data.get('completed_at', '') or '',
-            'status': raw_data.get('status', '') or '',
-            'analysis': raw_data.get('analysis', {}) or {},
-        }
-
-
-# ========== 单量表功能接口 ==========
-
-@scales_router.get("/configs", response=List[ScaleConfigResponseSchema])
-def list_configs(request, status: Optional[str] = Query(None)):
-    """获取量表配置列表 - 精简接口"""
+@scales_router.get(
+    "/results/history", auth=jwt_auth, response=List[ScaleResultHistorySchema]
+)
+def get_user_scale_history(request):
+    """获取用户量表结果历史（自动适配插件处理类）"""
     try:
-        queryset = ScaleConfig.objects.all()
-        if status:
-            queryset = queryset.filter(status=status)
-        
-        configs = list(queryset.order_by('-created_at'))
-        
-        # 确保数据格式正确并构建精简响应
-        result = []
-        for config in configs:
-            # 确保questions中的value是字符串
-            questions = config.questions or []
-            for question in questions:
-                if 'options' in question:
-                    for option in question['options']:
-                        if 'value' in option:
-                            option['value'] = str(option['value'])
-            
-            # 用schema实例化，确保类型一致
-            result.append(
-                ScaleConfigResponseSchema(
-                    id=config.id,
-                    name=config.name,
-                    code=config.code,
-                    version=config.version,
-                    description=config.description,
-                    type=config.type,
-                    questions=[
-                        QuestionSchema(
-                            id=q.get('id', 0),
-                            question=q.get('question', ''),
-                            options=[
-                                QuestionOptionSchema(
-                                    text=o.get('text', ''),
-                                    value=str(o.get('value', ''))
-                                ) for o in q.get('options', [])
-                            ]
-                        ) for q in questions
-                    ],
-                    status=config.status
-                )
+        user_id = str(request.user.id)
+        from apps.scales.models import ScaleResult
+
+        ScaleRegistry.discover_scales()
+        results = ScaleResult.objects.filter(user_id=user_id).order_by("-created_at")
+        history_list = []
+        for r in results:
+            scale_obj = ScaleRegistry.get_scale(r.scale_code)
+            analysis = scale_obj.calculate(r.selected_options) if scale_obj else {}
+            history_list.append(
+                {
+                    "id": int(r.id) if r.id is not None else 0,
+                    "score": r.score,
+                    "scale_type": getattr(scale_obj, "type", "") if scale_obj else "",
+                    "conclusion": r.conclusion or analysis.get("interpretation", ""),
+                    "created_at": r.created_at.isoformat() if r.created_at else "",
+                }
             )
-        
-        return result
-        
+        return history_list
     except Exception as e:
-        logger.error(f"获取量表配置失败: {str(e)}")
+        logger.error(f"量表历史接口异常: {e}", exc_info=True)
         return []
 
-@scales_router.get("/configs/{config_id}", response=ScaleConfigResponseSchema)
-def get_config(request, config_id: int):
-    """获取量表配置详情 - 精简接口"""
-    try:
-        config = ScaleConfig.objects.get(id=config_id)
-        
-        # 确保数据格式正确并构建精简响应
-        questions = config.questions or []
-        for question in questions:
-            if 'options' in question:
-                for option in question['options']:
-                    if 'value' in option:
-                        option['value'] = str(option['value'])
-        
-        # 用schema实例化，确保类型一致
-        return ScaleConfigResponseSchema(
-            id=config.id,
-            name=config.name,
-            code=config.code,
-            version=config.version,
-            description=config.description,
-            type=config.type,
-            questions=[
-                QuestionSchema(
-                    id=q.get('id', 0),
-                    question=q.get('question', ''),
-                    options=[
-                        QuestionOptionSchema(
-                            text=o.get('text', ''),
-                            value=str(o.get('value', ''))
-                        ) for o in q.get('options', [])
-                    ]
-                ) for q in questions
-            ],
-            status=config.status
-        )
-    except ScaleConfig.DoesNotExist:
-        return {"error": "量表配置不存在"}
-    except Exception as e:
-        return {"error": f"获取量表配置失败: {str(e)}"}
 
 @scales_router.post("/results", auth=jwt_auth, response=Dict[str, Any])
-def create_single_result(request, data: ScaleResultCreateSchema):
-    """提交单量表结果"""
+def create_scale_result(request, data: ScaleResultCreateSchema):
+    """提交量表结果（无 config 区分）"""
     try:
-        # 从JWT获取用户ID
         user_id = str(request.user.id)
-        result = ScaleResultService.create_single_scale_result(
-            user_id=user_id,
-            scale_config_id=data.scale_config_id,
-            selected_options=data.selected_options,
-            duration_ms=data.duration_ms,
-            started_at=data.started_at,
-            completed_at=data.completed_at
-        )
-        
-        if result:
+        from apps.scales.definitions.registry import ScaleRegistry
+
+        ScaleRegistry.discover_scales()
+        scale_obj = ScaleRegistry.get_scale(data.scale_code)
+        if not scale_obj:
+            logger.error(f"量表未注册: scale_code={data.scale_code}, data={data}")
             return {
-                'id': result.id,
-                'success': True,
-                'message': '量表结果提交成功'
+                "error": "量表未注册",
+                "debug": {"scale_code": data.scale_code, "data": str(data)},
+            }
+        analysis = scale_obj.calculate(data.selected_options)
+        from apps.scales.models import ScaleResult
+
+        # 优化插件机制：统一通过 ScaleRegistry.calculate 调用，避免实例化参数错误
+        from apps.scales.definitions.registry import ScaleRegistry
+        analysis = ScaleRegistry.calculate(data.scale_code, data.selected_options)
+        result = ScaleResult.objects.create(
+            user_id=user_id,
+            scale_code=data.scale_code,
+            score=analysis.get("score", 0.0),
+            selected_options=data.selected_options,
+            conclusion=analysis.get("interpretation", ""),
+            started_at=data.started_at,
+            completed_at=data.completed_at,
+        )
+        if result:
+            logger.info(
+                f"量表结果创建成功: id={result.id}, user_id={user_id}, scale_code={data.scale_code}"
+            )
+            return {
+                "id": result.id,
+                "score": result.score,
+                "success": True,
+                "message": "量表结果提交成功",
+                "debug": {
+                    "user_id": user_id,
+                    "scale_code": data.scale_code,
+                    "data": str(data),
+                },
             }
         else:
-            return {"error": "提交失败"}
-            
+            logger.error(
+                f"量表结果创建失败: user_id={user_id}, scale_code={data.scale_code}, data={data}"
+            )
+            return {
+                "error": "提交失败",
+                "debug": {
+                    "user_id": user_id,
+                    "scale_code": data.scale_code,
+                    "data": str(data),
+                },
+            }
     except Exception as e:
-        logger.error(f"提交单量表结果失败: {str(e)}")
-        return {"error": f"提交失败: {str(e)}"}
+        logger.error(f"提交量表结果失败: {str(e)}, data={data}")
+        return {"error": f"提交失败: {str(e)}", "debug": {"data": str(data)}}
+
+
+@scales_router.get("/list", response=List[Dict])
+def list_scale_types(request):
+    """获取所有可用量表类型及元信息（插件机制）"""
+    try:
+        ScaleRegistry.discover_scales()
+        types = []
+        for scale_cls in ScaleRegistry.all_scales():
+            types.append(scale_cls().get_meta())
+        return types
+    except Exception as e:
+        logger.error(f"获取量表类型失败: {str(e)}")
+        return []
+
+
+@scales_router.get("/{scale_code}/questions", response=List[Dict])
+def get_scale_questions(request, scale_code: str):
+    """获取指定量表的题目结构（插件机制）"""
+    try:
+        ScaleRegistry.discover_scales()
+        questions = ScaleRegistry.get_questions(scale_code)
+        return questions
+    except Exception as e:
+        logger.error(f"获取量表题目失败: {str(e)}")
+        return []
+
+
+@scales_router.get("/{scale_code}", response=Dict)
+def get_scale(request, scale_code: str):
+    """获取量表定义详情（无数据库依赖），业务优化：questions结构标准化，前端易用"""
+    try:
+        ScaleRegistry.discover_scales()
+        scale_cls = ScaleRegistry.get_scale(scale_code)
+        if not scale_cls:
+            return {"error": "量表不存在"}
+        # 标准化题目结构，便于前端渲染
+        questions = []
+        for q in getattr(scale_cls, "questions", []):
+            questions.append(
+                {
+                    "id": q.get("id", ""),
+                    "text": q.get("text", ""),
+                    "options": q.get("options", []),
+                    "type": q.get("type", "single"),
+                    "required": q.get("required", True),
+                    "order": q.get("order", 0),
+                }
+            )
+        return {
+            "code": getattr(scale_cls, "code", ""),
+            "name": getattr(scale_cls, "name", ""),
+            "version": getattr(scale_cls, "version", ""),
+            "description": getattr(scale_cls, "description", ""),
+            "type": getattr(scale_cls, "type", ""),
+            "questions": questions,
+            "status": getattr(scale_cls, "status", ""),
+        }
+    except Exception as e:
+        return {"error": f"获取量表定义失败: {str(e)}"}
+
 
 @scales_router.get("/results/{result_id}", response=ScaleResultResponseSchema)
-def get_single_result(request, result_id: int):
-    """获取单量表结果详情 - 改进版本"""
+def get_scale_result(request, result_id: int):
+    """获取单量表结果详情（自动适配插件处理类）"""
     try:
-        raw_data = ScaleResultService.get_single_scale_result(result_id)
-        if not raw_data:
+        from apps.scales.models import ScaleResult
+
+        result = ScaleResult.objects.filter(id=result_id).first()
+        if not result:
             return {"error": "结果不存在"}
-        
-        # 使用辅助类进行数据格式化
-        # 用schema实例化，确保类型一致
-        formatted = ScaleResultViewHelper.format_scale_result_data(raw_data)
+        ScaleRegistry.discover_scales()
+        scale_obj = ScaleRegistry.get_scale(result.scale_code)
+        questions = getattr(scale_obj, "questions", []) if scale_obj else []
+        analysis = scale_obj.calculate(result.selected_options) if scale_obj else {}
         return ScaleResultResponseSchema(
-            id=formatted['id'],
-            scale_config=ScaleConfigResponseSchema(**formatted['scale_config']) if formatted['scale_config'] else None,
-            selected_options=[int(x) for x in formatted.get('selected_options', [])],
-            conclusion=formatted.get('conclusion', ''),
-            duration_ms=int(formatted.get('duration_ms', 0)),
-            started_at=str(formatted.get('started_at', '')),
-            completed_at=str(formatted.get('completed_at', '')),
-            status=formatted.get('status', ''),
-            analysis=formatted.get('analysis', {}),
+            id=result.id,
+            scale_code=result.scale_code,
+            questions=questions,
+            selected_options=[int(x) for x in result.selected_options],
+            score=result.score,
+            risk_level=analysis.get("level", ""),
+            conclusion=result.conclusion or analysis.get("interpretation", ""),
+            duration_ms=int(
+                (result.completed_at - result.started_at).total_seconds() * 1000
+            )
+            if result.started_at and result.completed_at
+            else 0,
+            started_at=str(result.started_at),
+            completed_at=str(result.completed_at),
+            status="completed",
+            analysis=analysis,
+            created_at=str(result.created_at),
         )
-        
     except Exception as e:
-        logger.error(f"获取单量表结果失败: {str(e)}")
+        logger.error(f"获取量表结果失败: {str(e)}")
         return {"error": f"获取结果失败: {str(e)}"}
 
-@scales_router.get("/results/history", auth=jwt_auth, response=List[ScaleResultResponseSchema])
-def get_user_results_history(request):
-    """
-    获取当前用户的所有量表历史结果（仅返回自己的，按创建时间倒序，字段精简）
-    """
-    user_id = str(request.user.id)
-    # 获取所有结果，不限制数量
-    results = ScaleResultService.get_user_scale_results(user_id, limit=1000)
-    # 格式化为响应结构
-    response = []
-    for result in results:
-        # 只保留指定字段
-        response.append(
-            ScaleResultResponseSchema(
-                id=result.id,
-                scale_config=ScaleConfigResponseSchema(**result.scale_config) if isinstance(result.scale_config, dict) else result.scale_config,
-                selected_options=[int(x) for x in getattr(result, 'selected_options', [])],
-                conclusion=getattr(result, 'conclusion', ''),
-                duration_ms=int(getattr(result, 'duration_ms', 0)),
-                started_at=result.started_at.isoformat() if result.started_at else "",
-                completed_at=result.completed_at.isoformat() if result.completed_at else "",
-                status=getattr(result, 'status', ''),
-                analysis=getattr(result, 'analysis', {}),
-                created_at=result.created_at.isoformat() if hasattr(result, "created_at") else "",
-            )
-        )
-    # 按创建时间倒序（数据库已排序，保险起见再排序一次）
-    response.sort(key=lambda x: x.created_at, reverse=True)
-    return response
-    
+

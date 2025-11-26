@@ -3,7 +3,7 @@
 """
 
 from django.contrib import admin
-from apps.scales.admin.demographic_export import (
+from apps.users.demographic_export import (
     get_demographic_info
 )
 from django.utils.html import format_html
@@ -100,7 +100,7 @@ class MoodJournalAdmin(ExportActionModelAdmin):
 
     def export_selected_excel(self, request, queryset):
         """导出心情日志为Excel格式（调用人口学信息导出工具）"""
-        from apps.scales.admin.demographic_export import build_excel_with_demographics
+        from apps.users.demographic_export import build_excel_with_demographics
 
         extra_field_order = [
             "id", "mainMood", "moodIntensity", "moodSupplementText", "record_date", "created_at"
@@ -120,7 +120,7 @@ class MoodJournalAdmin(ExportActionModelAdmin):
 
     def export_selected_csv(self, request, queryset):
         """导出心情日志为CSV格式（调用人口学信息导出工具）"""
-        from apps.scales.admin.demographic_export import build_csv_with_demographics
+        from apps.users.demographic_export import build_csv_with_demographics
 
         extra_field_order = [
             "id", "mainMood", "moodIntensity", "moodSupplementText", "record_date", "created_at"

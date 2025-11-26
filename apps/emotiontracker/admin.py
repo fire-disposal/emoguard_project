@@ -78,7 +78,7 @@ class EmotionRecordAdmin(ExportActionModelAdmin):
 
     def export_selected_excel(self, request, queryset):
         """导出心情日志为Excel格式（调用人口学信息导出工具）"""
-        from apps.scales.admin.demographic_export import build_excel_with_demographics
+        from apps.users.demographic_export import build_excel_with_demographics
 
         extra_field_order = [
             "id",
@@ -120,7 +120,7 @@ class EmotionRecordAdmin(ExportActionModelAdmin):
 
     def export_selected_csv(self, request, queryset):
         """导出心情日志为CSV格式（调用人口学信息导出工具）"""
-        from apps.scales.admin.demographic_export import build_csv_with_demographics
+        from apps.users.demographic_export import build_csv_with_demographics
 
         extra_field_order = [
             "id",

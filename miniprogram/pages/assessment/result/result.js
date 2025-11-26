@@ -22,7 +22,14 @@ Page({
     this.setData({ loading: true });
     try {
       const res = await scaleApi.getResult(id);
-      this.setData({ result: res });
+      // 结论字段适配（兼容后端返回的 conclusion 字段）
+      let conclusion = '';
+      if (res && typeof res.conclusion === 'string') {
+        conclusion = res.conclusion;
+      } else if (res && res.analysis && typeof res.analysis.interpretation === 'string') {
+        conclusion = res.analysis.interpretation;
+      }
+      this.setData({ result: { ...res, conclusion } });
     } catch (error) {
       wx.showToast({
         title: (error && error.message) || '加载失败',

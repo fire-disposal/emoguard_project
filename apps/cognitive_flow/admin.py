@@ -3,7 +3,7 @@
 """
 
 from django.contrib import admin
-from apps.scales.admin.demographic_export import (
+from apps.users.demographic_export import (
     build_excel_with_demographics,
     build_csv_with_demographics,
 )

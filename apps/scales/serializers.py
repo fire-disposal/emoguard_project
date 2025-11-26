@@ -1,39 +1,30 @@
 from ninja import Schema
-from typing import Optional, List, Dict
+from typing import Optional, List
 
-class QuestionOptionSchema(Schema):
-    text: str
-    value: str  # 确保value是字符串
-
-class QuestionSchema(Schema):
-    id: int
-    question: str
-    options: List[QuestionOptionSchema]
-
-class ScaleConfigResponseSchema(Schema):
-    id: int
-    name: str
-    code: str
-    version: str
-    description: Optional[str]
-    type: str
-    questions: List[QuestionSchema]
-    status: str
 
 class ScaleResultCreateSchema(Schema):
-    scale_config_id: int
+    """量表结果创建参数"""
+    scale_code: str
     selected_options: List[int]
-    duration_ms: int
     started_at: str
     completed_at: str
 
 class ScaleResultResponseSchema(Schema):
+    """量表结果响应结构"""
     id: int
-    scale_config: ScaleConfigResponseSchema
+    scale_code: str
     selected_options: List[int]
+    score: float
     conclusion: Optional[str]
     duration_ms: int
     started_at: str
     completed_at: str
-    status: str
-    analysis: Dict
+    created_at: Optional[str]
+
+class ScaleResultHistorySchema(Schema):
+    """量表结果历史记录响应结构"""
+    id: int
+    score: float
+    scale_type: str
+    conclusion: str
+    created_at: str

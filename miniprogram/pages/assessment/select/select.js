@@ -16,14 +16,14 @@ Page({
   async loadScales() {
     try {
       this.setData({ loading: true });
-      const res = await scaleApi.listConfigs({ status: 'active' });
+      const res = await scaleApi.listTypes({ status: 'active' });
       
       if (res && res.length > 0) {
         this.setData({ scales: res });
       } else {
         wx.showModal({
-          title: '无可用问卷',
-          content: '当前没有可用的问卷，请联系管理员',
+          title: '无可用量表',
+          content: '当前没有可用的量表，请联系管理员',
           showCancel: false
         });
       }
@@ -61,7 +61,7 @@ Page({
 
   // 单问卷模式 - 直接开始单个量表
   async startSingleScale(e) {
-    const { id, name } = e.currentTarget.dataset;
+    const { code, name } = e.currentTarget.dataset;
     
     wx.showModal({
       title: '确认开始',
@@ -71,7 +71,7 @@ Page({
       success: async (res) => {
         if (res.confirm) {
           wx.navigateTo({
-            url: `/pages/assessment/detail/detail?id=${id}&mode=single`
+            url: `/pages/assessment/detail/detail?id=${code}&mode=single`
           });
         }
       }

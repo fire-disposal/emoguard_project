@@ -7,7 +7,7 @@ from .models import User
 from django.contrib import admin
 from import_export.admin import ExportActionModelAdmin
 from import_export import resources, fields
-from apps.scales.admin.demographic_export import build_excel_with_demographics, build_csv_with_demographics
+from apps.users.demographic_export import build_excel_with_demographics, build_csv_with_demographics
 
 admin.site.site_title = "情绪监测系统"
 admin.site.site_header = "情绪监测系统"

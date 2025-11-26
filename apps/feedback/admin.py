@@ -3,7 +3,7 @@ from django.contrib import admin
 from import_export.admin import ExportActionModelAdmin
 from import_export import resources, fields
 from apps.feedback.models import Feedback
-from apps.scales.admin.demographic_export import build_excel_with_demographics, build_csv_with_demographics
+from apps.users.demographic_export import build_excel_with_demographics, build_csv_with_demographics
 
 class FeedbackResource(resources.ModelResource):
     """用户反馈导出资源（人口学信息由导出模块统一处理）"""
