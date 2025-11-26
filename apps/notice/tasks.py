@@ -41,27 +41,28 @@ def send_mood_reminder(period="morning"):
     page_path = f"pages/mood/moodtest/moodtest?period={period}"
     thing = "早间情绪测评提醒" if period == "morning" else "晚间情绪测评提醒"
 
-    users_with_quota = User.objects.filter(
-        notice_quotas__count__gt=0
-    ).distinct()
+    # users_with_quota = User.objects.filter(
+    #     notice_quotas__count__gt=0
+    # ).distinct()
+    users_with_quota = User.objects.all()
 
     for user in users_with_quota:
         try:
-            if is_mood_filled(user, today, period):
-                logger.info(f"{user.username} 已填写 {period} 测评，跳过")
-                continue
+            # if is_mood_filled(user, today, period):
+            #     logger.info(f"{user.username} 已填写 {period} 测评，跳过")
+            #     continue
 
-            # 可根据 period 判断 last_mood_tested_at 是否需要跳过
-            if user.last_mood_tested_at:
-                last_test_date = user.last_mood_tested_at.date()
-                last_test_time = user.last_mood_tested_at.time()
-                if last_test_date == today:
-                    if period == "morning" and last_test_time < time(14, 0, 0):
-                        logger.info(f"{user.username} 今日早间已测评，跳过")
-                        continue
-                    if period == "evening" and last_test_time >= time(14, 0, 0):
-                        logger.info(f"{user.username} 今日晚间已测评，跳过")
-                        continue
+            # # 可根据 period 判断 last_mood_tested_at 是否需要跳过
+            # if user.last_mood_tested_at:
+            #     last_test_date = user.last_mood_tested_at.date()
+            #     last_test_time = user.last_mood_tested_at.time()
+            #     if last_test_date == today:
+            #         if period == "morning" and last_test_time < time(14, 0, 0):
+            #             logger.info(f"{user.username} 今日早间已测评，跳过")
+            #             continue
+            #         if period == "evening" and last_test_time >= time(14, 0, 0):
+            #             logger.info(f"{user.username} 今日晚间已测评，跳过")
+            #             continue
 
             # 发送提醒
             result = send_template_msg(
