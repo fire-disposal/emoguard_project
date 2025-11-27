@@ -10,6 +10,7 @@ from django.utils.html import format_html
 from import_export.admin import ExportActionModelAdmin
 from import_export import resources, fields
 from apps.journals.models import MoodJournal
+from apps.users.admin_mixins import BaseAdminMixin
 
 
 class MoodJournalResource(resources.ModelResource):
@@ -47,11 +48,20 @@ class MoodJournalResource(resources.ModelResource):
 
 
 @admin.register(MoodJournal)
-class MoodJournalAdmin(ExportActionModelAdmin):
+class MoodJournalAdmin(BaseAdminMixin, ExportActionModelAdmin):
     resource_class = MoodJournalResource
+    
+    # 定义导出字段配置
+    export_extra_fields = [
+        "id", "mainMood", "moodIntensity", "moodSupplementText", "record_date", "created_at"
+    ]
+    export_extra_titles = [
+        "记录ID", "情绪名称", "情绪强度", "详细描述", "记录日期", "创建时间"
+    ]
+    
     list_display = (
         "id",
-        "user_info",
+        "user_info",  # 使用统一的user_info方法
         "mainMood",
         "moodIntensity",
         "mainMoodOther",
@@ -69,19 +79,7 @@ class MoodJournalAdmin(ExportActionModelAdmin):
     ordering = ("-created_at",)
     actions = ["export_selected_excel", "export_selected_csv"]
     date_hierarchy = "created_at"
-
-    def user_info(self, obj):
-        """显示用户信息（姓名/性别/年龄）"""
-        user_info = self.get_user_info_simple(obj.user_id)
-        return format_html(
-            "<b>{}</b> | {} | {}岁",
-            user_info.get("real_name", "未知"),
-            user_info.get("gender", "未知"),
-            user_info.get("age", "未知"),
-        )
-
-    user_info.short_description = "用户信息"
-
+    
     def text_preview(self, obj):
         """文本预览"""
         if not obj.text:
@@ -97,51 +95,7 @@ class MoodJournalAdmin(ExportActionModelAdmin):
         )
 
     text_preview.short_description = "描述预览"
-
-    def export_selected_excel(self, request, queryset):
-        """导出心情日志为Excel格式（调用人口学信息导出工具）"""
-        from apps.users.demographic_export import build_excel_with_demographics
-
-        extra_field_order = [
-            "id", "mainMood", "moodIntensity", "moodSupplementText", "record_date", "created_at"
-        ]
-        extra_field_titles = [
-            "记录ID", "情绪名称", "情绪强度", "详细描述", "记录日期", "创建时间"
-        ]
-
-        def get_user_id(record):
-            return record.user_id
-
-        return build_excel_with_demographics(
-            queryset, get_user_id, extra_field_order, extra_field_titles
-        )
-
-    export_selected_excel.short_description = "导出为Excel"
-
-    def export_selected_csv(self, request, queryset):
-        """导出心情日志为CSV格式（调用人口学信息导出工具）"""
-        from apps.users.demographic_export import build_csv_with_demographics
-
-        extra_field_order = [
-            "id", "mainMood", "moodIntensity", "moodSupplementText", "record_date", "created_at"
-        ]
-        extra_field_titles = [
-            "记录ID", "情绪名称", "情绪强度", "详细描述", "记录日期", "创建时间"
-        ]
-
-        def get_user_id(record):
-            return record.user_id
-        
-        return build_csv_with_demographics(
-            queryset,get_user_id ,extra_field_order, extra_field_titles
-        )
-
-    export_selected_csv.short_description = "导出为CSV"
-
-    def get_user_info_simple(self, user_id):
-        """获取用户人口学信息（复用模块）"""
-        return get_demographic_info(user_id)
-
+    
     def get_gender_display(self, gender):
         """性别显示"""
         GENDER_MAP = {"male": "男", "female": "女", "other": "其他", "": "未知"}

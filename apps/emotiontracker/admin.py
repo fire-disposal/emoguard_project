@@ -6,6 +6,7 @@ from django.contrib import admin
 from import_export.admin import ExportActionModelAdmin
 from import_export import resources, fields
 from apps.emotiontracker.models import EmotionRecord
+from apps.users.admin_mixins import BaseAdminMixin
 
 
 class EmotionRecordResource(resources.ModelResource):
@@ -52,11 +53,40 @@ class EmotionRecordResource(resources.ModelResource):
 
 
 @admin.register(EmotionRecord)
-class EmotionRecordAdmin(ExportActionModelAdmin):
+class EmotionRecordAdmin(BaseAdminMixin, ExportActionModelAdmin):
     resource_class = EmotionRecordResource
+    
+    # 定义导出字段配置
+    export_extra_fields = [
+        "id",
+        "period",
+        "depression",
+        "anxiety",
+        "energy",
+        "sleep",
+        "mainMood",
+        "moodIntensity",
+        "moodSupplementTags",
+        "moodSupplementText",
+        "created_at",
+    ]
+    export_extra_titles = [
+        "记录ID",
+        "记录时段",
+        "抑郁",
+        "焦虑",
+        "精力",
+        "睡眠",
+        "主要情绪",
+        "情绪强度",
+        "情绪标签",
+        "补充说明",
+        "记录时间",
+    ]
+    
     list_display = (
         "id",
-        "user_id",
+        "user_info",  # 使用统一的user_info方法
         "period",
         "depression",
         "anxiety",
@@ -75,86 +105,3 @@ class EmotionRecordAdmin(ExportActionModelAdmin):
     ordering = ("-created_at",)
     actions = ["export_selected_excel", "export_selected_csv"]
     date_hierarchy = "created_at"
-
-    def export_selected_excel(self, request, queryset):
-        """导出心情日志为Excel格式（调用人口学信息导出工具）"""
-        from apps.users.demographic_export import build_excel_with_demographics
-
-        extra_field_order = [
-            "id",
-            "user_id",
-            "period",
-            "depression",
-            "anxiety",
-            "energy",
-            "sleep",
-            "mainMood",
-            "moodIntensity",
-            "moodSupplementTags",
-            "moodSupplementText",
-            "created_at",
-        ]
-        extra_field_titles = [
-            "记录ID",
-            "用户ID",
-            "记录时段",
-            "抑郁",
-            "焦虑",
-            "精力",
-            "睡眠",
-            "主要情绪",
-            "情绪强度",
-            "情绪标签",
-            "补充说明",
-            "记录时间",
-        ]
-
-        def get_user_id(record):
-            return record.user_id
-
-        return build_excel_with_demographics(
-            queryset, get_user_id, extra_field_order, extra_field_titles
-        )
-
-    export_selected_excel.short_description = "导出为Excel"
-
-    def export_selected_csv(self, request, queryset):
-        """导出心情日志为CSV格式（调用人口学信息导出工具）"""
-        from apps.users.demographic_export import build_csv_with_demographics
-
-        extra_field_order = [
-            "id",
-            "user_id",
-            "period",
-            "depression",
-            "anxiety",
-            "energy",
-            "sleep",
-            "mainMood",
-            "moodIntensity",
-            "moodSupplementTags",
-            "moodSupplementText",
-            "created_at",
-        ]
-        extra_field_titles = [
-            "记录ID",
-            "用户ID",
-            "记录时段",
-            "抑郁",
-            "焦虑",
-            "精力",
-            "睡眠",
-            "主要情绪",
-            "情绪强度",
-            "情绪标签",
-            "补充说明",
-            "记录时间",
-        ]
-        def get_user_id(record):
-            return record.user_id
-
-        return build_csv_with_demographics(
-            queryset, get_user_id, extra_field_order, extra_field_titles
-        )
-
-    export_selected_csv.short_description = "导出为CSV"

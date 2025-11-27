@@ -3,13 +3,11 @@
 """
 
 from django.contrib import admin
-from apps.users.demographic_export import (
-    build_excel_with_demographics,
-    build_csv_with_demographics,
-)
 from import_export.admin import ExportActionModelAdmin
 from import_export import resources, fields
 from apps.cognitive_flow.models import CognitiveAssessmentRecord
+from apps.users.admin_mixins import BaseAdminMixin
+
 
 class CognitiveAssessmentRecordResource(resources.ModelResource):
     """认知测评记录导出资源（仅保留核心业务字段，人口学信息由导出模块统一处理）"""
@@ -44,12 +42,24 @@ class CognitiveAssessmentRecordResource(resources.ModelResource):
         export_order = fields
         skip_unchanged = True
 
+
 @admin.register(CognitiveAssessmentRecord)
-class CognitiveAssessmentRecordAdmin(ExportActionModelAdmin):
+class CognitiveAssessmentRecordAdmin(BaseAdminMixin, ExportActionModelAdmin):
     resource_class = CognitiveAssessmentRecordResource
+    
+    # 定义导出字段配置
+    export_extra_fields = [
+        "id", "score_scd", "score_mmse", "score_moca", "score_gad7", "score_phq9", "score_adl",
+        "started_at", "completed_at", "created_at"
+    ]
+    export_extra_titles = [
+        "记录ID", "SCD得分", "MMSE得分", "MoCA得分", "GAD7得分", "PHQ9得分", "ADL得分",
+        "开始时间", "完成时间", "记录时间"
+    ]
+    
     list_display = (
         "id",
-        "user_info",
+        "user_info",  # 使用统一的user_info方法
         "score_scd",
         "score_mmse",
         "score_moca",
@@ -67,40 +77,3 @@ class CognitiveAssessmentRecordAdmin(ExportActionModelAdmin):
     ordering = ("-created_at",)
     actions = ["export_selected_excel", "export_selected_csv"]
     date_hierarchy = "created_at"
-
-    def export_selected_excel(self, request, queryset):
-        """导出认知测评记录为Excel格式（调用人口学信息导出工具）"""
-        extra_field_order = [
-            "id", "score_scd", "score_mmse", "score_moca", "score_gad7", "score_phq9", "score_adl",
-            "started_at", "completed_at", "created_at"
-        ]
-        extra_field_titles = [
-            "记录ID", "SCD得分", "MMSE得分", "MoCA得分", "GAD7得分", "PHQ9得分", "ADL得分",
-            "开始时间", "完成时间", "记录时间"
-        ]
-        def get_user_id(record):
-            return record.user_id
-        return build_excel_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
-
-    export_selected_excel.short_description = "导出为Excel"
-
-    def export_selected_csv(self, request, queryset):
-        """导出认知测评记录为CSV格式（调用人口学信息导出工具）"""
-        extra_field_order = [
-            "id", "score_scd", "score_mmse", "score_moca", "score_gad7", "score_phq9", "score_adl",
-            "started_at", "completed_at", "created_at"
-        ]
-        extra_field_titles = [
-            "记录ID", "SCD得分", "MMSE得分", "MoCA得分", "GAD7得分", "PHQ9得分", "ADL得分",
-            "开始时间", "完成时间", "记录时间"
-        ]
-        def get_user_id(record):
-            return record.user_id
-        return build_csv_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
-
-    export_selected_csv.short_description = "导出为CSV"
-
-    def user_info(self, obj):
-        """显示用户信息（仅显示ID）"""
-        return f"ID: {str(obj.user_id)[:8]}"
-    user_info.short_description = "用户信息"
