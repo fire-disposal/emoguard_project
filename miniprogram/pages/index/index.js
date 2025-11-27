@@ -173,7 +173,7 @@ Page({
   goToTrainTest(e) {
     wx.vibrateShort();
 
-    wx.navigateTo({ url: '/pages/mood/trainTest/trainTest' });
+    wx.navigateTo({ url: '/pages/mood/moodtest/moodtest?mock=true&period=morning' });
   },
 
   /**

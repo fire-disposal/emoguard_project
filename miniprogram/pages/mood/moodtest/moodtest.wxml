@@ -1,6 +1,7 @@
-<!-- 情绪测评页面 - 整合版本 -->
 <block wx:if="{{!showSuccess}}">
   <view class="page">
+    <view class="mock-banner " wx:if="{{isMockMode}}">模拟模式</view>
+
     <!-- 进度条 -->
     <view class="progress-container" wx:if="{{questions.length > 0}}">
       <view class="progress-bar">
@@ -17,16 +18,20 @@
           <text class="question-subtitle">{{questions[currentStep].question}}</text>
         </view>
 
-        <!-- 单选题 -->
+        <!-- 1. 单选题 (Radio) -->
         <block wx:if="{{questions[currentStep].type === 'radio'}}">
           <view class="question-content">
-            <radio-group class="radio-group" data-key="{{questions[currentStep].key}}" bindchange="handleRadioChange">
-              <block wx:for="{{questions[currentStep].options}}" wx:key="value" wx:for-item="item">
-                <label class="radio-option {{getOptionSelected(currentStep, item.value) ? 'selected' : ''}}">
-                  <radio value="{{item.value}}" checked="{{getOptionSelected(currentStep, item.value)}}" />
+            <radio-group class="radio-group" data-key="{{questions[currentStep].key}}" bindchange="handleCommonChange">
+              <block wx:for="{{currentOptions}}" wx:key="index" wx:for-item="item">
+                <label class="radio-option {{item.checked ? 'selected' : ''}}">
+                  <radio 
+                    value="{{item.value}}" 
+                    checked="{{item.checked}}" 
+                    color="#007aff" 
+                  />  
                   <view class="option-content">
                     <text class="option-text">{{item.text}}</text>
-                    <text class="option-desc">{{item.desc}}</text>
+                    <text class="option-desc" wx:if="{{item.desc}}">{{item.desc}}</text>
                   </view>
                 </label>
               </block>
@@ -34,7 +39,7 @@
           </view>
         </block>
 
-        <!-- 滑块题 -->
+        <!-- 2. 滑块题 (Slider) -->
         <block wx:if="{{questions[currentStep].type === 'scale'}}">
           <view class="question-content">
             <view class="scale-container">
@@ -42,44 +47,55 @@
                 <text class="scale-min-text">{{questions[currentStep].minText}}</text>
                 <text class="scale-max-text">{{questions[currentStep].maxText}}</text>
               </view>
-              <slider class="scale-slider" 
-                      min="{{questions[currentStep].min}}" 
+              <!-- 直接绑定 currentValue -->
+              <slider class="scale-slider"
+                      min="{{questions[currentStep].min}}"
                       max="{{questions[currentStep].max}}"
-                      value="{{getCurrentValue(currentStep) || 0}}"
+                      value="{{currentValue}}"
                       show-value="{{true}}"
                       data-key="{{questions[currentStep].key}}"
-                      bindchange="handleSliderChange" />
+                      bindchange="handleCommonChange" />
               <text class="scale-desc">{{questions[currentStep].desc}}</text>
             </view>
           </view>
         </block>
 
-        <!-- 情绪选择（特殊单选） -->
+        <!-- 3. 情绪选择（特殊单选） -->
         <block wx:if="{{questions[currentStep].type === 'mood'}}">
           <view class="question-content">
             <view class="mood-options">
-              <block wx:for="{{questions[currentStep].options}}" wx:key="value">
-                <view class="mood-option {{mainMood === item.value ? 'selected' : ''}}"
-                      bindtap="handleMoodSelect" data-key="mainMood" data-value="{{item.value}}">
+              <!-- 循环 currentOptions，使用 JS 算好的 checked 属性来判断 class -->
+              <block wx:for="{{currentOptions}}" wx:key="value">
+                <view class="mood-option {{item.checked ? 'selected' : ''}}"
+                      bindtap="handleMoodSelect" 
+                      data-key="mainMood" 
+                      data-value="{{item.value}}">
                   <view class="mood-icon {{item.icon}}"></view>
                   <text class="mood-text">{{item.text}}</text>
                 </view>
               </block>
             </view>
-            <view wx:if="{{mainMood === 'other'}}" class="other-mood-input">
-              <input placeholder="请填写其他情绪" value="{{mainMoodOther}}"
-                     data-key="mainMoodOther" bindinput="handleTextChange"/>
+            <!-- 绑定 mainMoodOther -->
+            <view wx:if="{{currentValue === 'other'}}" class="other-mood-input">
+              <input placeholder="请填写其他情绪" 
+                     value="{{mainMoodOther}}"
+                     data-key="mainMoodOther" 
+                     bindinput="handleMoodOtherInput"/>
             </view>
           </view>
         </block>
 
-        <!-- 多选题（复选框） -->
+        <!-- 4. 多选题（Checkbox） -->
         <block wx:if="{{questions[currentStep].type === 'checkbox'}}">
           <view class="question-content">
             <checkbox-group class="checkbox-group" data-key="{{questions[currentStep].key}}" bindchange="handleCheckboxChange">
-              <block wx:for="{{questions[currentStep].options}}" wx:key="value" wx:for-item="item">
-                <label class="checkbox-option {{getCheckboxSelected(currentStep, item.value) ? 'selected' : ''}}">
-                  <checkbox value="{{item.value}}" checked="{{getCheckboxSelected(currentStep, item.value)}}" />
+              <block wx:for="{{currentOptions}}" wx:key="index" wx:for-item="item">
+                <label class="checkbox-option {{item.checked ? 'selected' : ''}}">
+                  <checkbox 
+                    value="{{item.value}}" 
+                    checked="{{item.checked}}" 
+                    color="#007aff" 
+                  />
                   <text class="checkbox-text">{{item.text}}</text>
                 </label>
               </block>
@@ -87,12 +103,12 @@
           </view>
         </block>
 
-        <!-- 文本输入 -->
+        <!-- 5. 文本输入 -->
         <block wx:if="{{questions[currentStep].type === 'text'}}">
           <view class="question-content">
-            <input class="text-input" 
+            <input class="text-input"
                    placeholder="{{questions[currentStep].placeholder || '请输入内容'}}"
-                   value="{{getCurrentValue(currentStep) || ''}}"
+                   value="{{currentValue}}"
                    data-key="{{questions[currentStep].key}}"
                    bindinput="handleTextChange" />
           </view>
@@ -118,7 +134,6 @@
   </view>
 </block>
 
-<!-- 提交成功页 -->
 <block wx:if="{{showSuccess}}">
   <view class="submit-success question-card" style="margin: 60rpx auto 0; max-width: 600rpx; text-align: center; box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.08);">
     <view class="question-header" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 32rpx;">

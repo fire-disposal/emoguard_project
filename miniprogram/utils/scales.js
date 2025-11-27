@@ -360,3 +360,104 @@ export const scales = {
     }
   }
 };
+
+
+// 每日情绪测试题目
+export const moodtestQ = [
+  {
+    key: 'depression',
+    title: '情绪状态',
+    question: '在过去的几个小时里，您是否觉得心情低落，或者对平常喜欢做的事情提不起兴趣？',
+    type: 'radio',
+    options: [
+      { text: '没有', value: 0, desc: '完全没有这种感觉' },
+      { text: '轻微', value: 1, desc: '偶尔有轻微的感觉' },
+      { text: '中等', value: 2, desc: '有明显的感觉，影响日常生活' },
+      { text: '很严重', value: 3, desc: '感觉非常强烈，严重影响生活' }
+    ]
+  },
+  {
+    key: 'anxiety',
+    title: '焦虑水平',
+    question: '在过去的几个小时里，您是否感到紧张、焦虑，或者坐立不安？',
+    type: 'scale',
+    min: 0,
+    max: 10,
+    minText: '完全没有',
+    maxText: '非常严重',
+    desc: '请根据您的实际感受选择0-10之间的数值'
+  },
+  {
+    key: 'energy',
+    title: '精力状态',
+    question: '在过去的几个小时里，您是否觉得没有精力，容易感到疲劳？',
+    type: 'radio',
+    options: [
+      { text: '没有', value: 0, desc: '精力充沛，没有疲劳感' },
+      { text: '有一点', value: 1, desc: '偶尔感到轻微疲劳' },
+      { text: '明显', value: 2, desc: '经常感到疲劳，影响活动' },
+      { text: '非常严重', value: 3, desc: '极度疲劳，无法正常生活' }
+    ]
+  },
+  {
+    key: 'sleep',
+    title: '睡眠质量',
+    question: '请回顾今天（或昨晚），您的睡眠情况如何？',
+    type: 'radio',
+    options: [
+      { text: '非常好', value: 0, desc: '睡眠质量极佳，醒来精神饱满' },
+      { text: '比较好', value: 1, desc: '睡眠质量良好，基本恢复精力' },
+      { text: '一般', value: 2, desc: '睡眠质量一般，略有不足' },
+      { text: '不太好', value: 3, desc: '睡眠质量较差，影响精神状态' },
+      { text: '很差', value: 4, desc: '睡眠质量极差，严重缺乏休息' }
+    ]
+  },
+  // 主观情绪问题 - 整合到标准问题流程中
+  {
+    key: 'mainMood',
+    title: '主观情绪',
+    question: '您现在主要是什么感觉？',
+    type: 'mood',
+    options: [
+      { value: '快乐/愉快', text: '快乐/愉快', icon: 'smile' },
+      { value: '平静/放松', text: '平静/放松', icon: 'calm' },
+      { value: '难过/悲伤', text: '难过/悲伤', icon: 'cry' },
+      { value: '焦虑/担心', text: '焦虑/担心', icon: 'nervous' },
+      { value: '易怒/烦躁', text: '易怒/烦躁', icon: 'angry' },
+      { value: '疲惫/无力', text: '疲惫/无力', icon: 'tired' },
+      { value: '其他', text: '其他', icon: 'other' }
+    ]
+  },
+  {
+    key: 'moodIntensity',
+    title: '情绪强度',
+    question: '您当前感受的强度如何？',
+    type: 'radio',
+    options: [
+      { value: 1, text: '轻微', desc: '情绪感受较弱' },
+      { value: 2, text: '中等', desc: '情绪感受适中' },
+      { value: 3, text: '明显', desc: '情绪感受较强' }
+    ]
+  },
+  {
+    key: 'moodSupplementTags',
+    title: '情绪原因',
+    question: '导致此情绪的原因（可多选）',
+    type: 'checkbox',
+    options: [
+      { value: '身体不适', text: '身体不适', desc: '' },
+      { value: '家庭事务', text: '家庭事务', desc: '' },
+      { value: '记忆困扰', text: '记忆困扰', desc: '' },
+      { value: '睡眠不好', text: '睡眠不好', desc: '' },
+      { value: '工作/学习压力', text: '工作/学习压力', desc: '' },
+      { value: '其他', text: '其他', desc: '' }
+    ]
+  },
+  {
+    key: 'moodSupplementText',
+    title: '补充说明',
+    question: '请简短写下导致此情绪的事情（可选）',
+    type: 'text',
+    placeholder: '可填写具体内容（可跳过）'
+  }
+];

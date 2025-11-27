@@ -29,7 +29,6 @@ class EmotionRecord(models.Model):
     mainMoodOther = models.CharField(max_length=64, verbose_name='其他情绪文本', blank=True, null=True)
     moodSupplementTags = models.JSONField(verbose_name='情绪补充标签', blank=True, null=True)
     moodSupplementText = models.CharField(max_length=128, verbose_name='情绪补充说明', blank=True, null=True)
-    device_info = models.JSONField(verbose_name='设备信息', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='记录时间') # 仅作创建时间审计
 
     class Meta:

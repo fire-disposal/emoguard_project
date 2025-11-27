@@ -5,6 +5,16 @@
   padding: 0;
 }
 
+.mock-banner {
+  width: 100%;
+  background-color: #ffc107;
+  color: #212529;
+  text-align: center;
+  font-weight: 600;
+  padding: 10rpx 0;
+  font-size: 35rpx;
+  font-weight: 600;
+}
 /* 进度条容器 */
 .progress-container {
   background: #fff;

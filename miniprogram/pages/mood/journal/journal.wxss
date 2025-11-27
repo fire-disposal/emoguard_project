@@ -358,3 +358,12 @@
   font-size: 35rpx;
   color: #8c8c8c;
 }
+
+/* 情绪图标样式 */
+.mood-icon.smile::before { content: '😊'; }
+.mood-icon.calm::before { content: '😌'; }
+.mood-icon.cry::before { content: '😢'; }
+.mood-icon.nervous::before { content: '😰'; }
+.mood-icon.angry::before { content: '😠'; }
+.mood-icon.tired::before { content: '😴'; }
+.mood-icon.other::before { content: '❓'; }
