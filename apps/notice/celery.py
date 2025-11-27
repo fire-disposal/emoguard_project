@@ -22,6 +22,5 @@ app.conf.timezone = settings.TIME_ZONE
 
 # 配置任务路由
 app.conf.task_routes = {
-    'apps.notice.tasks.send_morning_reminder': {'queue': 'notice'},
-    'apps.notice.tasks.send_evening_reminder': {'queue': 'notice'},
+    'apps.notice.tasks.send_mood_reminder': {'queue': 'notice'}
 }
