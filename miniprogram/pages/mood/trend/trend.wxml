@@ -7,50 +7,13 @@
       <text class="selector-label">时间范围：</text>
       <view class="range-buttons">
         <block wx:for="{{timeRanges}}" wx:key="value" wx:for-item="range">
-          <button class="range-btn {{timeRange === range.value ? 'active' : ''}}"
-                  data-range="{{range.value}}"
-                  bindtap="onTimeRangeChange">{{range.label}}</button>
+          <button class="range-btn {{timeRange === range.value ? 'active' : ''}}" data-range="{{range.value}}" bindtap="onTimeRangeChange">
+            {{range.label}}
+          </button>
         </block>
       </view>
     </view>
-
   </view>
-
-  <!-- 统计卡片 -->
-  <view class="stats-container" wx:if="{{!loading && trendData}}">
-    <view class="stat-card">
-      <view class="stat-header">
-        <text class="stat-title stat-trend-{{stats.trendDepression}}">抑郁 {{stats.trendDepression === 'up' ? '↑' : stats.trendDepression === 'down' ? '↓' : '→'}}</text>
-      </view>
-      <text class="stat-value">{{stats.avgDepression}}</text>
-      <text class="stat-desc">平均值</text>
-    </view>
-    
-    <view class="stat-card">
-      <view class="stat-header">
-        <text class="stat-title stat-trend-{{stats.trendAnxiety}}">焦虑 {{stats.trendAnxiety === 'up' ? '↑' : stats.trendAnxiety === 'down' ? '↓' : '→'}}</text>
-      </view>
-      <text class="stat-value">{{stats.avgAnxiety}}</text>
-      <text class="stat-desc">平均值</text>
-    </view>
-    
-    <view class="stat-card">
-      <view class="stat-header">
-        <text class="stat-title stat-trend-{{stats.trendEnergy}}">精力 {{stats.trendEnergy === 'up' ? '↑' : stats.trendEnergy === 'down' ? '↓' : '→'}}</text>
-      </view>
-      <text class="stat-value">{{stats.avgEnergy}}</text>
-      <text class="stat-desc">平均值</text>
-    </view>
-    
-    <view class="stat-card">
-      <view class="stat-header">
-        <text class="stat-title stat-trend-{{stats.trendSleep}}">睡眠 {{stats.trendSleep === 'up' ? '↑' : stats.trendSleep === 'down' ? '↓' : '→'}}</text>
-      </view>
-      <text class="stat-value">{{stats.avgSleep}}</text>
-      <text class="stat-desc">平均值</text>
-    </view>
-  </view>
-
   <!-- 图表容器 -->
   <view class="chart-container">
     <view class="chart-header">
@@ -62,7 +25,6 @@
         </button>
       </view>
     </view>
-    
     <view class="chart-wrapper">
       <ec-canvas id="mychart-dom-line" canvas-id="mychart-line" ec="{{ec}}" wx:if="{{!loading && trendData}}"></ec-canvas>
       <view wx:else class="chart-placeholder">
@@ -70,14 +32,51 @@
       </view>
     </view>
   </view>
-
+  <!-- 统计卡片 -->
+  <view class="stats-container" wx:if="{{!loading && trendData}}">
+    <view class="stat-card">
+      <view class="stat-header">
+        <text class="stat-title stat-trend-{{stats.trendDepression}}">
+          抑郁 {{stats.trendDepression === 'up' ? '↑' : stats.trendDepression === 'down' ? '↓' : '→'}}
+        </text>
+      </view>
+      <text class="stat-value">{{stats.avgDepression}}</text>
+      <text class="stat-desc">平均值</text>
+    </view>
+    <view class="stat-card">
+      <view class="stat-header">
+        <text class="stat-title stat-trend-{{stats.trendAnxiety}}">
+          焦虑 {{stats.trendAnxiety === 'up' ? '↑' : stats.trendAnxiety === 'down' ? '↓' : '→'}}
+        </text>
+      </view>
+      <text class="stat-value">{{stats.avgAnxiety}}</text>
+      <text class="stat-desc">平均值</text>
+    </view>
+    <view class="stat-card">
+      <view class="stat-header">
+        <text class="stat-title stat-trend-{{stats.trendEnergy}}">
+          精力 {{stats.trendEnergy === 'up' ? '↑' : stats.trendEnergy === 'down' ? '↓' : '→'}}
+        </text>
+      </view>
+      <text class="stat-value">{{stats.avgEnergy}}</text>
+      <text class="stat-desc">平均值</text>
+    </view>
+    <view class="stat-card">
+      <view class="stat-header">
+        <text class="stat-title stat-trend-{{stats.trendSleep}}">
+          睡眠 {{stats.trendSleep === 'up' ? '↑' : stats.trendSleep === 'down' ? '↓' : '→'}}
+        </text>
+      </view>
+      <text class="stat-value">{{stats.avgSleep}}</text>
+      <text class="stat-desc">平均值</text>
+    </view>
+  </view>
   <!-- 历史记录表单 -->
   <view class="history-container" wx:if="{{!loading && historyRecords.length > 0}}">
     <view class="history-header">
       <text class="history-title">历史记录</text>
       <text class="history-count">共 {{historyRecords.length}} 条记录</text>
     </view>
-    
     <view class="history-list">
       <block wx:for="{{historyRecords}}" wx:key="date" wx:for-item="record">
         <view class="history-item {{!record.hasData ? 'no-data' : ''}}">
@@ -110,13 +109,11 @@
       </block>
     </view>
   </view>
-
   <!-- 加载状态 -->
   <view class="loading-container" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">正在加载数据...</text>
   </view>
-
   <!-- 空数据状态 -->
   <view class="empty-state" wx:if="{{!loading && (!trendData || historyRecords.length === 0)}}">
     <text class="empty-icon">📊</text>
