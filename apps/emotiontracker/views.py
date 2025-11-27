@@ -1,119 +1,86 @@
-from ninja import Router, Query
+from ninja import Router
 from django.utils import timezone
-from datetime import datetime, time, timedelta
+from datetime import time
 from .models import EmotionRecord
 from .serializers import (
-    EmotionRecordCreateSchema, EmotionRecordResponseSchema, EmotionTrendSchema
+    EmotionRecordCreateSchema, EmotionRecordResponseSchema
 )
 from config.jwt_auth_adapter import jwt_auth
 
 emotion_router = Router(tags=["emotiontracker"])
 
+# 辅助函数：判断当前时段
+def get_current_period_info():
+    """
+    返回 (current_date, period_string)
+    逻辑：14:00 之前算 morning，之后算 evening
+    """
+    now = timezone.localtime()
+    today = now.date()
+    # 14点为分界线
+    if now.time() < time(14, 0):
+        return today, EmotionRecord.PERIOD_MORNING
+    else:
+        return today, EmotionRecord.PERIOD_EVENING
+
 @emotion_router.post("/", response=EmotionRecordResponseSchema, auth=jwt_auth)
 def create_emotion_record(request, data: EmotionRecordCreateSchema):
     from apps.users.models import User
-    from django.utils import timezone
-
     current_user = request.auth
-    record = EmotionRecord.objects.create(
+    
+    # 1. 计算当前归属的日期和时段（由后端控制，不要信任前端传来的 period）
+    record_date, period = get_current_period_info()
+
+    # 2. 准备要更新/写入的数据 (defaults 字典)
+    defaults_data = {
+        "depression": data.depression,
+        "anxiety": data.anxiety,
+        "energy": data.energy,
+        "sleep": data.sleep,
+        "mainMood": getattr(data, "mainMood", None),
+        "moodIntensity": getattr(data, "moodIntensity", None),
+        "mainMoodOther": getattr(data, "mainMoodOther", None),
+        "moodSupplementTags": getattr(data, "moodSupplementTags", None),
+        "moodSupplementText": getattr(data, "moodSupplementText", None),
+        "created_at": timezone.now() 
+    }
+
+    # 3. 核心逻辑：Update Or Create
+    # 查找条件：user_id + record_date + period
+    # 如果找到 -> 更新 defaults_data 中的字段
+    # 如果没找到 -> 创建新记录
+    record, created = EmotionRecord.objects.update_or_create(
         user_id=current_user.id,
-        depression=data.depression,
-        anxiety=data.anxiety,
-        energy=data.energy,
-        sleep=data.sleep,
-        mainMood=getattr(data, "mainMood", None),
-        moodIntensity=getattr(data, "moodIntensity", None),
-        mainMoodOther=getattr(data, "mainMoodOther", None),
-        moodSupplementTags=getattr(data, "moodSupplementTags", None),
-        moodSupplementText=getattr(data, "moodSupplementText", None),
-        period=getattr(data, "period", None),
-        device_info=getattr(data, "device_info", None)
+        record_date=record_date,
+        period=period,
+        defaults=defaults_data
     )
-    # 更新用户上次情绪测试时间
+
+    # 更新用户上次测试时间
     try:
         User.objects.filter(id=current_user.id).update(last_mood_tested_at=timezone.now())
     except Exception:
         pass
 
-    return EmotionRecordResponseSchema(
-        id=record.id,
-        user_id=str(record.user_id),
-        depression=record.depression,
-        anxiety=record.anxiety,
-        energy=record.energy,
-        sleep=record.sleep,
-        mainMood=record.mainMood,
-        moodIntensity=record.moodIntensity,
-        mainMoodOther=record.mainMoodOther,
-        moodSupplementTags=record.moodSupplementTags,
-        moodSupplementText=record.moodSupplementText,
-        period=record.period,
-        device_info=record.device_info,
-        created_at=record.created_at.isoformat()
-    )
-
-@emotion_router.get("/trend", response=EmotionTrendSchema, auth=jwt_auth)
-def get_emotion_trend(request, days: int = Query(90)):
-    current_user = request.auth
-    end_date = timezone.now()
-    start_date = end_date - timedelta(days=days)
-    records = EmotionRecord.objects.filter(
-        user_id=current_user.id,
-        created_at__gte=start_date,
-        created_at__lte=end_date
-    ).order_by('created_at')
-
-    dates = []
-    depression = []
-    anxiety = []
-    energy = []
-    sleep = []
-
-    for r in records:
-        dates.append(r.created_at.date().isoformat())
-        depression.append(r.depression)
-        anxiety.append(r.anxiety)
-        energy.append(r.energy)
-        sleep.append(r.sleep)
-
-    return EmotionTrendSchema(
-        dates=dates,
-        depression=depression,
-        anxiety=anxiety,
-        energy=energy,
-        sleep=sleep
-    )
+    return record  # Schema 会自动序列化 model 实例
 
 @emotion_router.get("/status", auth=jwt_auth)
 def get_today_status(request):
-    """
-    返回今日早间/晚间是否已填写（自动识别当前用户）
-    早晚分界线为14:00
-    """
-    # 使用JWT认证获取当前用户
     current_user = request.auth
     if not current_user:
         return {"morning_filled": False, "evening_filled": False}
     
     now = timezone.localtime()
     today = now.date()
-    morning_end = datetime.combine(today, time(14, 0, 0, tzinfo=now.tzinfo))
     
-    # 查询早间记录 (00:00-14:00)
-    morning_record = EmotionRecord.objects.filter(
+    # 现在的查询变得极其简单且极快，不需要计算时间范围
+    records = EmotionRecord.objects.filter(
         user_id=current_user.id,
-        created_at__gte=datetime.combine(today, time(0, 0, 0, tzinfo=now.tzinfo)),
-        created_at__lt=morning_end
-    ).exists()
+        record_date=today
+    ).values_list('period', flat=True)
     
-    # 查询晚间记录 (14:00-次日00:00)
-    evening_record = EmotionRecord.objects.filter(
-        user_id=current_user.id,
-        created_at__gte=morning_end,
-        created_at__lt=datetime.combine(today + timedelta(days=1), time(0, 0, 0, tzinfo=now.tzinfo))
-    ).exists()
-    
+    # records 可能是 ['morning'] 或 ['morning', 'evening'] 或 []
     return {
-        "morning_filled": morning_record,
-        "evening_filled": evening_record
+        "morning_filled": EmotionRecord.PERIOD_MORNING in records,
+        "evening_filled": EmotionRecord.PERIOD_EVENING in records
     }

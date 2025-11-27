@@ -1,4 +1,5 @@
 const subscribeUtil = require('../../utils/subscribeUtil');
+const FORCE_OPEN_EMOTION_TEST = true;
 
 Page({
   data: {
@@ -89,9 +90,9 @@ Page({
       periodText = '晚间';
     }
 
-    // 判断测评开放时间
-    const isMorningOpen = hours >= 8 && hours < 10;
-    const isEveningOpen = hours >= 20 && hours < 22;
+    // 判断测评开放时间（如果测试开关开启，则强制开放）
+    const isMorningOpen = FORCE_OPEN_EMOTION_TEST ? true : (hours >= 8 && hours < 10);
+    const isEveningOpen = FORCE_OPEN_EMOTION_TEST ? true : (hours >= 20 && hours < 22);
 
     this.setData({
       currentTime: `${hours}:${minutes}`,
@@ -203,9 +204,9 @@ Page({
     const now = new Date();
     const hours = now.getHours();
 
-    // 严格时间限制：早间测评 8:00-10:00，晚间测评 20:00-22:00
+    // 严格时间限制：早间测评 8:00-10:00，晚间测评 20:00-22:00（测试模式下跳过时间限制）
     if (period === 'morning') {
-      if (hours < 8 || hours >= 10) {
+      if (!FORCE_OPEN_EMOTION_TEST && (hours < 8 || hours >= 10)) {
         wx.showModal({
           title: '测评未开放',
           content: '早间测评时间为 8:00-10:00，您可预约下一次测评并订阅提醒。',
@@ -221,7 +222,7 @@ Page({
         return;
       }
     } else if (period === 'evening') {
-      if (hours < 20 || hours >= 22) {
+      if (!FORCE_OPEN_EMOTION_TEST && (hours < 20 || hours >= 22)) {
         wx.showModal({
           title: '测评未开放',
           content: '晚间测评时间为 20:00-22:00，您可预约下一次测评并订阅提醒。',
