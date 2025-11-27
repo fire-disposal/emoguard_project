@@ -7,6 +7,14 @@ function formatDateMD(dateStr) {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
+function formatDateFull(dateStr) {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function initChart(canvas, width, height, dpr) {
   const chart = echarts.init(canvas, null, { width, height, devicePixelRatio: dpr });
   canvas.setChart(chart);
@@ -71,7 +79,18 @@ Page({
       { value: 30, label: '30天' },
       { value: 90, label: '90天' }
     ],
-    historyRecords: []
+    historyRecords: [],
+    // 新增：数据统计信息
+    stats: {
+      avgDepression: 0,
+      avgAnxiety: 0,
+      avgEnergy: 0,
+      avgSleep: 0,
+      trendDepression: 'stable',
+      trendAnxiety: 'stable',
+      trendEnergy: 'stable',
+      trendSleep: 'stable'
+    }
   },
 
   onLoad() {
@@ -92,9 +111,13 @@ Page({
       // 构建历史记录数据，确保数据完整性
       const historyRecords = this.buildHistoryRecords(trendData);
 
+      // 计算统计数据和趋势
+      const stats = this.calculateStats(trendData);
+
       this.setData({
         trendData: { ...trendData, dates: formattedDates },
         historyRecords: historyRecords,
+        stats: stats,
         loading: false
       });
 
@@ -105,7 +128,17 @@ Page({
       this.setData({
         loading: false,
         trendData: null,
-        historyRecords: []
+        historyRecords: [],
+        stats: {
+          avgDepression: 0,
+          avgAnxiety: 0,
+          avgEnergy: 0,
+          avgSleep: 0,
+          trendDepression: 'stable',
+          trendAnxiety: 'stable',
+          trendEnergy: 'stable',
+          trendSleep: 'stable'
+        }
       });
 
       wx.showToast({
@@ -188,6 +221,71 @@ Page({
     });
   },
 
+  // 计算统计数据和趋势
+  calculateStats(trendData) {
+    if (!trendData || !trendData.dates || trendData.dates.length === 0) {
+      return {
+        avgDepression: 0,
+        avgAnxiety: 0,
+        avgEnergy: 0,
+        avgSleep: 0,
+        trendDepression: 'stable',
+        trendAnxiety: 'stable',
+        trendEnergy: 'stable',
+        trendSleep: 'stable'
+      };
+    }
+
+    const { dates, depression = [], anxiety = [], energy = [], sleep = [] } = trendData;
+    
+    // 过滤掉0值（表示无数据的日期）
+    const validDepression = depression.filter(v => v > 0);
+    const validAnxiety = anxiety.filter(v => v > 0);
+    const validEnergy = energy.filter(v => v > 0);
+    const validSleep = sleep.filter(v => v > 0);
+
+    // 计算平均值
+    const avgDepression = validDepression.length > 0 ?
+      Math.round(validDepression.reduce((a, b) => a + b, 0) / validDepression.length) : 0;
+    const avgAnxiety = validAnxiety.length > 0 ?
+      Math.round(validAnxiety.reduce((a, b) => a + b, 0) / validAnxiety.length) : 0;
+    const avgEnergy = validEnergy.length > 0 ?
+      Math.round(validEnergy.reduce((a, b) => a + b, 0) / validEnergy.length) : 0;
+    const avgSleep = validSleep.length > 0 ?
+      Math.round(validSleep.reduce((a, b) => a + b, 0) / validSleep.length) : 0;
+
+    // 计算趋势（基于最近7天数据）
+    const trendWindow = Math.min(7, dates.length);
+    const recentStart = Math.max(0, dates.length - trendWindow);
+    
+    const calcTrend = (data, validData) => {
+      if (validData.length < trendWindow * 0.5) return 'stable'; // 数据不足
+      
+      const recent = data.slice(recentStart).filter(v => v > 0);
+      const older = data.slice(Math.max(0, recentStart - trendWindow), recentStart).filter(v => v > 0);
+      
+      if (recent.length === 0 || older.length === 0) return 'stable';
+      
+      const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+      const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+      
+      const diff = recentAvg - olderAvg;
+      if (Math.abs(diff) < 0.5) return 'stable';
+      return diff > 0 ? 'up' : 'down';
+    };
+
+    return {
+      avgDepression,
+      avgAnxiety,
+      avgEnergy,
+      avgSleep,
+      trendDepression: calcTrend(depression, validDepression),
+      trendAnxiety: calcTrend(anxiety, validAnxiety),
+      trendEnergy: calcTrend(energy, validEnergy),
+      trendSleep: calcTrend(sleep, validSleep)
+    };
+  },
+
   // 构建历史记录数据
   buildHistoryRecords(trendData) {
     if (!trendData || !trendData.dates || !Array.isArray(trendData.dates)) {
@@ -202,10 +300,12 @@ Page({
         const record = {
           date: dates[i],
           formattedDate: formatDateMD(dates[i]),
+          fullDate: formatDateFull(dates[i]),
           depression: depression[i] || 0,
           anxiety: anxiety[i] || 0,
           energy: energy[i] || 0,
-          sleep: sleep[i] || 0
+          sleep: sleep[i] || 0,
+          hasData: depression[i] > 0 || anxiety[i] > 0 || energy[i] > 0 || sleep[i] > 0
         };
         records.push(record);
       } catch (error) {

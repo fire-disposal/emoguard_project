@@ -6,8 +6,6 @@
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
 }
 
-
-
 /* 控制面板 */
 .control-panel {
   background: white;
@@ -72,14 +70,13 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20rpx;
-  padding: 0 20rpx;
   margin-bottom: 20rpx;
 }
 
 .stat-card {
   background: #fff;
   border-radius: 12rpx;
-  padding: 24rpx;
+  padding: 20rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
@@ -96,13 +93,13 @@
 }
 
 .stat-title {
-  font-size: 24rpx;
+  font-size: 50rpx;
   color: #6c757d;
   font-weight: 500;
 }
 
 .stat-trend {
-  font-size: 24rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 
@@ -120,14 +117,14 @@
 
 .stat-value {
   display: block;
-  font-size: 40rpx;
+  font-size: 50rpx;
   font-weight: 700;
   color: #212529;
-  margin-bottom: 8rpx;
+
 }
 
 .stat-desc {
-  font-size: 22rpx;
+  font-size: 30rpx;
   color: #6c757d;
   line-height: 1.4;
 }
@@ -365,6 +362,34 @@
   background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
 }
 
+/* 无数据状态样式 */
+.history-item.no-data {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+  opacity: 0.7;
+}
+
+.no-data-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 8rpx;
+}
+
+.no-data-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx;
+  background: #fafafa;
+  border-radius: 8rpx;
+  margin-top: 16rpx;
+}
+
+.no-data-text {
+  font-size: 28rpx;
+  color: #999;
+  font-style: italic;
+}
 
 /* 图表占位符样式 */
 .chart-placeholder {

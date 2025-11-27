@@ -1,9 +1,9 @@
 from ninja import Router
 from django.utils import timezone
-from datetime import time
+from datetime import time, timedelta
 from .models import EmotionRecord
 from .serializers import (
-    EmotionRecordCreateSchema, EmotionRecordResponseSchema
+    EmotionRecordCreateSchema, EmotionRecordResponseSchema, EmotionTrendSchema
 )
 from config.jwt_auth_adapter import jwt_auth
 
@@ -83,4 +83,78 @@ def get_today_status(request):
     return {
         "morning_filled": EmotionRecord.PERIOD_MORNING in records,
         "evening_filled": EmotionRecord.PERIOD_EVENING in records
+    }
+
+@emotion_router.get("/trend", response=EmotionTrendSchema, auth=jwt_auth)
+def get_emotion_trend(request, days: int = 30):
+    """
+    获取用户情绪趋势数据
+    返回指定天数内的每日情绪数据，每天可能有morning/evening两个时段
+    如果某天有多个时段，取平均值
+    """
+    current_user = request.auth
+    if not current_user:
+        return {"dates": [], "depression": [], "anxiety": [], "energy": [], "sleep": []}
+    
+    # 计算日期范围
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=days - 1)
+    
+    # 查询指定范围内的所有记录
+    records = EmotionRecord.objects.filter(
+        user_id=current_user.id,
+        record_date__range=[start_date, end_date]
+    ).order_by('record_date', 'period')
+    
+    # 按日期分组，计算每日平均值
+    daily_data = {}
+    for record in records:
+        date_str = record.record_date.strftime('%Y-%m-%d')
+        if date_str not in daily_data:
+            daily_data[date_str] = {
+                'depression': [],
+                'anxiety': [],
+                'energy': [],
+                'sleep': []
+            }
+        
+        daily_data[date_str]['depression'].append(record.depression)
+        daily_data[date_str]['anxiety'].append(record.anxiety)
+        daily_data[date_str]['energy'].append(record.energy)
+        daily_data[date_str]['sleep'].append(record.sleep)
+    
+    # 构建趋势数据
+    dates = []
+    depression = []
+    anxiety = []
+    energy = []
+    sleep = []
+    
+    # 按日期顺序处理
+    current_date = start_date
+    while current_date <= end_date:
+        date_str = current_date.strftime('%Y-%m-%d')
+        dates.append(date_str)
+        
+        if date_str in daily_data:
+            # 计算平均值（四舍五入到整数）
+            depression.append(round(sum(daily_data[date_str]['depression']) / len(daily_data[date_str]['depression'])))
+            anxiety.append(round(sum(daily_data[date_str]['anxiety']) / len(daily_data[date_str]['anxiety'])))
+            energy.append(round(sum(daily_data[date_str]['energy']) / len(daily_data[date_str]['energy'])))
+            sleep.append(round(sum(daily_data[date_str]['sleep']) / len(daily_data[date_str]['sleep'])))
+        else:
+            # 没有数据的日期用0填充
+            depression.append(0)
+            anxiety.append(0)
+            energy.append(0)
+            sleep.append(0)
+        
+        current_date += timedelta(days=1)
+    
+    return {
+        "dates": dates,
+        "depression": depression,
+        "anxiety": anxiety,
+        "energy": energy,
+        "sleep": sleep
     }

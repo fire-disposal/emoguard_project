@@ -16,6 +16,41 @@
 
   </view>
 
+  <!-- 统计卡片 -->
+  <view class="stats-container" wx:if="{{!loading && trendData}}">
+    <view class="stat-card">
+      <view class="stat-header">
+        <text class="stat-title stat-trend-{{stats.trendDepression}}">抑郁 {{stats.trendDepression === 'up' ? '↑' : stats.trendDepression === 'down' ? '↓' : '→'}}</text>
+      </view>
+      <text class="stat-value">{{stats.avgDepression}}</text>
+      <text class="stat-desc">平均值</text>
+    </view>
+    
+    <view class="stat-card">
+      <view class="stat-header">
+        <text class="stat-title stat-trend-{{stats.trendAnxiety}}">焦虑 {{stats.trendAnxiety === 'up' ? '↑' : stats.trendAnxiety === 'down' ? '↓' : '→'}}</text>
+      </view>
+      <text class="stat-value">{{stats.avgAnxiety}}</text>
+      <text class="stat-desc">平均值</text>
+    </view>
+    
+    <view class="stat-card">
+      <view class="stat-header">
+        <text class="stat-title stat-trend-{{stats.trendEnergy}}">精力 {{stats.trendEnergy === 'up' ? '↑' : stats.trendEnergy === 'down' ? '↓' : '→'}}</text>
+      </view>
+      <text class="stat-value">{{stats.avgEnergy}}</text>
+      <text class="stat-desc">平均值</text>
+    </view>
+    
+    <view class="stat-card">
+      <view class="stat-header">
+        <text class="stat-title stat-trend-{{stats.trendSleep}}">睡眠 {{stats.trendSleep === 'up' ? '↑' : stats.trendSleep === 'down' ? '↓' : '→'}}</text>
+      </view>
+      <text class="stat-value">{{stats.avgSleep}}</text>
+      <text class="stat-desc">平均值</text>
+    </view>
+  </view>
+
   <!-- 图表容器 -->
   <view class="chart-container">
     <view class="chart-header">
@@ -45,9 +80,12 @@
     
     <view class="history-list">
       <block wx:for="{{historyRecords}}" wx:key="date" wx:for-item="record">
-        <view class="history-item">
-          <view class="record-date">{{record.formattedDate}}</view>
-          <view class="record-scores">
+        <view class="history-item {{!record.hasData ? 'no-data' : ''}}">
+          <view class="record-date">
+            {{record.formattedDate}}
+            <text wx:if="{{!record.hasData}}" class="no-data-label">(无记录)</text>
+          </view>
+          <view class="record-scores" wx:if="{{record.hasData}}">
             <view class="score-item">
               <text class="score-label">抑郁</text>
               <text class="score-value depression">{{record.depression}}</text>
@@ -64,6 +102,9 @@
               <text class="score-label">睡眠</text>
               <text class="score-value sleep">{{record.sleep}}</text>
             </view>
+          </view>
+          <view class="no-data-placeholder" wx:else>
+            <text class="no-data-text">当日无情绪记录</text>
           </view>
         </view>
       </block>

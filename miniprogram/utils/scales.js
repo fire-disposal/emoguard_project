@@ -366,7 +366,7 @@ export const scales = {
 export const moodtestQ = [
   {
     key: 'depression',
-    title: '情绪状态',
+    title: '抑郁水平',
     question: '在过去的几个小时里，您是否觉得心情低落，或者对平常喜欢做的事情提不起兴趣？',
     type: 'radio',
     options: [
