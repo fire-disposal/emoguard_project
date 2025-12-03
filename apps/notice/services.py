@@ -1,13 +1,16 @@
 import requests
 from django.utils import timezone
 from django.conf import settings
+from django.db import transaction
+from django.db.models import F
+import logging
 from .models import UserQuota, NotificationLog
 
+logger = logging.getLogger("notice.services")
 
 def get_wechat_access_token():
     """
     获取微信access_token
-    这里需要根据你的微信配置实现具体的获取逻辑
     """
     appid = settings.WECHAT_MINI_PROGRAM_APP_ID
     secret = settings.WECHAT_MINI_PROGRAM_APP_SECRET
@@ -19,24 +22,16 @@ def get_wechat_access_token():
         result = response.json()
         return result.get('access_token')
     except Exception as e:
-        import logging
-        logger = logging.getLogger("notice.services")
         logger.error(f"获取access_token失败: {e}")
         return None
 
 
 def send_template_msg(user, template_id, page_path, data_dict):
     """
-    发送模板消息的核心业务逻辑，日志更详细
-    :param user: User对象
-    :param template_id: 微信模板ID
-    :param page_path: 点击卡片跳转的小程序页面
-    :param data_dict: 具体的字段内容 {'thing1': {'value': '...'}, ...}
+    发送模板消息的核心业务逻辑
+    精简版：仅在出错或额度不足时打印日志
     """
-    import logging
-    logger = logging.getLogger("notice.services")
-
-    from django.db import transaction
+    # 1. 检查并锁定额度
     try:
         with transaction.atomic():
             quota = UserQuota.objects.select_for_update().get(
@@ -44,7 +39,7 @@ def send_template_msg(user, template_id, page_path, data_dict):
                 template_id=template_id,
                 count__gt=0
             )
-            logger.info(f"推送前额度检查通过: 用户 {user.username} 模板 {template_id} 当前额度 {quota.count}")
+            # 正常流程日志已移除
     except UserQuota.DoesNotExist:
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
@@ -53,6 +48,7 @@ def send_template_msg(user, template_id, page_path, data_dict):
         logger.warning(f"推送失败: 用户 {user.username} 模板 {template_id} 无可用订阅额度")
         return False
 
+    # 2. 获取Token
     access_token = get_wechat_access_token()
     if not access_token:
         NotificationLog.objects.create(
@@ -62,6 +58,7 @@ def send_template_msg(user, template_id, page_path, data_dict):
         logger.error(f"用户 {user.username} 模板 {template_id} 获取access_token失败")
         return False
 
+    # 3. 构造请求
     url = f"https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token={access_token}"
     payload = {
         "touser": user.wechat_openid,
@@ -72,6 +69,7 @@ def send_template_msg(user, template_id, page_path, data_dict):
         "data": data_dict
     }
 
+    # 4. 发送请求
     try:
         response = requests.post(url, json=payload, timeout=5)
         res_json = response.json()
@@ -83,19 +81,20 @@ def send_template_msg(user, template_id, page_path, data_dict):
         logger.error(f"用户 {user.username} 模板 {template_id} 微信接口异常: {e}")
         return False
 
+    # 5. 处理结果
     if res_json.get('errcode') == 0:
-        from django.db.models import F
+        # 扣减额度
         quota.count = F('count') - 1
         quota.save()
-        quota.refresh_from_db()
-        logger.info(f"推送成功: 用户 {user.username} 模板 {template_id} 额度扣减，当前额度 {quota.count}")
+        
+        # 记录成功日志到数据库，但不打印控制台日志
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
             status='success', wechat_msg_id=res_json.get('msgid'), sent_at=timezone.now()
         )
-        logger.info(f"用户 {user.username} 模板 {template_id} 推送成功，msgid={res_json.get('msgid')}")
         return True
     else:
+        # 记录失败
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
             status='failed', error_response=res_json.get('errmsg')
