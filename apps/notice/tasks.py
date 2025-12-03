@@ -9,7 +9,6 @@ from celery.utils.log import get_task_logger
 from django.utils import timezone
 from datetime import time, timedelta
 # 导入 Q 对象用于更复杂的查询
-from django.db.models import Q 
 from django.contrib.auth import get_user_model
 from apps.emotiontracker.models import EmotionRecord
 from apps.notice.services import send_template_msg

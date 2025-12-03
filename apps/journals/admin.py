@@ -3,9 +3,6 @@
 """
 
 from django.contrib import admin
-from apps.users.demographic_export import (
-    get_demographic_info
-)
 from django.utils.html import format_html
 from import_export.admin import ExportActionModelAdmin
 from import_export import resources, fields
