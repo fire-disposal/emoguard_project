@@ -24,6 +24,7 @@ class MoodJournalResponseSchema(Schema):
     moodSupplementText: str
     record_date: str
     created_at: str
+    started_at: str = None
 
 class MoodJournalListQuerySchema(Schema):
     start_date: Optional[str] = None

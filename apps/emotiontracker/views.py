@@ -62,7 +62,22 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
     except Exception:
         pass
 
-    return record  # Schema 会自动序列化 model 实例
+    # 保证 started_at 字段序列化为字符串（空字符串而非 None）
+    result = {
+        "id": record.id,
+        "depression": record.depression,
+        "anxiety": record.anxiety,
+        "energy": record.energy,
+        "sleep": record.sleep,
+        "mainMood": record.mainMood,
+        "moodIntensity": record.moodIntensity,
+        "mainMoodOther": record.mainMoodOther,
+        "moodSupplementTags": record.moodSupplementTags,
+        "moodSupplementText": record.moodSupplementText,
+        "period": record.period,
+        "started_at": record.started_at.isoformat() if record.started_at else "",
+    }
+    return result
 
 @emotion_router.get("/status", auth=jwt_auth)
 def get_today_status(request):
@@ -84,6 +99,29 @@ def get_today_status(request):
         "morning_filled": EmotionRecord.PERIOD_MORNING in records,
         "evening_filled": EmotionRecord.PERIOD_EVENING in records
     }
+
+# 如需新增批量/列表API，务必保证 started_at 字段序列化为字符串（空字符串而非 None）
+@emotion_router.get("/list", response=list[EmotionRecordResponseSchema], auth=jwt_auth)
+def list_emotion_records(request):
+    current_user = request.auth
+    queryset = EmotionRecord.objects.filter(user_id=current_user.id).order_by("-created_at")
+    result = []
+    for record in queryset:
+        result.append({
+            "id": record.id,
+            "depression": record.depression,
+            "anxiety": record.anxiety,
+            "energy": record.energy,
+            "sleep": record.sleep,
+            "mainMood": record.mainMood,
+            "moodIntensity": record.moodIntensity,
+            "mainMoodOther": record.mainMoodOther,
+            "moodSupplementTags": record.moodSupplementTags,
+            "moodSupplementText": record.moodSupplementText,
+            "period": record.period,
+            "started_at": record.started_at.isoformat() if record.started_at else "",
+        })
+    return result
 
 @emotion_router.get("/trend", response=EmotionTrendSchema, auth=jwt_auth)
 def get_emotion_trend(request, days: int = 30):

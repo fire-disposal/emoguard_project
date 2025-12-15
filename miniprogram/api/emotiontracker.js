@@ -3,6 +3,7 @@ const request = require('../utils/request');
 
 // 创建或更新当日情绪记录 (POST /api/emotiontracker/)
 function upsertEmotionRecord(data) {
+  // 新增：支持上传 started_at 字段
   return request.post('/api/emotiontracker/', data);
 }
 

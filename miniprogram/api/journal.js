@@ -14,7 +14,8 @@ function createJournal(data) {
     moodIntensity: data.moodIntensity,
     mainMoodOther: data.mainMoodOther || '',
     moodSupplementTags: typeof data.moodSupplementTags === 'object' && !Array.isArray(data.moodSupplementTags) ? data.moodSupplementTags : {},
-    moodSupplementText: data.moodSupplementText || ''
+    moodSupplementText: data.moodSupplementText || '',
+    started_at: data.started_at || null // 新增：支持上传开始作答时间
   };
   return request.post('/api/journals/', payload);
 }

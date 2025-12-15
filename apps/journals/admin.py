@@ -26,6 +26,32 @@ class MoodJournalResource(resources.ModelResource):
     )
     record_date = fields.Field(column_name="记录日期", attribute="record_date")
     created_at = fields.Field(column_name="创建时间", attribute="created_at")
+    started_at = fields.Field(column_name="开始作答时间", attribute="started_at")
+
+    def dehydrate_record_date(self, obj):
+        if obj.record_date:
+            return obj.record_date.strftime("%Y年%m月%d日 %H点%M分%S秒")
+        return ""
+
+    def dehydrate_created_at(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime("%Y年%m月%d日 %H点%M分%S秒")
+        return ""
+
+    def dehydrate_started_at(self, obj):
+        if obj.started_at:
+            return obj.started_at.strftime("%Y年%m月%d日 %H点%M分%S秒")
+        return ""
+
+    def dehydrate(self, obj):
+        data = super().dehydrate(obj)
+        # 答题时长（秒），允许为空
+        if obj.started_at and obj.created_at:
+            delta = (obj.created_at - obj.started_at).total_seconds()
+            data["答题时长"] = int(delta)
+        else:
+            data["答题时长"] = ""
+        return data
 
     class Meta:
         model = MoodJournal
@@ -39,8 +65,9 @@ class MoodJournalResource(resources.ModelResource):
             "moodSupplementText",
             "record_date",
             "created_at",
+            "started_at",
         ]
-        export_order = fields
+        export_order = fields + ["答题时长"]
         skip_unchanged = True
 
 
@@ -58,7 +85,7 @@ class MoodJournalAdmin(BaseAdminMixin, ExportActionModelAdmin):
     
     list_display = (
         "id",
-        "user_info",  # 使用统一的user_info方法
+        "user_info",
         "mainMood",
         "moodIntensity",
         "mainMoodOther",
@@ -74,8 +101,66 @@ class MoodJournalAdmin(BaseAdminMixin, ExportActionModelAdmin):
     list_select_related = ()
     list_per_page = 25
     ordering = ("-created_at",)
-    actions = ["export_selected_excel", "export_selected_csv"]
+    actions = ["export_selected_excel", "export_selected_csv", "export_user_journals_xlsx"]
     date_hierarchy = "created_at"
+
+    def export_user_journals_xlsx(self, request, queryset):
+        """
+        导出所选用户的所有心情日志为xlsx（支持多用户，每个用户一份文件）。
+        """
+        from django.http import HttpResponse
+        import openpyxl
+        from openpyxl.utils import get_column_letter
+        from django.utils.encoding import escape_uri_path
+
+        user_ids = queryset.values_list("user_id", flat=True).distinct()
+        for user_id in user_ids:
+            records = self.model.objects.filter(user_id=user_id).order_by("created_at")
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "心情日志"
+            # 表头
+            headers = [
+                "记录ID", "用户ID", "主观情绪", "情绪强度", "其他情绪文本", "情绪补充标签", "情绪补充说明",
+                "记录日期", "创建时间", "开始作答时间", "答题时长"
+            ]
+            ws.append(headers)
+            for obj in records:
+                started_at = obj.started_at.strftime("%Y年%m月%d日 %H点%M分%S秒") if obj.started_at else ""
+                created_at = obj.created_at.strftime("%Y年%m月%d日 %H点%M分%S秒") if obj.created_at else ""
+                record_date = obj.record_date.strftime("%Y年%m月%d日 %H点%M分%S秒") if obj.record_date else ""
+                duration = int((obj.created_at - obj.started_at).total_seconds()) if obj.started_at and obj.created_at else ""
+                ws.append([
+                    obj.id,
+                    str(obj.user_id),
+                    obj.mainMood,
+                    obj.moodIntensity,
+                    obj.mainMoodOther,
+                    obj.moodSupplementTags,
+                    obj.moodSupplementText,
+                    record_date,
+                    created_at,
+                    started_at,
+                    duration,
+                ])
+            # 自动列宽
+            for col in ws.columns:
+                max_length = 0
+                column = col[0].column_letter
+                for cell in col:
+                    try:
+                        if cell.value:
+                            max_length = max(max_length, len(str(cell.value)))
+                    except Exception:
+                        pass
+                ws.column_dimensions[column].width = max_length + 2
+            # 响应
+            filename = f"心情日志_{user_id}.xlsx"
+            response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response["Content-Disposition"] = f'attachment; filename="{escape_uri_path(filename)}"'
+            wb.save(response)
+            return response
+    export_user_journals_xlsx.short_description = "导出所选用户全部心情日志为xlsx"
     
     def text_preview(self, obj):
         """文本预览"""

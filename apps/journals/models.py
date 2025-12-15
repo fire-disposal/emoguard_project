@@ -27,6 +27,7 @@ class MoodJournal(models.Model):
     )
     record_date = models.DateTimeField(verbose_name="记录日期", auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    started_at = models.DateTimeField(null=True, blank=True, verbose_name="开始作答时间")
 
     class Meta:
         verbose_name = "情绪日记"

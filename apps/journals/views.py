@@ -51,7 +51,8 @@ def list_journals(request, filters: MoodJournalListQuerySchema = Query(...)):
             moodSupplementTags=j.moodSupplementTags,
             moodSupplementText=j.moodSupplementText,
             record_date=j.record_date.isoformat(),
-            created_at=j.created_at.isoformat()
+            created_at=j.created_at.isoformat(),
+            started_at=j.started_at.isoformat() if j.started_at else "",
         )
         for j in journals
     ]
@@ -79,18 +80,21 @@ def create_journal(request, data: MoodJournalCreateSchema):
     创建情绪日记
     """
     current_user = request.auth
-    
-    # 记录日期由模型自动生成，无需处理
 
+    # 记录日期由模型自动生成，无需处理
+    started_at = getattr(data, "started_at", None)
+    if started_at is None:
+        started_at = None
     journal = MoodJournal.objects.create(
         user_id=current_user.id,
         mainMood=data.mainMood,
         moodIntensity=data.moodIntensity,
         mainMoodOther=data.mainMoodOther,
         moodSupplementTags=data.moodSupplementTags,
-        moodSupplementText=data.moodSupplementText
+        moodSupplementText=data.moodSupplementText,
+        started_at=started_at
     )
-    
+
     return MoodJournalResponseSchema(
         id=journal.id,
         mainMood=journal.mainMood,
@@ -100,6 +104,7 @@ def create_journal(request, data: MoodJournalCreateSchema):
         moodSupplementText=journal.moodSupplementText,
         record_date=journal.record_date.isoformat(),
         created_at=journal.created_at.isoformat(),
+        started_at=journal.started_at.isoformat() if journal.started_at else "",
     )
 
 @journals_router.put("/{journal_id}", response=MoodJournalResponseSchema, auth=jwt_auth)

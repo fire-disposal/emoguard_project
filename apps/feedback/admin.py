@@ -15,6 +15,11 @@ class FeedbackResource(resources.ModelResource):
     is_processed = fields.Field(column_name="已处理", attribute="is_processed")
     created_at = fields.Field(column_name="创建时间", attribute="created_at")
 
+    def dehydrate_created_at(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime("%Y年%m月%d日 %H点%M分%S秒")
+        return ""
+
     class Meta:
         model = Feedback
         fields = [

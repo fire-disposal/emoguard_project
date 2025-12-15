@@ -36,6 +36,11 @@ class UserResource(resources.ModelResource):
     score_adl = fields.Field(column_name="ADL分数", attribute="score_adl")
     last_mood_tested_at = fields.Field(column_name="上次情绪测试时间", attribute="last_mood_tested_at")
 
+    def dehydrate_last_mood_tested_at(self, obj):
+        if obj.last_mood_tested_at:
+            return obj.last_mood_tested_at.strftime("%Y年%m月%d日 %H点%M分%S秒")
+        return ""
+
     class Meta:
         model = User
         fields = [

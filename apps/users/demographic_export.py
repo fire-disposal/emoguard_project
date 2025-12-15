@@ -120,8 +120,11 @@ def build_excel_with_demographics(queryset, get_user_id, extra_field_order, extr
             import uuid
             if isinstance(value, uuid.UUID):
                 value = str(value)
-            if isinstance(value, datetime) and getattr(value, "tzinfo", None) is not None:
-                value = value.replace(tzinfo=None)
+            if isinstance(value, datetime):
+                # 时间格式：某年某月几日几点几分几秒
+                if getattr(value, "tzinfo", None) is not None:
+                    value = value.replace(tzinfo=None)
+                value = value.strftime("%Y年%m月%d日 %H点%M分%S秒")
             ws.cell(row=row, column=col, value=value)
 
     for column in ws.columns:

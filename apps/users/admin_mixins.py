@@ -14,26 +14,34 @@ class UserInfoDisplayMixin:
     """统一用户信息展示mixin"""
     
     def user_info(self, obj):
-        """显示用户信息（姓名/性别/年龄）"""
+        """显示用户信息完整形式（用户真名 + 性别 + 年龄 + 分组）"""
         user_info = get_demographic_info(obj.user_id)
+        real_name = user_info.get("real_name", "未知")
+        gender = user_info.get("gender", "未知")
+        age = user_info.get("age", "未知")
+        group = user_info.get("group", "")
+        group_display = f"【{group}】" if group else ""
         return format_html(
-            "<b>{}</b> | {} | {}岁",
-            user_info.get("real_name", "未知"),
-            user_info.get("gender", "未知"),
-            user_info.get("age", "未知"),
+            "{}{}{}{}",
+            real_name,
+            f" | {gender}" if gender != "未知" else "",
+            f" | {age}岁" if age != "未知" else "",
+            group_display
         )
     user_info.short_description = "用户信息"
     
     def user_info_short(self, obj):
-        """显示用户信息的简短形式"""
+        """显示用户信息简短形式（用户真名+分组）"""
         user_info = get_demographic_info(obj.user_id)
         real_name = user_info.get("real_name", "未知")
+        group = user_info.get("group", "")
+        group_display = f"【{group}】" if group else ""
         if real_name != "未知" and len(real_name) > 4:
             real_name = real_name[:4] + "..."
         return format_html(
-            "{} | {}",
+            "{}{}",
             real_name,
-            user_info.get("gender", "未知"),
+            group_display
         )
     user_info_short.short_description = "用户信息"
 

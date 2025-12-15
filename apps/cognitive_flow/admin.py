@@ -24,6 +24,21 @@ class CognitiveAssessmentRecordResource(resources.ModelResource):
     completed_at = fields.Field(column_name="完成时间", attribute="completed_at")
     created_at = fields.Field(column_name="记录时间", attribute="created_at")
 
+    def dehydrate_started_at(self, obj):
+        if obj.started_at:
+            return obj.started_at.strftime("%Y年%m月%d日 %H点%M分%S秒")
+        return ""
+
+    def dehydrate_completed_at(self, obj):
+        if obj.completed_at:
+            return obj.completed_at.strftime("%Y年%m月%d日 %H点%M分%S秒")
+        return ""
+
+    def dehydrate_created_at(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime("%Y年%m月%d日 %H点%M分%S秒")
+        return ""
+
     class Meta:
         model = CognitiveAssessmentRecord
         fields = [
@@ -59,7 +74,7 @@ class CognitiveAssessmentRecordAdmin(BaseAdminMixin, ExportActionModelAdmin):
     
     list_display = (
         "id",
-        "user_info",  # 使用统一的user_info方法
+        "user_info",
         "score_scd",
         "score_mmse",
         "score_moca",

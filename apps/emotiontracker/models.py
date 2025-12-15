@@ -30,6 +30,7 @@ class EmotionRecord(models.Model):
     moodSupplementTags = models.JSONField(verbose_name='情绪补充标签', blank=True, null=True)
     moodSupplementText = models.CharField(max_length=128, verbose_name='情绪补充说明', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='记录时间') # 仅作创建时间审计
+    started_at = models.DateTimeField(null=True, blank=True, verbose_name='开始作答时间')
 
     class Meta:
         verbose_name = '情绪测试'

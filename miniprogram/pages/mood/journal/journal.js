@@ -63,6 +63,7 @@ Page({
     moodIntensity: 5, // 默认值
     moodSupplementTags: [], // 应该为数组
     moodSupplementText: "",
+    startedAt: null, // 新增：开始作答时间
 
     // 页面状态
     submitting: false,
@@ -126,6 +127,11 @@ Page({
     const { key, value } = e.currentTarget.dataset;
     const isOther = value === '其他';
 
+    // 如果是第一题第一次选择，记录开始作答时间
+    if (!this.data.startedAt) {
+      this.setData({ startedAt: new Date().toISOString() });
+    }
+
     this.setData({
       [key]: value,
       mainMoodOther: isOther ? this.data.mainMoodOther : '',
@@ -167,7 +173,7 @@ Page({
    * 提交心情记录
    */
   async submitMoodRecord() {
-    const { mainMood, mainMoodOther, moodIntensity, moodSupplementTags, moodSupplementText, submitting } = this.data;
+    const { mainMood, mainMoodOther, moodIntensity, moodSupplementTags, moodSupplementText, submitting, startedAt } = this.data;
 
     if (!mainMood || (mainMood === '其他' && !mainMoodOther.trim())) {
       wx.showToast({ title: '请选择主观情绪并填写其他情绪', icon: 'none' });
@@ -188,6 +194,7 @@ Page({
       mainMoodOther: mainMood === '其他' ? mainMoodOther : '',
       moodSupplementTags: moodSupplementTags,
       moodSupplementText: moodSupplementText.trim(),
+      started_at: startedAt, // 新增：上传开始作答时间
     };
 
     try {
@@ -212,8 +219,9 @@ Page({
       mainMood: "",
       mainMoodOther: "",
       moodIntensity: 5,
-      moodSupplementTags: [], 
+      moodSupplementTags: [],
       moodSupplementText: "",
+      startedAt: null, // 新增：重置开始作答时间
     });
   },
 

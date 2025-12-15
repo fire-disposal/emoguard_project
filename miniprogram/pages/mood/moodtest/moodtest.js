@@ -16,6 +16,7 @@ Page({
       moodSupplementTags: [],
       moodSupplementText: '',
     },
+    startedAt: null, // 新增：开始作答时间
     
     // --- 当前题目专用的渲染数据 (核心修改) ---
     currentValue: null,      // 当前题目的值（用于滑块、文本、单选对比）
@@ -56,9 +57,14 @@ Page({
     // 获取之前的回答，如果没有则是 null/默认值
     let val = this.data.answers[key];
 
+    // 如果是第一题且未记录开始作答时间，则记录
+    if (stepIndex === 0 && !this.data.startedAt) {
+      this.setData({ startedAt: new Date().toISOString() });
+    }
+
     // 处理滑块的默认值
     if (question.type === 'scale' && (val === null || val === undefined)) {
-      val = question.min; 
+      val = question.min;
     }
 
     // 处理选项的选中状态 (针对 Radio 和 Checkbox)
@@ -85,7 +91,7 @@ Page({
 
     this.setData({
       currentStep: stepIndex,
-      currentValue: val, 
+      currentValue: val,
       currentOptions: processedOptions,
       mainMoodOther: otherText
     });
@@ -201,7 +207,7 @@ Page({
   // --- 提交 ---
   async handleSubmit() {
     this.setData({ submitting: true });
-    const { answers, currentPeriod, isMockMode } = this.data;
+    const { answers, currentPeriod, isMockMode, startedAt } = this.data;
 
     try {
       const recordData = {
@@ -209,6 +215,7 @@ Page({
         mainMoodOther: answers.mainMood === 'other' ? answers.mainMoodOther.trim() : '',
         moodSupplementText: answers.moodSupplementText ? answers.moodSupplementText.trim() : '',
         period: currentPeriod || 'unknown',
+        started_at: startedAt, // 新增：上传开始作答时间
       };
 
       console.log('提交数据:', recordData);

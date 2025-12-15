@@ -24,6 +24,7 @@ class EmotionRecordResponseSchema(Schema):
     moodSupplementTags: list = None
     moodSupplementText: str = None
     period: str = None
+    started_at: str = None
 
 class EmotionTrendSchema(Schema):
     dates: List[str]

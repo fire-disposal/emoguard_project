@@ -156,6 +156,14 @@ class User(AbstractUser):
         verbose_name="上次每日情绪测试时间"
     )
 
+    # ========== 分组字段 ==========
+    group = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        verbose_name='分组'
+    )
+
     class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         verbose_name = '用户'
         verbose_name_plural = '用户'
