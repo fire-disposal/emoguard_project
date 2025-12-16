@@ -1,7 +1,13 @@
 """情绪追踪模块的 admin 配置"""
+import io
+from datetime import datetime
 from django.contrib import admin
-from django.utils.html import format_html
-from django.utils import timezone
+from django.http import HttpResponse
+from django.contrib import messages
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+from apps.users.models import User
 from apps.users.admin_mixins import UUIDUserAdminMixin, UserRealNameFilter
 from .models import EmotionRecord
 
@@ -85,3 +91,221 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
     def has_add_permission(self, request):
         """禁止手动添加情绪记录"""
         return False
+    
+    actions = ['export_tracked_users_emotion_records']
+    
+    def export_tracked_users_emotion_records(self, request, queryset):
+        """导出所有被追踪用户的情绪记录（XLSX格式）"""
+        try:
+            # 忽略选择的queryset，导出所有被追踪用户的记录
+            # 获取所有被追踪用户的情绪记录
+            tracked_user_ids = list(User.objects.filter(is_tracked=True).values_list('id', flat=True))
+            
+            if not tracked_user_ids:
+                self.message_user(request, '当前没有被追踪的用户', level=messages.WARNING)
+                return
+            
+            emotion_records = EmotionRecord.objects.filter(
+                user_id__in=tracked_user_ids
+            ).order_by('user_id', 'record_date', 'period')
+            
+            if not emotion_records.exists():
+                self.message_user(request, '被追踪用户没有情绪记录', level=messages.WARNING)
+                return
+            
+            # 创建 XLSX 文件
+            output = io.BytesIO()
+            workbook = Workbook()
+            worksheet = workbook.active
+            worksheet.title = '情绪记录'
+            
+            # 定义样式
+            header_font = Font(bold=True, color="FFFFFF")
+            header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+            header_alignment = Alignment(horizontal="center", vertical="center")
+            header_border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
+            
+            cell_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            cell_border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
+            
+            # 设置列宽
+            column_widths = [8, 15, 15, 8, 15, 15, 15, 15, 10, 12, 10, 10, 10, 10, 10, 15, 12, 20, 25]
+            for i, width in enumerate(column_widths, 1):
+                worksheet.column_dimensions[get_column_letter(i)].width = width
+            
+            # 写入表头
+            headers = [
+                '编号', '姓名', '调查日期', '时段', '日期-时段',
+                '计划时间', '开始时间', '记录时间', '响应延迟(分钟)', '是否按时(1是0否)',
+                '答题用时(分钟)', '抑郁水平（1-4）', '焦虑水平（0-10）', '精力得分（0-3）',
+                '睡眠得分（0-4）', '主要情绪', '情绪强度（1轻微2中等3明显）',
+                '情绪标签', '补充说明'
+            ]
+            
+            for col, header in enumerate(headers, 1):
+                cell = worksheet.cell(row=1, column=col, value=header)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+                cell.border = header_border
+            
+            # 写入数据
+            for row, record in enumerate(emotion_records, 1):
+                # 获取用户信息
+                try:
+                    user = User.objects.get(id=record.user_id)
+                    user_name = user.real_name or user.username
+                    # 添加分组信息（如果有）
+                    if user.group:
+                        user_name = f"{user_name}（{user.group}）"
+                except User.DoesNotExist:
+                    user_name = "未知用户"
+                
+                # 格式化日期
+                survey_date = record.record_date.strftime('%Y年%m月%d号') if record.record_date else ''
+                
+                # 时段
+                period_map = {'morning': '早', 'evening': '晚'}
+                period = period_map.get(record.period, record.period) if record.period else ''
+                
+                # 日期-时段组合
+                date_period = f"{survey_date} {period}" if survey_date and period else ''
+                
+                # 计划时间（根据时段推断，包含日期）
+                planned_datetime = None
+                planned_time_str = ''
+                if record.record_date and record.period:
+                    from datetime import time as datetime_time
+                    planned_hour = 8 if record.period == 'morning' else 20
+                    planned_datetime = datetime.combine(
+                        record.record_date,
+                        datetime_time(planned_hour, 0)
+                    )
+                    planned_time_str = planned_datetime.strftime('%Y年%m月%d日 %H:%M')
+                
+                # 开始时间
+                start_time = record.started_at.strftime('%Y年%m月%d日 %H:%M') if record.started_at else ''
+                
+                # 记录时间
+                record_time = record.created_at.strftime('%Y年%m月%d日 %H:%M') if record.created_at else ''
+                
+                # 响应延迟（分钟）- 计划时间与记录时间的差值
+                # 负值表示提早作答，正值表示延迟作答
+                delay_minutes = 0  # 默认值改为0而不是空字符串
+                
+                if record.created_at and planned_datetime:
+                    try:
+                        # 计算延迟（记录时间 - 计划时间）- 移除时区处理
+                        delay_seconds = (record.created_at - planned_datetime).total_seconds()
+                        delay_minutes = int(delay_seconds / 60)
+                        
+                    except Exception as e:
+                        # 如果计算出错，使用默认值
+                        delay_minutes = 0
+                        print(f"计算延迟时出错: {e}")
+                
+                # 是否按时（在计划时间前后60分钟内作答算按时）
+                on_time = 1 if -60 <= delay_minutes <= 60 else 0
+                
+                # 答题用时(分钟) - 开始作答到完成记录的时间
+                answer_duration = 0
+                if record.started_at and record.created_at:
+                    answer_seconds = (record.created_at - record.started_at).total_seconds()
+                    answer_duration = int(answer_seconds / 60)
+                
+                # 抑郁水平（1-4分制，根据原始分数转换）
+                depression_level = min(4, max(1, int(record.depression / 10) + 1)) if record.depression is not None else ''
+                
+                # 焦虑水平（保持原始0-10分）
+                anxiety_level = record.anxiety if record.anxiety is not None else ''
+                
+                # 精力得分（保持原始0-3分）
+                energy_score = record.energy if record.energy is not None else ''
+                
+                # 睡眠得分（保持原始0-4分）
+                sleep_score = record.sleep if record.sleep is not None else ''
+                
+                # 主要情绪
+                main_mood = record.mainMood if record.mainMood else ''
+                
+                # 情绪强度（1-3分制）
+                mood_intensity_map = {1: '1', 2: '2', 3: '3'}
+                mood_intensity = mood_intensity_map.get(record.moodIntensity, '') if record.moodIntensity else ''
+                
+                # 情绪标签（JSON字段转换为字符串列表）
+                mood_tags = ''
+                if record.moodSupplementTags and isinstance(record.moodSupplementTags, list):
+                    mood_tags = ','.join(record.moodSupplementTags)
+                
+                # 补充说明
+                supplement_text = record.moodSupplementText if record.moodSupplementText else ''
+                
+                # 写入数据行
+                data_row = [
+                    row,  # 编号
+                    user_name,  # 姓名
+                    survey_date,  # 调查日期
+                    period,  # 时段
+                    date_period,  # 日期-时段组合
+                    planned_time_str,  # 计划时间
+                    start_time,  # 开始时间
+                    record_time,  # 记录时间
+                    delay_minutes,  # 响应延迟
+                    on_time,  # 是否按时
+                    answer_duration,  # 答题用时
+                    depression_level,  # 抑郁水平
+                    anxiety_level,  # 焦虑水平
+                    energy_score,  # 精力得分
+                    sleep_score,  # 睡眠得分
+                    main_mood,  # 主要情绪
+                    mood_intensity,  # 情绪强度
+                    mood_tags,  # 情绪标签
+                    supplement_text  # 补充说明
+                ]
+                
+                for col, value in enumerate(data_row, 1):
+                    cell = worksheet.cell(row=row + 1, column=col, value=value)
+                    cell.alignment = cell_alignment
+                    cell.border = cell_border
+                    # 数字列设置特殊格式
+                    if col - 1 in [8, 9, 10, 11, 12, 13, 14, 15, 17]:  # 数字列 (0索引)
+                        cell.number_format = '0'
+            
+            # 设置行高
+            for row in range(2, worksheet.max_row + 1):
+                worksheet.row_dimensions[row].height = 25
+            
+            # 冻结首行
+            worksheet.freeze_panes = 'A2'
+            
+            # 保存工作簿到内存
+            workbook.save(output)
+            output.seek(0)
+            
+            # 准备响应
+            response = HttpResponse(
+                output.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            
+            filename = f'被追踪用户情绪记录_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            
+            self.message_user(request, f'成功导出 {emotion_records.count()} 条情绪记录')
+            return response
+            
+        except Exception as e:
+            self.message_user(request, f'导出失败：{str(e)}', level=messages.ERROR)
+            return
+    
+    export_tracked_users_emotion_records.short_description = '导出被追踪用户情绪记录(XLSX)'
