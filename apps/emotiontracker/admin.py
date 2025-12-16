@@ -1,113 +1,87 @@
-"""
-情绪记录管理后台 - 重构版本，使用统一的基础组件
-"""
+"""情绪追踪模块的 admin 配置"""
 from django.contrib import admin
-from django.http import HttpResponse
-import openpyxl
-from django.utils.encoding import escape_uri_path
-from apps.common.admin_base import TimeBasedAdmin
-from apps.common.resource_configs import EmotionRecordResource
-from apps.emotiontracker.models import EmotionRecord
+from django.utils.html import format_html
+from django.utils import timezone
+from apps.users.admin_mixins import UUIDUserAdminMixin, UserRealNameFilter
+from .models import EmotionRecord
 
 
 @admin.register(EmotionRecord)
-class EmotionRecordAdmin(TimeBasedAdmin):
-    """情绪记录管理后台 - 简化版本"""
+class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
+    """情绪记录管理"""
     
-    resource_class = EmotionRecordResource
+    list_display = [
+        'id', 'user_real_name', 'record_date', 'period', 
+        'depression', 'anxiety', 'energy', 'sleep', 
+        'mainMood', 'moodIntensity', 'created_at'
+    ]
     
-    # 特有配置
-    list_display = (
-        "id",
-        "user_info",
-        "period",
-        "depression",
-        "anxiety", 
-        "energy",
-        "sleep",
-        "mainMood",
-        "moodIntensity",
-        "moodSupplementTags",
-        "moodSupplementText",
-        "started_at",
-        "created_at",
+    list_filter = [
+        'period', 'record_date', 'created_at', 
+        UserRealNameFilter, 'mainMood'
+    ]
+    
+    search_fields = [
+        'mainMood', 'mainMoodOther', 'moodSupplementText'
+    ]
+    
+    readonly_fields = [
+        'id', 'user_id', 'created_at', 'started_at'
+    ]
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user_id', 'record_date', 'period')
+        }),
+        ('情绪评分', {
+            'fields': ('depression', 'anxiety', 'energy', 'sleep')
+        }),
+        ('情绪描述', {
+            'fields': ('mainMood', 'moodIntensity', 'mainMoodOther')
+        }),
+        ('补充信息', {
+            'fields': ('moodSupplementTags', 'moodSupplementText')
+        }),
+        ('时间信息', {
+            'fields': ('started_at', 'created_at'),
+            'classes': ('collapse',)
+        })
     )
-    search_fields = ("user_id", "mainMood", "period")
-    list_filter = ("period", "mainMood", "moodIntensity", "created_at")
     
-    # 导出配置
-    export_extra_fields = [
-        "id", "period", "depression", "anxiety", "energy", "sleep",
-        "mainMood", "moodIntensity", "moodSupplementTags", 
-        "moodSupplementText", "started_at", "created_at"
-    ]
-    export_extra_titles = [
-        "记录ID", "记录时段", "抑郁", "焦虑", "精力", "睡眠",
-        "主要情绪", "情绪强度", "情绪标签", "补充说明", 
-        "开始作答时间", "记录时间"
-    ]
+    def get_queryset(self, request):
+        """优化查询"""
+        return super().get_queryset(request).select_related()
     
-    actions = ["export_selected_excel", "export_selected_csv", "export_user_records_xlsx"]
+    def mood_summary(self, obj):
+        """情绪摘要"""
+        mood_info = []
+        if obj.mainMood:
+            mood_info.append(f"主要情绪: {obj.mainMood}")
+        if obj.moodIntensity:
+            mood_info.append(f"强度: {obj.moodIntensity}")
+        if obj.moodSupplementText:
+            mood_info.append(f"补充: {obj.moodSupplementText[:50]}...")
+        
+        return " | ".join(mood_info) if mood_info else "无描述"
     
-    def export_user_records_xlsx(self, request, queryset):
-        """
-        导出所选用户的所有情绪记录为xlsx（支持多用户，每个用户一份文件）。
-        保持原有功能不变
-        """
-        user_ids = queryset.values_list("user_id", flat=True).distinct()
-        for user_id in user_ids:
-            records = self.model.objects.filter(user_id=user_id).order_by("created_at")
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.title = "情绪记录"
-            
-            # 表头
-            headers = [
-                "记录ID", "用户ID", "时段", "抑郁得分", "焦虑得分", "精力得分", "睡眠得分",
-                "主要情绪", "情绪强度", "情绪标签", "补充说明", "记录时间", "开始作答时间", "答题时长"
-            ]
-            ws.append(headers)
-            
-            # 数据行
-            for obj in records:
-                started_at = obj.started_at.strftime("%Y年%m月%d日 %H点%M分%S秒") if obj.started_at else ""
-                created_at = obj.created_at.strftime("%Y年%m月%d日 %H点%M分%S秒") if obj.created_at else ""
-                duration = int((obj.created_at - obj.started_at).total_seconds()) if obj.started_at and obj.created_at else ""
-                
-                ws.append([
-                    obj.id,
-                    str(obj.user_id),
-                    obj.period,
-                    obj.depression,
-                    obj.anxiety,
-                    obj.energy,
-                    obj.sleep,
-                    obj.mainMood,
-                    obj.moodIntensity,
-                    obj.moodSupplementTags,
-                    obj.moodSupplementText,
-                    created_at,
-                    started_at,
-                    duration,
-                ])
-            
-            # 自动列宽
-            for col in ws.columns:
-                max_length = 0
-                column = col[0].column_letter
-                for cell in col:
-                    try:
-                        if cell.value:
-                            max_length = max(max_length, len(str(cell.value)))
-                    except Exception:
-                        pass
-                ws.column_dimensions[column].width = max_length + 2
-            
-            # 响应
-            filename = f"情绪记录_{user_id}.xlsx"
-            response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            response["Content-Disposition"] = f'attachment; filename="{escape_uri_path(filename)}"'
-            wb.save(response)
-            return response
+    mood_summary.short_description = '情绪摘要'
     
-    export_user_records_xlsx.short_description = "导出所选用户全部情绪记录为xlsx"
+    def score_summary(self, obj):
+        """评分摘要"""
+        scores = []
+        if obj.depression is not None:
+            scores.append(f"抑郁: {obj.depression}")
+        if obj.anxiety is not None:
+            scores.append(f"焦虑: {obj.anxiety}")
+        if obj.energy is not None:
+            scores.append(f"精力: {obj.energy}")
+        if obj.sleep is not None:
+            scores.append(f"睡眠: {obj.sleep}")
+        
+        return " | ".join(scores) if scores else "无评分"
+    
+    score_summary.short_description = '评分摘要'
+    
+    def has_add_permission(self, request):
+        """禁止手动添加情绪记录"""
+        return False

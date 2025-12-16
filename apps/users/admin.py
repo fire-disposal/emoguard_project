@@ -1,110 +1,68 @@
-"""
-用户管理后台配置 - 适配单模型设计
-"""
+"""用户管理 admin 配置"""
 
-from django.utils.html import format_html
-from .models import User
 from django.contrib import admin
-from import_export.admin import ExportActionModelAdmin
-from import_export import resources, fields
-from apps.users.demographic_export import build_excel_with_demographics, build_csv_with_demographics
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.html import format_html
+from django.contrib.auth.models import Group
+from .models import User
 
-admin.site.site_title = "情绪监测系统"
-admin.site.site_header = "情绪监测系统"
-
-
-
-class UserResource(resources.ModelResource):
-    """用户导出资源（人口学信息与业务字段分离，避免重复）"""
-    id = fields.Field(column_name="用户ID", attribute="id")
-    username = fields.Field(column_name="用户名", attribute="username")
-    real_name = fields.Field(column_name="真实姓名", attribute="real_name")
-    gender = fields.Field(column_name="性别", attribute="gender")
-    age = fields.Field(column_name="年龄", attribute="age")
-    education = fields.Field(column_name="学历", attribute="education")
-    province = fields.Field(column_name="省份", attribute="province")
-    city = fields.Field(column_name="城市", attribute="city")
-    district = fields.Field(column_name="区县", attribute="district")
-    phone = fields.Field(column_name="手机号", attribute="phone")
-    is_profile_complete = fields.Field(column_name="信息已完善", attribute="is_profile_complete")
-    role = fields.Field(column_name="角色", attribute="role")
-    score_scd = fields.Field(column_name="SCD分数", attribute="score_scd")
-    score_mmse = fields.Field(column_name="MMSE分数", attribute="score_mmse")
-    score_moca = fields.Field(column_name="MoCA分数", attribute="score_moca")
-    score_gad7 = fields.Field(column_name="GAD7分数", attribute="score_gad7")
-    score_phq9 = fields.Field(column_name="PHQ9分数", attribute="score_phq9")
-    score_adl = fields.Field(column_name="ADL分数", attribute="score_adl")
-    last_mood_tested_at = fields.Field(column_name="上次情绪测试时间", attribute="last_mood_tested_at")
-
-    def dehydrate_last_mood_tested_at(self, obj):
-        if obj.last_mood_tested_at:
-            return obj.last_mood_tested_at.strftime("%Y年%m月%d日 %H点%M分%S秒")
-        return ""
-
-    class Meta:
-        model = User
-        fields = [
-            "id", "username", "real_name", "gender", "age", "education", "province", "city", "district", "phone",
-            "is_profile_complete", "role", "score_scd", "score_mmse", "score_moca", "score_gad7", "score_phq9", "score_adl", "last_mood_tested_at"
-        ]
-        export_order = fields
-        skip_unchanged = True
 
 @admin.register(User)
-class UserAdmin(ExportActionModelAdmin):
-    """用户管理后台"""
+class UserAdmin(BaseUserAdmin):
+    """用户管理"""
 
-    resource_class = UserResource
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.exclude(is_staff=True)
-
-    # 列表显示字段
-    list_display = (
-        "username",
+    # 列表显示字段，将 is_tracked 放在显眼位置
+    list_display = [
         "real_name",
         "gender",
         "age",
         "education",
         "province",
-        "city",
-        "phone",
-        "score_scd",
-        "score_mmse",
-        "score_moca",
+        "is_tracked_display",
         "is_profile_complete",
-        "last_mood_tested_at",
-    )
-    list_display_links = ("username",)
+        "phone",
+        "last_login",
+    ]
+
+    # 列表筛选器
+    list_filter = [
+        "is_tracked",
+        "role",
+        "is_profile_complete",
+        "gender",
+        "is_active",
+        "has_completed_cognitive_assessment",
+    ]
 
     # 搜索字段
-    search_fields = (
-        "username",
-        "real_name",
-        "email",
-        "wechat_openid",
-        "wechat_unionid",
-        "phone",
-    )
-
-    # 过滤字段
-    list_filter = ("role", "gender", "is_active", "is_staff", "date_joined")
+    search_fields = ["real_name", "phone", "wechat_openid"]
 
     # 排序
-    ordering = ("-date_joined",)
+    ordering = ["-date_joined"]
 
-    # 分页
-    list_per_page = 20
+    # 只读字段
+    readonly_fields = [
+        "id",
+        "date_joined",
+        "last_login",
+        "wechat_openid",
+        "wechat_unionid",
+    ]
 
     # 字段分组
     fieldsets = (
-        ("账号信息", {"fields": ("username", "email", "password")}),
         (
-            "基础资料",
+            "基本信息",
+            {"fields": ("username", "password", "real_name", "role", "is_tracked")},
+        ),
+        (
+            "微信信息",
+            {"fields": ("wechat_openid", "wechat_unionid"), "classes": ("collapse",)},
+        ),
+        (
+            "个人资料",
             {
                 "fields": (
-                    "real_name",
                     "gender",
                     "age",
                     "education",
@@ -113,90 +71,120 @@ class UserAdmin(ExportActionModelAdmin):
                     "district",
                     "phone",
                     "is_profile_complete",
+                )
+            },
+        ),
+        (
+            "测评状态",
+            {
+                "fields": ("has_completed_cognitive_assessment", "group"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "测评分数",
+            {
+                "fields": (
                     "score_scd",
                     "score_mmse",
                     "score_moca",
                     "score_gad7",
                     "score_phq9",
                     "score_adl",
-                    "last_mood_tested_at",
                 ),
-                "description": "请完善用户的基本信息，便于后续服务。测评分数可由管理员直接编辑。",
-            },
-        ),
-        (
-            "微信相关（技术字段，通常可忽略）",
-            {
-                "fields": ("wechat_openid", "wechat_unionid"),
                 "classes": ("collapse",),
-                "description": "微信小程序用户相关信息，仅技术人员关注。",
             },
         ),
+        ("情绪测试", {"fields": ("last_mood_tested_at",), "classes": ("collapse",)}),
         (
-            "权限设置",
+            "权限状态",
             {
-                "fields": (
-                    "role",
-                    "is_active",
-                    "is_staff",
-                    "is_superuser",
-                    "groups",
-                    "user_permissions",
-                ),
-                "description": "如无特殊需求，保持默认即可。",
+                "fields": ("is_active", "is_staff", "is_superuser"),
+                "classes": ("collapse",),
             },
         ),
         (
-            "时间信息",
+            "重要日期",
             {"fields": ("date_joined", "last_login"), "classes": ("collapse",)},
         ),
     )
 
-    # 只读字段
-    readonly_fields = ("date_joined", "last_login")
+    # 添加用户时的字段配置
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "username",
+                    "password1",
+                    "password2",
+                    "real_name",
+                    "role",
+                    "is_tracked",
+                ),
+            },
+        ),
+    )
 
-    actions = ["export_selected_excel", "export_selected_csv"]
+    def is_tracked_display(self, obj):
+        """跟踪状态显示"""
+        return obj.is_tracked
 
-    def export_selected_excel(self, request, queryset):
-        """导出用户为Excel格式（仅额外导出微信字段、信息完善状态和上次情绪测试时间）"""
-        extra_field_order = [
-            "wechat_openid", "wechat_unionid", "is_profile_complete", "last_mood_tested_at"
-        ]
-        extra_field_titles = [
-            "微信OpenID", "微信UnionID", "信息已完善", "上次情绪测试时间"
-        ]
-        def get_user_id(record):
-            return record.id
-        return build_excel_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
-    export_selected_excel.short_description = "导出为Excel"
+    is_tracked_display.short_description = "跟踪状态"
+    is_tracked_display.admin_order_field = "is_tracked"
+    is_tracked_display.boolean = True
 
-    def export_selected_csv(self, request, queryset):
-        """导出用户为CSV格式（仅额外导出微信字段、信息完善状态和上次情绪测试时间）"""
-        extra_field_order = [
-            "wechat_openid", "wechat_unionid", "is_profile_complete", "last_mood_tested_at"
-        ]
-        extra_field_titles = [
-            "微信OpenID", "微信UnionID", "信息已完善", "上次情绪测试时间"
-        ]
-        def get_user_id(record):
-            return record.id
-        return build_csv_with_demographics(queryset, get_user_id, extra_field_order, extra_field_titles)
-    export_selected_csv.short_description = "导出为CSV"
+    def get_queryset(self, request):
+        """优化查询，隐藏超级用户"""
+        qs = super().get_queryset(request)
+        # 隐藏超级用户，只显示普通用户和管理员
+        if not request.user.is_superuser:
+            qs = qs.filter(is_superuser=False)
+        return qs
 
-    @admin.display(description="用户类型")
-    def user_type_display(self, obj):
-        """显示用户类型"""
-        if obj.is_wechat_user:
-            return "微信用户"
-        return "密码用户"
+    # 批量操作
+    actions = ["mark_as_tracked", "mark_as_untracked", "export_selected"]
 
-    @admin.display(description="微信OpenID", ordering="wechat_openid")
-    def wechat_openid_short(self, obj):
-        """显示微信OpenID的简短形式"""
-        if obj.wechat_openid:
-            return format_html(
-                '<span title="{}">{}...</span>',
-                obj.wechat_openid,
-                obj.wechat_openid[:8],
-            )
-        return "-"
+    def mark_as_tracked(self, request, queryset):
+        """批量标记为已跟踪"""
+        updated = queryset.update(is_tracked=True)
+        self.message_user(request, f"已将 {updated} 个用户标记为已跟踪")
+
+    mark_as_tracked.short_description = "标记为跟踪"
+
+    def mark_as_untracked(self, request, queryset):
+        """批量标记为未跟踪"""
+        updated = queryset.update(is_tracked=False)
+        self.message_user(request, f"已将 {updated} 个用户标记为未跟踪")
+
+    mark_as_untracked.short_description = "跟踪"
+
+    def export_selected(self, request, queryset):
+        """导出选中的用户信息"""
+        # 这里可以添加导出功能
+        user_count = queryset.count()
+        self.message_user(request, f"已选择 {user_count} 个用户进行导出")
+
+    export_selected.short_description = "导出选中的用户"
+
+    # 自定义方法显示用户信息完整度
+    def profile_completion_display(self, obj):
+        """资料完整度显示"""
+        if obj.is_profile_complete:
+            return format_html('<span style="color: #28a745;">✓ 完整</span>')
+        else:
+            return format_html('<span style="color: #dc3545;">✗ 不完整</span>')
+
+    profile_completion_display.short_description = "资料完整度"
+    profile_completion_display.boolean = True
+
+    # 重写保存方法，确保用户信息完整度状态正确
+    def save_model(self, request, obj, form, change):
+        """保存模型时更新信息完整度"""
+        obj.update_profile_complete_status()
+        super().save_model(request, obj, form, change)
+
+
+# 取消注册默认的 Group 模型（如果不需要）
+admin.site.unregister(Group)

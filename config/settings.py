@@ -66,7 +66,6 @@ INSTALLED_APPS = [
     "ninja_jwt",
     'django_summernote',
     'django_celery_beat',
-    'import_export',
     
     # 自定义应用
     "apps.users",

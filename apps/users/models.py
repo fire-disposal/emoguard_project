@@ -164,6 +164,12 @@ class User(AbstractUser):
         verbose_name='分组'
     )
 
+    # ========== 跟踪状态字段 ==========
+    is_tracked = models.BooleanField(
+        default=False,
+        verbose_name='是否跟踪'
+    )
+
     class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         verbose_name = '用户'
         verbose_name_plural = '用户'
