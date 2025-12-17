@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "ninja_jwt",
     'django_summernote',
     'django_celery_beat',
+    'rangefilter',
     
     # 自定义应用
     "apps.users",

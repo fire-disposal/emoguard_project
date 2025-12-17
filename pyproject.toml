@@ -27,6 +27,7 @@ dependencies = [
     "redis>=7.1.0",
     "openpyxl>=3.1.5",
     "pysocks>=1.7.1",
+    "django-admin-rangefilter>=0.13.5",
 ]
 
 [tool.deadcode]

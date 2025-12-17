@@ -11,6 +11,7 @@ from openpyxl.utils import get_column_letter
 from apps.users.models import User
 from apps.users.admin_mixins import UUIDUserAdminMixin, UserRealNameFilter
 from .models import EmotionRecord
+from rangefilter.filters import DateRangeFilter
 
 
 class CreatedAtTimeFilter(admin.SimpleListFilter):
@@ -115,8 +116,12 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
     ]
     
     list_filter = [
-        'period', 'record_date', CreatedAtTimeFilter,
-        UserRealNameFilter, UserTrackingStatusFilter, 'mainMood'
+        'period',
+        ('record_date', DateRangeFilter),
+        CreatedAtTimeFilter,
+        UserRealNameFilter,
+        UserTrackingStatusFilter,
+        'mainMood'
     ]
     
     search_fields = [
