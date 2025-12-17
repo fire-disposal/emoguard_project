@@ -12,13 +12,7 @@ function getEmotionTrend(days = 30) {
   return request.get('/api/emotiontracker/trend', { days });
 }
 
-// 获取今日早晚填写状态 (GET /api/emotiontracker/status)
-function getTodayStatus() {
-  return request.get('/api/emotiontracker/status');
-}
-
 module.exports = {
   upsertEmotionRecord,
-  getEmotionTrend,
-  getTodayStatus
+  getEmotionTrend
 };

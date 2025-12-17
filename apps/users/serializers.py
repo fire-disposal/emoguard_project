@@ -53,6 +53,11 @@ class UserResponseSchema(Schema):
     score_adl: Optional[float] = None
     # 新增：上次每日情绪测试时间
     last_mood_tested_at: Optional[str] = None
+    
+    # 新增：今日问卷完成情况
+    morning_completed_today: bool
+    evening_completed_today: bool
+    last_completion_reset_date: Optional[str] = None
 
 class UserCreateSchema(Schema):
     """创建用户（管理员功能）"""

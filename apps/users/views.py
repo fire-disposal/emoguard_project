@@ -59,6 +59,9 @@ def _user_to_response_schema(user):
         score_phq9=user.score_phq9,
         score_adl=user.score_adl,
         last_mood_tested_at=user.last_mood_tested_at.isoformat() if user.last_mood_tested_at else None,
+        morning_completed_today=user.morning_completed_today,
+        evening_completed_today=user.evening_completed_today,
+        last_completion_reset_date=user.last_completion_reset_date.isoformat() if user.last_completion_reset_date else None,
     )
 
 
@@ -217,3 +220,28 @@ def get_user(request, user_id):
 def get_current_user(request):
     """获取当前登录用户完整信息"""
     return _user_to_response_schema(request.auth)
+
+
+@users_router.get("/me/today-completion-status", auth=jwt_auth)
+def get_today_completion_status(request):
+    """获取当前用户今日问卷完成情况"""
+    user = request.auth
+    if not user:
+        return {"morning_completed": False, "evening_completed": False}
+    
+    # 检查是否需要重置完成情况（跨天时）
+    from datetime import date
+    today = date.today()
+    
+    if user.last_completion_reset_date != today:
+        # 如果重置日期不是今天，说明需要重置
+        user.morning_completed_today = False
+        user.evening_completed_today = False
+        user.last_completion_reset_date = today
+        user.save(update_fields=['morning_completed_today', 'evening_completed_today', 'last_completion_reset_date'])
+    
+    return {
+        "morning_completed": user.morning_completed_today,
+        "evening_completed": user.evening_completed_today,
+        "last_reset_date": user.last_completion_reset_date.isoformat() if user.last_completion_reset_date else None
+    }

@@ -19,7 +19,8 @@ class UserAdmin(BaseUserAdmin):
         "education",
         "province",
         "is_tracked_display",
-        "is_profile_complete",
+        "morning_completed_today",
+        "evening_completed_today",
         "phone",
         "last_login",
     ]
@@ -32,6 +33,9 @@ class UserAdmin(BaseUserAdmin):
         "gender",
         "is_active",
         "has_completed_cognitive_assessment",
+        "morning_completed_today",
+        "evening_completed_today",
+        "group",
     ]
 
     # 搜索字段
@@ -151,14 +155,14 @@ class UserAdmin(BaseUserAdmin):
         updated = queryset.update(is_tracked=True)
         self.message_user(request, f"已将 {updated} 个用户标记为已跟踪")
 
-    mark_as_tracked.short_description = "标记为跟踪"
+    mark_as_tracked.short_description = "批量标记为已跟踪"
 
     def mark_as_untracked(self, request, queryset):
         """批量标记为未跟踪"""
         updated = queryset.update(is_tracked=False)
         self.message_user(request, f"已将 {updated} 个用户标记为未跟踪")
 
-    mark_as_untracked.short_description = "跟踪"
+    mark_as_untracked.short_description = "批量标记为未跟踪"
 
     def export_selected(self, request, queryset):
         """导出选中的用户信息"""

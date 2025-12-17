@@ -56,9 +56,24 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
         defaults=defaults_data
     )
 
-    # 更新用户上次测试时间
+    # 更新用户上次测试时间和完成情况
     try:
-        User.objects.filter(id=current_user.id).update(last_mood_tested_at=timezone.now())
+        from datetime import date
+        today = date.today()
+        
+        # 更新完成状态和重置日期
+        update_data = {
+            'last_mood_tested_at': timezone.now(),
+            'last_completion_reset_date': today
+        }
+        
+        # 根据时段更新对应的完成状态
+        if period == EmotionRecord.PERIOD_MORNING:
+            update_data['morning_completed_today'] = True
+        elif period == EmotionRecord.PERIOD_EVENING:
+            update_data['evening_completed_today'] = True
+            
+        User.objects.filter(id=current_user.id).update(**update_data)
     except Exception:
         pass
 
@@ -78,27 +93,6 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
         "started_at": record.started_at.isoformat() if record.started_at else "",
     }
     return result
-
-@emotion_router.get("/status", auth=jwt_auth)
-def get_today_status(request):
-    current_user = request.auth
-    if not current_user:
-        return {"morning_filled": False, "evening_filled": False}
-    
-    now = timezone.localtime()
-    today = now.date()
-    
-    # 现在的查询变得极其简单且极快，不需要计算时间范围
-    records = EmotionRecord.objects.filter(
-        user_id=current_user.id,
-        record_date=today
-    ).values_list('period', flat=True)
-    
-    # records 可能是 ['morning'] 或 ['morning', 'evening'] 或 []
-    return {
-        "morning_filled": EmotionRecord.PERIOD_MORNING in records,
-        "evening_filled": EmotionRecord.PERIOD_EVENING in records
-    }
 
 # 如需新增批量/列表API，务必保证 started_at 字段序列化为字符串（空字符串而非 None）
 @emotion_router.get("/list", response=list[EmotionRecordResponseSchema], auth=jwt_auth)

@@ -132,9 +132,9 @@ App({
       return;
     }
     try {
-      const res = await emotionApi.getTodayStatus();
-      this.globalData.morningFilled = !!res.morning_filled;
-      this.globalData.eveningFilled = !!res.evening_filled;
+      const res = await userApi.getTodayCompletionStatus();
+      this.globalData.morningFilled = !!res.morning_completed;
+      this.globalData.eveningFilled = !!res.evening_completed;
     } catch (e) {
       this.globalData.morningFilled = false;
       this.globalData.eveningFilled = false;

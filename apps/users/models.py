@@ -169,6 +169,23 @@ class User(AbstractUser):
         default=False,
         verbose_name='是否跟踪'
     )
+    
+    # ========== 今日问卷完成情况 ==========
+    morning_completed_today = models.BooleanField(
+        default=False,
+        verbose_name='今日早上完成情况'
+    )
+    
+    evening_completed_today = models.BooleanField(
+        default=False,
+        verbose_name='今日晚上完成情况'
+    )
+    
+    last_completion_reset_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='上次完成情况重置日期'
+    )
 
     class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         verbose_name = '用户'

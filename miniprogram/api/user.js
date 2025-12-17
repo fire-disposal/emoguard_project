@@ -16,8 +16,14 @@ function updateProfile(data) {
   return request.put('/api/users/me/profile', data);
 }
 
+// 获取今日问卷完成情况
+function getTodayCompletionStatus() {
+  return request.get('/api/users/me/today-completion-status');
+}
+
 module.exports = {
   wechatLogin,
   getCurrentUser,
-  updateProfile
+  updateProfile,
+  getTodayCompletionStatus
 };

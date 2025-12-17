@@ -1,9 +1,10 @@
 """情绪追踪模块的 admin 配置"""
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.contrib import admin
 from django.http import HttpResponse
 from django.contrib import messages
+from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -12,19 +13,110 @@ from apps.users.admin_mixins import UUIDUserAdminMixin, UserRealNameFilter
 from .models import EmotionRecord
 
 
+class CreatedAtTimeFilter(admin.SimpleListFilter):
+    """创建时间过滤器 - 支持1天、3天、7天、30天快速筛选"""
+    
+    title = '创建时间'
+    parameter_name = 'created_at_time'
+    
+    def lookups(self, request, model_admin):
+        return (
+            ('1', '最近1天'),
+            ('3', '最近3天'),
+            ('7', '最近7天'),
+            ('30', '最近30天'),
+            ('all', '全部数据'),
+        )
+    
+    def queryset(self, request, queryset):
+        if self.value() is None:
+            # 默认返回全部数据
+            return queryset
+        
+        if self.value() == 'all':
+            return queryset
+        
+        try:
+            days = int(self.value())
+            now = timezone.now()
+            start_time = now - timedelta(days=days)
+            return queryset.filter(created_at__gte=start_time)
+        except (ValueError, TypeError):
+            return queryset
+    
+    def choices(self, changelist):
+        """重写choices方法，确保默认选中全部数据"""
+        yield {
+            'selected': self.value() is None or self.value() == 'all',
+            'query_string': changelist.get_query_string({self.parameter_name: 'all'}),
+            'display': '全部数据',
+        }
+        for lookup, title in self.lookup_choices:
+            if lookup != 'all':  # 跳过all选项，因为我们已经在上面处理了
+                yield {
+                    'selected': self.value() == str(lookup),
+                    'query_string': changelist.get_query_string({self.parameter_name: lookup}),
+                    'display': title,
+                }
+
+
+class UserTrackingStatusFilter(admin.SimpleListFilter):
+    """用户追踪状态过滤器"""
+    
+    title = '用户追踪状态'
+    parameter_name = 'user_tracking_status'
+    
+    def lookups(self, request, model_admin):
+        return (
+            ('tracked', '已追踪'),
+            ('untracked', '未追踪'),
+            ('all', '全部用户'),
+        )
+    
+    def queryset(self, request, queryset):
+        if self.value() is None or self.value() == 'all':
+            return queryset
+        
+        if self.value() == 'tracked':
+            tracked_user_ids = list(User.objects.filter(is_tracked=True).values_list('id', flat=True))
+            return queryset.filter(user_id__in=tracked_user_ids)
+        
+        if self.value() == 'untracked':
+            untracked_user_ids = list(User.objects.filter(is_tracked=False).values_list('id', flat=True))
+            return queryset.filter(user_id__in=untracked_user_ids)
+        
+        return queryset
+    
+    def choices(self, changelist):
+        """重写choices方法，确保默认选中全部用户"""
+        yield {
+            'selected': self.value() is None or self.value() == 'all',
+            'query_string': changelist.get_query_string({self.parameter_name: 'all'}),
+            'display': '全部用户',
+        }
+        for lookup, title in self.lookup_choices:
+            if lookup != 'all':  # 跳过all选项，因为我们已经在上面处理了
+                yield {
+                    'selected': self.value() == str(lookup),
+                    'query_string': changelist.get_query_string({self.parameter_name: lookup}),
+                    'display': title,
+                }
+
+
 @admin.register(EmotionRecord)
 class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
     """情绪记录管理"""
     
     list_display = [
-        'id', 'user_real_name', 'record_date', 'period', 
-        'depression', 'anxiety', 'energy', 'sleep', 
-        'mainMood', 'moodIntensity', 'created_at'
+        'id', 'user_real_name', 'record_date', 'period',
+        'depression', 'anxiety', 'energy', 'sleep',
+        'mainMood', 'moodIntensity', 'moodSupplementTags_display',
+        'moodSupplementText_short', 'created_at'
     ]
     
     list_filter = [
-        'period', 'record_date', 'created_at', 
-        UserRealNameFilter, 'mainMood'
+        'period', 'record_date', CreatedAtTimeFilter,
+        UserRealNameFilter, UserTrackingStatusFilter, 'mainMood'
     ]
     
     search_fields = [
@@ -71,6 +163,22 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
         return " | ".join(mood_info) if mood_info else "无描述"
     
     mood_summary.short_description = '情绪摘要'
+
+    def moodSupplementTags_display(self, obj):
+        """情绪补充标签显示"""
+        if obj.moodSupplementTags and isinstance(obj.moodSupplementTags, list):
+            return ', '.join(obj.moodSupplementTags)
+        return '-'
+    
+    moodSupplementTags_display.short_description = '情绪标签'
+
+    def moodSupplementText_short(self, obj):
+        """情绪补充说明简短显示"""
+        if obj.moodSupplementText:
+            return obj.moodSupplementText[:30] + '...' if len(obj.moodSupplementText) > 30 else obj.moodSupplementText
+        return '-'
+    
+    moodSupplementText_short.short_description = '补充说明'
     
     def score_summary(self, obj):
         """评分摘要"""
@@ -92,25 +200,16 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
         """禁止手动添加情绪记录"""
         return False
     
-    actions = ['export_tracked_users_emotion_records']
+    actions = ['export_emotion_records']
     
-    def export_tracked_users_emotion_records(self, request, queryset):
-        """导出所有被追踪用户的情绪记录（XLSX格式）"""
+    def export_emotion_records(self, request, queryset):
+        """导出当前筛选的情绪记录（XLSX格式）"""
         try:
-            # 忽略选择的queryset，导出所有被追踪用户的记录
-            # 获取所有被追踪用户的情绪记录
-            tracked_user_ids = list(User.objects.filter(is_tracked=True).values_list('id', flat=True))
-            
-            if not tracked_user_ids:
-                self.message_user(request, '当前没有被追踪的用户', level=messages.WARNING)
-                return
-            
-            emotion_records = EmotionRecord.objects.filter(
-                user_id__in=tracked_user_ids
-            ).order_by('user_id', 'record_date', 'period')
+            # 使用当前筛选的queryset，而不是忽略它
+            emotion_records = queryset.order_by('user_id', 'record_date', 'period')
             
             if not emotion_records.exists():
-                self.message_user(request, '被追踪用户没有情绪记录', level=messages.WARNING)
+                self.message_user(request, '当前没有符合条件的情绪记录', level=messages.WARNING)
                 return
             
             # 创建 XLSX 文件
@@ -298,7 +397,7 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
             
-            filename = f'被追踪用户情绪记录_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+            filename = f'情绪记录_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             
             self.message_user(request, f'成功导出 {emotion_records.count()} 条情绪记录')
@@ -308,4 +407,4 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
             self.message_user(request, f'导出失败：{str(e)}', level=messages.ERROR)
             return
     
-    export_tracked_users_emotion_records.short_description = '导出被追踪用户情绪记录(XLSX)'
+    export_emotion_records.short_description = '导出情绪记录(XLSX)'
