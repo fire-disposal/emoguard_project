@@ -264,6 +264,7 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
                 cell.border = header_border
             
             # 写入数据
+            from django.utils.timezone import localtime
             for row, record in enumerate(emotion_records, 1):
                 # 获取用户信息
                 try:
@@ -291,17 +292,19 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
                 if record.record_date and record.period:
                     from datetime import time as datetime_time
                     planned_hour = 8 if record.period == 'morning' else 20
-                    planned_datetime = datetime.combine(
+                    # 创建带时区信息的datetime对象
+                    naive_datetime = datetime.combine(
                         record.record_date,
                         datetime_time(planned_hour, 0)
                     )
-                    planned_time_str = planned_datetime.strftime('%Y年%m月%d日 %H:%M')
+                    planned_datetime = timezone.make_aware(naive_datetime)
+                    planned_time_str = localtime(planned_datetime).strftime('%Y年%m月%d日 %H:%M')
                 
                 # 开始时间
-                start_time = record.started_at.strftime('%Y年%m月%d日 %H:%M') if record.started_at else ''
+                start_time = localtime(record.started_at).strftime('%Y年%m月%d日 %H:%M') if record.started_at else ''
                 
                 # 记录时间
-                record_time = record.created_at.strftime('%Y年%m月%d日 %H:%M') if record.created_at else ''
+                record_time = localtime(record.created_at).strftime('%Y年%m月%d日 %H:%M') if record.created_at else ''
                 
                 # 响应延迟（分钟）- 计划时间与记录时间的差值
                 # 负值表示提早作答，正值表示延迟作答
@@ -309,7 +312,8 @@ class EmotionRecordAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
                 
                 if record.created_at and planned_datetime:
                     try:
-                        # 计算延迟（记录时间 - 计划时间）- 移除时区处理
+                        # 计算延迟（记录时间 - 计划时间）
+                        # 确保两个datetime都有时区信息
                         delay_seconds = (record.created_at - planned_datetime).total_seconds()
                         delay_minutes = int(delay_seconds / 60)
                         
