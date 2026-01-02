@@ -229,19 +229,34 @@ def get_today_completion_status(request):
     if not user:
         return {"morning_completed": False, "evening_completed": False}
     
-    # 检查是否需要重置完成情况（跨天时）
-    from datetime import date
-    today = date.today()
+    # 使用 timezone.localtime() 获取正确的本地日期，避免 UTC 时间导致的跨天问题
+    from django.utils import timezone
+    from apps.emotiontracker.models import EmotionRecord
     
-    if user.last_completion_reset_date != today:
-        # 如果重置日期不是今天，说明需要重置
-        user.morning_completed_today = False
-        user.evening_completed_today = False
+    today = timezone.localtime().date()
+    
+    # 直接查询 EmotionRecord 表获取真实状态，而不是依赖 User 表的缓存字段
+    # 这样可以避免缓存字段更新不及时或被错误重置的问题
+    records = EmotionRecord.objects.filter(
+        user_id=user.id,
+        record_date=today
+    ).values_list('period', flat=True)
+    
+    morning_completed = EmotionRecord.PERIOD_MORNING in records
+    evening_completed = EmotionRecord.PERIOD_EVENING in records
+    
+    # 同步更新 User 表的缓存字段，保持一致性
+    if (user.morning_completed_today != morning_completed or 
+        user.evening_completed_today != evening_completed or 
+        user.last_completion_reset_date != today):
+        
+        user.morning_completed_today = morning_completed
+        user.evening_completed_today = evening_completed
         user.last_completion_reset_date = today
         user.save(update_fields=['morning_completed_today', 'evening_completed_today', 'last_completion_reset_date'])
     
     return {
-        "morning_completed": user.morning_completed_today,
-        "evening_completed": user.evening_completed_today,
-        "last_reset_date": user.last_completion_reset_date.isoformat() if user.last_completion_reset_date else None
+        "morning_completed": morning_completed,
+        "evening_completed": evening_completed,
+        "last_reset_date": today.isoformat()
     }

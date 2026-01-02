@@ -58,8 +58,8 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
 
     # 更新用户上次测试时间和完成情况
     try:
-        from datetime import date
-        today = date.today()
+        # 使用 timezone.localtime().date() 确保使用配置的时区日期
+        today = timezone.localtime().date()
         
         # 更新完成状态和重置日期
         update_data = {
