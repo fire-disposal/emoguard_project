@@ -10,7 +10,9 @@ on:
 
 env:
   IMAGE_BASE: ghcr.io/${{ github.repository }}/emoguard-backend
-  NGINX_IMAGE_BASE: ghcr.io/${{ github.repository }}/emoguard-nginx
+  DEPLOY_ROOT: /var/www/emoguard
+
+
 
 jobs:
   deploy:
@@ -55,27 +57,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Get Nginx Version Tag
-        id: nginx_ver
-        run: |
-          set -euo pipefail
-          TAG_SHORT=$(echo "${GITHUB_SHA:0:8}")
-          TAG_FINAL="${TAG_SHORT:-latest}"
-          echo "IMAGE=${{ env.NGINX_IMAGE_BASE }}:$TAG_FINAL" >> $GITHUB_OUTPUT
-          echo "TAG=$TAG_FINAL" >> $GITHUB_OUTPUT
-
-      - name: Build & Push Nginx Image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./nginx_build
-          file: ./nginx_build/Dockerfile
-          push: true
-          tags: |
-            ${{ steps.nginx_ver.outputs.IMAGE }}
-            ${{ env.NGINX_IMAGE_BASE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
       - name: Setup SSH Key
         run: |
           set -euo pipefail
@@ -88,10 +69,11 @@ jobs:
         run: |
           set -euo pipefail
           
-          sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g; s|__NGINX__|${{ steps.nginx_ver.outputs.IMAGE }}|g" \
+          sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g" \
             docker-compose.yml > docker-compose.rendered.yml
 
           cat > .env <<EOF
+          HOST_APP_ROOT=${{ env.DEPLOY_ROOT }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
           SECRET_KEY=${{ secrets.SECRET_KEY }}
@@ -121,7 +103,23 @@ jobs:
             echo "📥 拉取镜像..."
             docker compose -f ~/docker-compose.yml --env-file ~/.env pull
             
-            echo "🔍 验证镜像:"
+            echo "📂 确保挂载目录存在并设置权限..."
+            # 尝试创建标准目录，如果失败则输出指导信息
+            if sudo mkdir -p ${{ env.DEPLOY_ROOT }}/media ${{ env.DEPLOY_ROOT }}/staticfiles ${{ env.DEPLOY_ROOT }}/logs; then
+                echo "✅ 目录已就绪: ${{ env.DEPLOY_ROOT }}"
+                # 设置权限给当前用户或 docker 用户 (通常 uid 1000)
+                sudo chown -R 1000:1000 ${{ env.DEPLOY_ROOT }} || echo "⚠️ 无法设置chown，可能需要手动介入"
+                sudo chmod -R 775 ${{ env.DEPLOY_ROOT }} || echo "⚠️ 无法设置chmod"
+            else
+                echo "❌ 无法创建目录 ${{ env.DEPLOY_ROOT }}。"
+                echo "👉 请登录服务器手动执行以下命令："
+                echo "   sudo mkdir -p ${{ env.DEPLOY_ROOT }}/media ${{ env.DEPLOY_ROOT }}/staticfiles ${{ env.DEPLOY_ROOT }}/logs"
+                echo "   sudo chown -R 1000:1000 ${{ env.DEPLOY_ROOT }}"
+                echo "   sudo chmod -R 775 ${{ env.DEPLOY_ROOT }}"
+                exit 1
+            fi
+            
+            echo "�🔍 验证镜像:"
             docker images | grep emoguard || echo "⚠️ 未找到emoguard镜像"
 
             echo "🚀 停止旧容器..."

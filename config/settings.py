@@ -33,11 +33,12 @@ SECRET_KEY = os.environ.get(
 )
 
 # 调试模式
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+# 默认为 False (生产环境安全优先)，仅在明确设置环境变量为 True 时开启
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 # 允许的主机
 ALLOWED_HOSTS = (
-    os.environ.get('ALLOWED_HOSTS', 'cg.aoxintech.com').split(',')
+    os.environ.get('ALLOWED_HOSTS', 'cg.aoxintech.com,localhost,127.0.0.1').split(',')
     if not DEBUG
     else ['*']
 )
@@ -138,9 +139,15 @@ if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
         'connect_timeout': 10,
         'options': '-c statement_timeout=30000'  # 30秒查询超时
     }
+
 # =============================================================================
-# 认证与授权
+# 安全配置
 # =============================================================================
+
+# 代理配置：告知 Django 它正运行在 Nginx 后面，需要基于 X-Forwarded-Proto 头判断 HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# 基础安全配置
 
 # 密码验证器
 AUTH_PASSWORD_VALIDATORS = [
@@ -179,10 +186,12 @@ USE_TZ = True
 
 # 静态文件
 STATIC_URL = "/static/"
+# 容器内 collectstatic 的目标目录，与 docker-compose.yml 挂载点对应
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # 媒体文件
 MEDIA_URL = "/media/"
+# 容器内媒体文件存储目录，与 docker-compose.yml 挂载点对应
 MEDIA_ROOT = BASE_DIR / "media"
 
 # 默认主键字段类型
