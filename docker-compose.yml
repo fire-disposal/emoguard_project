@@ -120,6 +120,8 @@ services:
     volumes:
       # 使用命名卷持久化数据
       - pg_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
     networks:
       - emoguard-net
     healthcheck:
