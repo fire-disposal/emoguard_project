@@ -93,6 +93,7 @@ jobs:
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/.env
 
       - name: Deploy Stack via SSH
+        shell: bash
         run: |
           ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -euo pipefail
