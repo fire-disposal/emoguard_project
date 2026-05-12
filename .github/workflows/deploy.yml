@@ -75,7 +75,6 @@ jobs:
           cat > .env <<EOF
           HOST_APP_ROOT=${{ env.DEPLOY_ROOT }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
           SECRET_KEY=${{ secrets.SECRET_KEY }}
           DJANGO_SUPERUSER_USERNAME=${{ secrets.DJANGO_SUPERUSER_USERNAME }}
           DJANGO_SUPERUSER_EMAIL=${{ secrets.DJANGO_SUPERUSER_EMAIL }}
@@ -161,7 +160,6 @@ jobs:
               docker ps -a
               docker compose logs backend --tail 50
               docker compose logs db --tail 20
-              docker compose logs redis --tail 20
               exit 1
             fi
             

@@ -66,8 +66,7 @@ INSTALLED_APPS = [
     "ninja_extra",
     "ninja_jwt",
     'django_summernote',
-    'django_celery_beat',
-    'rangefilter',
+     'rangefilter',
     
     # 自定义应用
     "apps.users",
@@ -221,17 +220,6 @@ NINJA_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
     'TOKEN_USER_CLASS': 'users.User',
 }
-
-# =============================================================================
-# Celery 配置
-# =============================================================================
-
-# Celery 配置
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/1')
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_ENABLE_UTC = False
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # =============================================================================
 # CORS 与 CSRF 配置

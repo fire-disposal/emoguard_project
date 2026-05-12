@@ -16,25 +16,20 @@ echo "==================================================="
 
 # -----------------------------------------------------------------
 # 🔍 数据库连接等待 (Application Level Wait)
-# 
-# 尽管 docker-compose 依赖已设置，但应用层需确认数据库服务可接受连接。
 # -----------------------------------------------------------------
 echo "⏳ Waiting for PostgreSQL connection to be ready..."
-MAX_ATTEMPTS=20 # 减少到 20 次，总共 40 秒，避免过长等待
+MAX_ATTEMPTS=20
 ATTEMPTS=0
 until [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; do
-    # 使用 Django 的 check 命令来验证数据库连接
     if uv run python manage.py check --database default > /dev/null 2>&1; then
         echo "✅ Database connection established."
         break
     fi
-
     ATTEMPTS=$((ATTEMPTS + 1))
     echo "   Attempt $ATTEMPTS/$MAX_ATTEMPTS: Waiting for DB..."
     sleep 2
 done
 
-# 如果循环结束仍未成功连接，则退出
 if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
     echo "❌ Failed to connect to database after $MAX_ATTEMPTS attempts."
     exit 1
@@ -51,14 +46,13 @@ if [ "$CONTAINER_ROLE" = "backend" ]; then
     echo "🔄 Running database migrations..."
     uv run python manage.py migrate --noinput
     
-    # 2. 收集静态文件 (运行一次)
+    # 2. 收集静态文件
     echo "📁 Collecting static files..."
     uv run python manage.py collectstatic --noinput
     
     # 3. 创建超级用户
     if [ -n "$DJANGO_SUPERUSER_USERNAME" ]; then
         echo "👤 Creating or ensuring superuser exists..."
-        # 确保 create_admin 是幂等的 (只创建不存在的用户)
         uv run python manage.py create_admin
     else
         echo "ℹ️ DJANGO_SUPERUSER_USERNAME not set. Skipping superuser creation."
@@ -70,32 +64,17 @@ if [ "$CONTAINER_ROLE" = "backend" ]; then
         uv run python manage.py load_scales_from_yaml
     fi
     
-    # 5. 创建定时任务
-    echo "🗓️ Setting up periodic tasks..."
-    uv run python manage.py setup_periodic_tasks
-    
     echo "✅ Backend initialization complete."
 fi
 
 # -----------------------------------------------------------------
-# 🏃 根据容器角色执行相应命令 (使用 exec 确保信号处理)
+# 🏃 根据容器角色执行相应命令
 # -----------------------------------------------------------------
 echo "---------------------------------------------------"
 case "$CONTAINER_ROLE" in
-    "worker")
-        echo "// [🔄️ Starting Celery Worker] //"
-        # 确保 worker 使用了正确的 app 名称和日志级别
-        exec uv run celery -A apps.notice worker -l info -Q notice
-        ;;
-    "beat")
-        echo "// [❤️ Starting Celery Beat] //"
-        # 确保 beat 使用了正确的 app 名称和调度器
-        exec uv run celery -A apps.notice beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-        ;;
     "backend")
-        echo "// [🌱 Starting Gunicorn Backend] //"
+        echo "// [🌱 Starting Gunicorn + Scheduler] //"
         
-        # Banner 展示
         cat << 'EMOGUARD_BANNER'
 
                        _oo0oo_
@@ -125,10 +104,13 @@ case "$CONTAINER_ROLE" in
  |  __| | '_ ` _ \ / _ \| | |_ | | | |/ _` | '__/ _` |
  | |____| | | | | | (_) | |__| | |_| | (_| | | | (_| |
  |______|_| |_| |_|\___/ \_____|\__,_|\__,_|_|  \__,_|
-                                                                                      
+                                                                                       
 EMOGUARD_BANNER
         
-        # 使用 exec 启动 Gunicorn
+        # 启动轻量级调度器 (后台)
+        uv run python manage.py run_scheduler &
+        
+        # 启动 Gunicorn (前台，阻塞)
         exec uv run gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100 config.wsgi:application
         ;;
     *)

@@ -3,14 +3,6 @@ services:
     build: .
     image: emoguard-backend:local
 
-  celery-worker:
-    build: .
-    image: emoguard-backend:local
-
-  celery-beat:
-    build: .
-    image: emoguard-backend:local
-
   nginx:
     build:
       context: .
