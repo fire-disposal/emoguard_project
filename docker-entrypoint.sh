@@ -83,9 +83,8 @@ fi
 echo "---------------------------------------------------"
 case "$CONTAINER_ROLE" in
     "worker")
-        echo "// [🔄️ Starting Celery Worker] //"
-        # 确保 worker 使用了正确的 app 名称和日志级别
-        exec uv run celery -A apps.notice worker -l info -Q notice
+        echo "// [🔄️ Starting Celery Worker + Beat] //"
+        exec uv run celery -A apps.notice worker -B -l info -Q notice --concurrency 1 --pool solo --max-tasks-per-child 100 --scheduler django_celery_beat.schedulers:DatabaseScheduler
         ;;
     "beat")
         echo "// [❤️ Starting Celery Beat] //"
@@ -129,7 +128,7 @@ case "$CONTAINER_ROLE" in
 EMOGUARD_BANNER
         
         # 使用 exec 启动 Gunicorn
-        exec uv run gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100 config.wsgi:application
+        exec uv run gunicorn --bind 0.0.0.0:8000 --workers 1 --timeout 120 --keep-alive 5 --max-requests 500 --max-requests-jitter 50 config.wsgi:application
         ;;
     *)
         echo "⚠️ Unknown container role: $CONTAINER_ROLE. Executing default command."

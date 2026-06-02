@@ -7,9 +7,10 @@ services:
     build: .
     image: emoguard-backend:local
 
-  celery-beat:
-    build: .
-    image: emoguard-backend:local
+  # celery-beat removed — beat scheduler now embedded in worker via -B flag
+  # celery-beat:
+  #   build: .
+  #   image: emoguard-backend:local
 
   nginx:
     build:
