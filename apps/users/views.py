@@ -142,7 +142,11 @@ def wechat_login(request, data: WeChatLoginSchema):
     if len(data.code) != 32:
         raise HttpError(400, "无效的微信登录凭证格式")
     
-    wechat_data = wechat_service.get_access_token(data.code)
+    try:
+        wechat_data = wechat_service.get_access_token(data.code)
+    except Exception as e:
+        logger.error(f"微信API不可达: {e}")
+        raise HttpError(503, "微信服务暂时不可用，请稍后重试")
     openid = wechat_data.get("openid")
     unionid = wechat_data.get("unionid")
     session_key = wechat_data.get("session_key")
