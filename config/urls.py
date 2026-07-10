@@ -4,6 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from .health import health_check
+from .token_views import token_refresh_slash
 
 def health_info_view(request):
     return JsonResponse({
@@ -19,6 +20,8 @@ urlpatterns = [
     path('', health_info_view, name='root'),  # 根路径处理
     path('health/', health_check, name='health'),  # 健康检查
     path('admin/', admin.site.urls),
+    # 带尾斜杠的令牌刷新，须在 api/ include 之前以优先匹配小程序请求
+    path('api/token/refresh/', token_refresh_slash, name='token_refresh_slash'),
     path('api/', include('config.api')),  # Ninja API统一路由
     path('summernote/', include('django_summernote.urls')),  # 富文本编辑器
 ]
