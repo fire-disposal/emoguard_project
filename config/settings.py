@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "ninja",
     "ninja_extra",
     "ninja_jwt",
+    "ninja_jwt.token_blacklist",
     'django_summernote',
     'django_celery_beat',
     'rangefilter',
