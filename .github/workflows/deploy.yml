@@ -82,6 +82,18 @@ jobs:
           ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -euo pipefail
 
+            echo "🔎 校验服务器 ~/.env (运行时密钥由服务器手动维护, CI 不再生成)..."
+            if [ ! -f ~/.env ]; then
+              echo "❌ ~/.env 不存在。请先在服务器创建并填入运行时密钥后重试。"
+              exit 1
+            fi
+            for k in JWT_SIGNING_KEY SECRET_KEY POSTGRES_PASSWORD REDIS_PASSWORD \
+                     DJANGO_SUPERUSER_USERNAME WECHAT_MINI_PROGRAM_APP_ID \
+                     WECHAT_MINI_PROGRAM_APP_SECRET WECHAT_SUBSCRIPTION_TEMPLATES; do
+              grep -q "^${k}=" ~/.env || { echo "❌ ~/.env 缺少必需键: ${k}"; exit 1; }
+            done
+            echo "✅ ~/.env 必需键齐全"
+
             echo "🔑 Docker登录..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
