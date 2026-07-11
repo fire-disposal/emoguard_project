@@ -3,15 +3,16 @@ Django Ninja JWT 认证适配器
 用于将django-ninja-jwt集成到现有的认证流程中
 """
 import logging
-logger = logging.getLogger("django")
+
 from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.tokens import RefreshToken
 from ninja_jwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth import get_user_model
 
+logger = logging.getLogger("django")
+
 User = get_user_model()
 
-# 创建全局JWT认证实例
 jwt_auth = JWTAuth()
 
 def create_tokens_for_user(user):
@@ -20,7 +21,7 @@ def create_tokens_for_user(user):
     适配django-ninja-jwt的令牌格式
     """
     refresh = RefreshToken.for_user(user)
-    logger.info(f"[JWT] 创建令牌: 用户ID={user.id}, refresh={str(refresh)}, access={str(refresh.access_token)}")
+    logger.info("[JWT] 签发令牌: user_id=%s", user.id)
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -57,15 +58,11 @@ def refresh_access_token(refresh_token_str):
         return None
 
 def get_user_from_token(token_str):
-    """
-    从令牌字符串中获取用户
-    """
+    """从令牌字符串中获取用户"""
     try:
-        logger.info(f"[JWT] 解析令牌: token_str={token_str}")
         refresh = RefreshToken(token_str)
         user_id = refresh['user_id']
-        logger.info(f"[JWT] 令牌解析成功: user_id={user_id}")
         return User.objects.get(id=user_id)
     except (TokenError, InvalidToken, User.DoesNotExist) as e:
-        logger.error(f"[JWT] 令牌解析失败: {str(e)}")
+        logger.warning("[JWT] 令牌解析失败: %s", str(e))
         return None
