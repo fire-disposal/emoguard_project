@@ -137,7 +137,7 @@ jobs:
             echo "🔍 开始健康检查 (Max 20 attempts, 5s interval)..."
             health_check_passed=false
             for i in {1..20}; do
-              if docker exec emoguard-backend curl -fsS http://localhost:8000/health; then
+              if docker exec emoguard-backend curl -fsS http://localhost:8000/health/; then
                 echo "✅ 健康检查通过"
                 health_check_passed=true
                 break

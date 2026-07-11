@@ -318,6 +318,8 @@ X_FRAME_OPTIONS = 'DENY'
 # 生产环境安全配置
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
+    # 健康检查豁免 HTTPS 跳转，使容器/CI 的内部 HTTP 探针能真正执行 DB/缓存检查
+    SECURE_REDIRECT_EXEMPT = [r"^health/?$"]
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True

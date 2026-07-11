@@ -28,8 +28,10 @@ def health_check(request):
     response_time = round((time.time() - start_time) * 1000, 2)
     
     status = "healthy"
+    status_code = 200
     if db_status != "healthy" or cache_status != "healthy":
         status = "unhealthy"
+        status_code = 503
     
     return JsonResponse({
         "status": status,
@@ -39,4 +41,4 @@ def health_check(request):
             "database": db_status,
             "cache": cache_status
         }
-    })
+    }, status=status_code)
