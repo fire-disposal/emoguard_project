@@ -143,6 +143,11 @@ def wechat_login(request, data: WeChatLoginSchema):
         raise HttpError(400, "无效的微信登录凭证格式")
     
     try:
+        wechat_service.validate_wechat_code(data.code)
+    except Exception:
+        raise HttpError(400, "微信登录凭证已使用或无效")
+    
+    try:
         wechat_data = wechat_service.get_access_token(data.code)
     except Exception as e:
         logger.error(f"微信API不可达: {e}")

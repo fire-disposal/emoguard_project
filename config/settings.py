@@ -274,25 +274,18 @@ CSRF_TRUSTED_ORIGINS = [
 # =============================================================================
 
 CACHES = {
-    # 默认内存缓存
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,  # 5分钟缓存超时
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,  # 最大缓存条目数
-            'CULL_FREQUENCY': 3,  # 缓存清理频率
-        }
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.environ.get(
+            'CACHE_URL',
+            os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379/1'),
+        ),
+        'KEY_PREFIX': 'emoguard',
     },
-    
-    # 数据库缓存
     'database': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'django_cache_table',
-        'TIMEOUT': 600,  # 10分钟缓存超时
-        'OPTIONS': {
-            'MAX_ENTRIES': 10000,
-        }
+        'OPTIONS': {'MAX_ENTRIES': 10000},
     },
 }
 
