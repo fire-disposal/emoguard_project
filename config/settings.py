@@ -209,11 +209,25 @@ WECHAT_SUBSCRIPTION_TEMPLATES = os.environ.get('WECHAT_SUBSCRIPTION_TEMPLATES', 
 # JWT 认证配置
 # =============================================================================
 
+# JWT 签名密钥与 Django SECRET_KEY 解耦。
+# 生产(DEBUG=False)必须由环境变量提供,缺失即启动失败(fail-fast),
+# 避免静默回落到不安全默认值导致全量令牌被错误签发。
+JWT_SIGNING_KEY = os.environ.get("JWT_SIGNING_KEY")
+if not JWT_SIGNING_KEY:
+    if DEBUG:
+        JWT_SIGNING_KEY = SECRET_KEY
+    else:
+        raise RuntimeError(
+            "JWT_SIGNING_KEY 未设置。生产环境必须通过环境变量提供该密钥。"
+        )
+
 NINJA_JWT = {
-    'ACCESS_TOKEN_LIFETIME':  timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME':  timedelta(hours=24),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'SIGNING_KEY': JWT_SIGNING_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
