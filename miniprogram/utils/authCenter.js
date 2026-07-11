@@ -110,11 +110,14 @@ async function refreshToken() {
       refreshFailCount = 0;
       resolve(access);
     } catch (e) {
-      refreshFailCount++;
-      if (refreshFailCount >= MAX_REFRESH_FAIL) {
+      const status = e && e.statusCode;
+      if (status === 401 || status === 403) {
+        // 刷新令牌已失效：立即熔断并跳登录
         breakdown();
       } else {
-        refreshFailCount = MAX_REFRESH_FAIL;
+        // 网络/服务端临时错误：累加，达阈值才熔断
+        refreshFailCount++;
+        if (refreshFailCount >= MAX_REFRESH_FAIL) breakdown();
       }
       reject(e);
     } finally {
@@ -135,6 +138,7 @@ module.exports = {
   login,
   logout,
   refreshToken,
+  navigateToLogin,
   getUserInfo,
   setUserInfo,
   clearUserInfo,
