@@ -3,15 +3,16 @@ Django Ninja JWT 认证适配器
 用于将django-ninja-jwt集成到现有的认证流程中
 """
 import logging
-logger = logging.getLogger("django")
+
 from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.tokens import RefreshToken
 from ninja_jwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth import get_user_model
 
+logger = logging.getLogger("django")
+
 User = get_user_model()
 
-# 创建全局JWT认证实例
 jwt_auth = JWTAuth()
 
 def create_tokens_for_user(user):
@@ -20,39 +21,48 @@ def create_tokens_for_user(user):
     适配django-ninja-jwt的令牌格式
     """
     refresh = RefreshToken.for_user(user)
-    logger.info(f"[JWT] 创建令牌: 用户ID={user.id}, refresh={str(refresh)}, access={str(refresh.access_token)}")
+    logger.info("[JWT] 签发令牌: user_id=%s", user.id)
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
 
 def refresh_access_token(refresh_token_str):
-    """
-    使用刷新令牌获取新的访问令牌
+    """使用刷新令牌换取新的访问令牌。
+
+    启用 ROTATE_REFRESH_TOKENS + BLACKLIST_AFTER_ROTATION 后:
+    - 校验旧 refresh;
+    - 签发新 access;
+    - 将旧 refresh 加入黑名单并签发新的 refresh(真轮换)。
+    失败返回 None(旧令牌被拉黑或过期/无效)。
     """
     try:
-        logger.info(f"[JWT] 刷新令牌请求: refresh_token_str={refresh_token_str}")
         refresh = RefreshToken(refresh_token_str)
-        result = {
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),  # 返回新的刷新令牌
-        }
-        logger.info(f"[JWT] 刷新令牌成功: 新access={result['access']}, 新refresh={result['refresh']}")
+        access = str(refresh.access_token)
+
+        new_refresh = refresh
+        try:
+            refresh.blacklist()
+        except AttributeError:
+            pass
+        else:
+            new_refresh = RefreshToken.for_user(
+                User.objects.get(id=refresh["user_id"])
+            )
+
+        result = {"access": access, "refresh": str(new_refresh)}
+        logger.info("[JWT] 刷新成功: user_id=%s", refresh.get("user_id", "?"))
         return result
-    except (TokenError, InvalidToken) as e:
-        logger.error(f"[JWT] 刷新令牌失败: {str(e)}")
+    except (TokenError, InvalidToken, User.DoesNotExist) as e:
+        logger.warning("[JWT] 刷新失败: %s", str(e))
         return None
 
 def get_user_from_token(token_str):
-    """
-    从令牌字符串中获取用户
-    """
+    """从令牌字符串中获取用户"""
     try:
-        logger.info(f"[JWT] 解析令牌: token_str={token_str}")
         refresh = RefreshToken(token_str)
         user_id = refresh['user_id']
-        logger.info(f"[JWT] 令牌解析成功: user_id={user_id}")
         return User.objects.get(id=user_id)
     except (TokenError, InvalidToken, User.DoesNotExist) as e:
-        logger.error(f"[JWT] 令牌解析失败: {str(e)}")
+        logger.warning("[JWT] 令牌解析失败: %s", str(e))
         return None

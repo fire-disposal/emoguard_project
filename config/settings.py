@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "ninja",
     "ninja_extra",
     "ninja_jwt",
+    "ninja_jwt.token_blacklist",
     'django_summernote',
     'django_celery_beat',
     'rangefilter',
@@ -209,11 +210,25 @@ WECHAT_SUBSCRIPTION_TEMPLATES = os.environ.get('WECHAT_SUBSCRIPTION_TEMPLATES', 
 # JWT 认证配置
 # =============================================================================
 
+# JWT 签名密钥与 Django SECRET_KEY 解耦。
+# 生产(DEBUG=False)必须由环境变量提供,缺失即启动失败(fail-fast),
+# 避免静默回落到不安全默认值导致全量令牌被错误签发。
+JWT_SIGNING_KEY = os.environ.get("JWT_SIGNING_KEY")
+if not JWT_SIGNING_KEY:
+    if DEBUG:
+        JWT_SIGNING_KEY = SECRET_KEY
+    else:
+        raise RuntimeError(
+            "JWT_SIGNING_KEY 未设置。生产环境必须通过环境变量提供该密钥。"
+        )
+
 NINJA_JWT = {
-    'ACCESS_TOKEN_LIFETIME':  timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME':  timedelta(hours=24),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'SIGNING_KEY': JWT_SIGNING_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
@@ -259,25 +274,18 @@ CSRF_TRUSTED_ORIGINS = [
 # =============================================================================
 
 CACHES = {
-    # 默认内存缓存
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,  # 5分钟缓存超时
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,  # 最大缓存条目数
-            'CULL_FREQUENCY': 3,  # 缓存清理频率
-        }
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.environ.get(
+            'CACHE_URL',
+            os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379/1'),
+        ),
+        'KEY_PREFIX': 'emoguard',
     },
-    
-    # 数据库缓存
     'database': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'django_cache_table',
-        'TIMEOUT': 600,  # 10分钟缓存超时
-        'OPTIONS': {
-            'MAX_ENTRIES': 10000,
-        }
+        'OPTIONS': {'MAX_ENTRIES': 10000},
     },
 }
 

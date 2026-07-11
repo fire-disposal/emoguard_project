@@ -68,35 +68,31 @@ jobs:
       - name: Render & Upload Stack Files
         run: |
           set -euo pipefail
-          
+
           sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g" \
             docker-compose.yml > docker-compose.rendered.yml
 
-          cat > .env <<EOF
-          HOST_APP_ROOT=${{ env.DEPLOY_ROOT }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          DJANGO_SUPERUSER_USERNAME=${{ secrets.DJANGO_SUPERUSER_USERNAME }}
-          DJANGO_SUPERUSER_EMAIL=${{ secrets.DJANGO_SUPERUSER_EMAIL }}
-          DJANGO_SUPERUSER_PASSWORD=${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
-          WECHAT_MINI_PROGRAM_APP_ID=${{ secrets.WECHAT_MINI_PROGRAM_APP_ID }}
-          WECHAT_MINI_PROGRAM_APP_SECRET=${{ secrets.WECHAT_MINI_PROGRAM_APP_SECRET }}
-          WECHAT_SUBSCRIPTION_TEMPLATES=${{ secrets.WECHAT_SUBSCRIPTION_TEMPLATES }}
-          COMPOSE_BAKE=true
-          EOF
-
-          echo "📤 Uploading files to server..."
+          echo "📤 Uploading compose to server (server-side ~/.env is manually managed, untouched)..."
           scp -i ~/.ssh/id_rsa docker-compose.rendered.yml \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/docker-compose.yml
-          scp -i ~/.ssh/id_rsa .env \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/.env
 
       - name: Deploy Stack via SSH
         shell: bash
         run: |
           ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -euo pipefail
+
+            echo "🔎 校验服务器 ~/.env (运行时密钥由服务器手动维护, CI 不再生成)..."
+            if [ ! -f ~/.env ]; then
+              echo "❌ ~/.env 不存在。请先在服务器创建并填入运行时密钥后重试。"
+              exit 1
+            fi
+            for k in JWT_SIGNING_KEY SECRET_KEY POSTGRES_PASSWORD REDIS_PASSWORD \
+                     DJANGO_SUPERUSER_USERNAME WECHAT_MINI_PROGRAM_APP_ID \
+                     WECHAT_MINI_PROGRAM_APP_SECRET WECHAT_SUBSCRIPTION_TEMPLATES; do
+              grep -q "^${k}=" ~/.env || { echo "❌ ~/.env 缺少必需键: ${k}"; exit 1; }
+            done
+            echo "✅ ~/.env 必需键齐全"
 
             echo "🔑 Docker登录..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin

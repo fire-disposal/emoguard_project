@@ -53,11 +53,17 @@
 | 变量 | 说明 |
 |------|------|
 | `SECRET_KEY` | Django 密钥 |
-| `POSTGRES_PASSWORD` | 数据库密码 |
+| `JWT_SIGNING_KEY` | JWT 签名密钥（与 `SECRET_KEY` 解耦，独立管理；生产缺失即启动失败） |
+| `POSTGRES_PASSWORD` | 数据库密码（已固化进数据卷，迁移/修改需同步 DB） |
 | `REDIS_PASSWORD` | Redis 密码 |
 | `DJANGO_SUPERUSER_USERNAME` / `_EMAIL` / `_PASSWORD` | 管理员账号 |
 | `WECHAT_MINI_PROGRAM_APP_ID` / `_APP_SECRET` | 微信小程序凭证 |
 | `WECHAT_SUBSCRIPTION_TEMPLATES` | 微信订阅消息模板 ID |
+
+> **密钥管理约定**：运行时密钥由服务器上手动维护的 `~/.env` 提供，CI/CD **不再生成或覆盖** `~/.env`。
+> 新增/轮换运行时密钥请直接编辑服务器 `~/.env` 后执行 `docker compose --env-file ~/.env up -d`。
+> GitHub Secrets 仅保留部署必须项（`SERVER_SSH_KEY` / `SERVER_HOST` / `SERVER_USER` 及自动注入的 `GITHUB_TOKEN`）。
+> 服务器 `~/.env` 须离线加密备份（密码管理器 / sops），**严禁提交进 git**。
 
 ### 启动
 
@@ -89,7 +95,7 @@ curl http://localhost:8000/health/
 |------|------|
 | `POST /api/users/wechat/login` | 微信小程序登录 |
 | `POST /api/users/admin/login` | 管理员登录 |
-| `POST /api/token/refresh` | 刷新 JWT（限流 10次/分钟） |
+| `POST /api/token/refresh/` | 刷新 JWT（旋转 + 旧令牌加入黑名单；限流 10次/分钟） |
 | `GET /api/emotiontracker/trend` | 30 天情绪趋势 |
 | `POST /api/cognitive/submit` | 提交认知评估 |
 | `GET /api/scales/{code}/questions` | 获取量表题目 |
@@ -121,6 +127,6 @@ emoguard_project/
 - 依赖更新：修改 `pyproject.toml` 后运行 `uv lock`，重新构建镜像
 - 定时任务：`setup_periodic_tasks` 管理命令（容器启动自动执行）
 - 量表配置：YAML 文件位于 `apps/scales/yaml_configs/`，启动时自动导入
-- JWT 有效期：access 7 天 / refresh 30 天
+- JWT 有效期：access 24 小时 / refresh 30 天（启用轮换 + 黑名单，支持吊销）
 - Python 版本要求：≥ 3.13
 - 管理员联系邮箱：3295829485@qq.com

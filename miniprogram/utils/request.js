@@ -39,8 +39,9 @@ async function _requestWithRetry(options, retry = 1) {
 
         // --- 统一 401 处理 ---
         if (statusCode === 401 && !skipAuth) {
-          // 如果已经熔断，直接失败
+          // 如果已经熔断，主动跳登录后再失败
           if (!authCenter.access || authCenter.breakdown) {
+            authCenter.navigateToLogin();
             reject(new Error('Token expired and refresh breakdown'));
             return;
           }
@@ -57,8 +58,10 @@ async function _requestWithRetry(options, retry = 1) {
 
         // 其他业务错误
         const msg = body?.detail || body?.message || `Request Error ${statusCode}`;
-        wx.showToast({ title: msg, icon: 'none' });
-        reject(new Error(msg));
+        if (!skipAuth) wx.showToast({ title: msg, icon: 'none' });
+        const err = new Error(msg);
+        err.statusCode = statusCode;
+        reject(err);
       },
       fail: (err) => {
         // 网络层失败：静默重试一次
