@@ -4,6 +4,7 @@
 import os
 
 os.environ.setdefault("JWT_SIGNING_KEY", "test-only-signing-key-not-for-production")
+os.environ.setdefault("SECRET_KEY", "test-only-secret-key-not-for-production")
 
 from config.settings import *  # noqa: F401,F403
 

@@ -26,15 +26,21 @@ except ImportError:
 # 核心 Django 设置
 # =============================================================================
 
-# 安全密钥
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY',
-    'django-insecure-b2#f(%-90xf8y7$54+l50r_p!eyfxd0xw2qu+uok+(z&_jc*px'
-)
-
 # 调试模式
 # 默认为 False (生产环境安全优先)，仅在明确设置环境变量为 True 时开启
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+
+# 安全密钥
+# 生产(DEBUG=False)必须由环境变量提供，缺失即启动失败(fail-fast)，
+# 避免静默回落到源码中的不安全默认值。DEBUG 下保留开发默认以不阻断本地/CI。
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-b2#f(%-90xf8y7$54+l50r_p!eyfxd0xw2qu+uok+(z&_jc*px'
+    else:
+        raise RuntimeError(
+            "SECRET_KEY 未设置。生产环境必须通过环境变量提供该密钥。"
+        )
 
 # 允许的主机
 ALLOWED_HOSTS = (
@@ -144,9 +150,6 @@ if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
 # =============================================================================
 # 安全配置
 # =============================================================================
-
-# 代理配置：告知 Django 它正运行在 Nginx 后面，需要基于 X-Forwarded-Proto 头判断 HTTPS
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # 基础安全配置
 
