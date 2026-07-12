@@ -1,4 +1,4 @@
-from ninja import Router
+from ninja import Router, Query
 from django.utils import timezone
 from datetime import time, timedelta
 from .models import EmotionRecord
@@ -42,7 +42,6 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
         "mainMoodOther": getattr(data, "mainMoodOther", None),
         "moodSupplementTags": getattr(data, "moodSupplementTags", None),
         "moodSupplementText": getattr(data, "moodSupplementText", None),
-        "created_at": timezone.now() 
     }
 
     # 3. 核心逻辑：Update Or Create
@@ -57,25 +56,27 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
     )
 
     # 更新用户上次测试时间和完成情况
+    import logging
+    _logger = logging.getLogger("emotiontracker.views")
     try:
         # 使用 timezone.localtime().date() 确保使用配置的时区日期
         today = timezone.localtime().date()
-        
+
         # 更新完成状态和重置日期
         update_data = {
             'last_mood_tested_at': timezone.now(),
             'last_completion_reset_date': today
         }
-        
+
         # 根据时段更新对应的完成状态
         if period == EmotionRecord.PERIOD_MORNING:
             update_data['morning_completed_today'] = True
         elif period == EmotionRecord.PERIOD_EVENING:
             update_data['evening_completed_today'] = True
-            
+
         User.objects.filter(id=current_user.id).update(**update_data)
-    except Exception:
-        pass
+    except Exception as exc:
+        _logger.error("更新用户情绪完成状态失败: user_id=%s, err=%s", current_user.id, exc, exc_info=True)
 
     # 保证 started_at 字段序列化为字符串（空字符串而非 None）
     result = {
@@ -98,7 +99,7 @@ def create_emotion_record(request, data: EmotionRecordCreateSchema):
 @emotion_router.get("/list", response=list[EmotionRecordResponseSchema], auth=jwt_auth)
 def list_emotion_records(request):
     current_user = request.auth
-    queryset = EmotionRecord.objects.filter(user_id=current_user.id).order_by("-created_at")
+    queryset = EmotionRecord.objects.filter(user_id=current_user.id).order_by("-created_at")[:500]
     result = []
     for record in queryset:
         result.append({
@@ -118,7 +119,7 @@ def list_emotion_records(request):
     return result
 
 @emotion_router.get("/trend", response=EmotionTrendSchema, auth=jwt_auth)
-def get_emotion_trend(request, days: int = 30):
+def get_emotion_trend(request, days: int = Query(30, ge=1, le=365)):
     """
     获取用户情绪趋势数据
     返回指定天数内的每日情绪数据，每天可能有morning/evening两个时段

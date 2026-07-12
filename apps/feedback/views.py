@@ -27,7 +27,7 @@ def create_feedback(request, data: FeedbackCreateSchema):
 @feedback_router.get("/feedback", auth=jwt_auth)
 def list_user_feedback(request):
     """获取用户自己的反馈列表"""
-    feedbacks = Feedback.objects.filter(user=request.user).order_by('-created_at')
+    feedbacks = Feedback.objects.filter(user=request.user).order_by('-created_at')[:200]
     
     return [{
         'id': f.id,

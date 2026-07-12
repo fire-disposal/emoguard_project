@@ -53,25 +53,18 @@ def get_user_scale_history(request):
 
 @scales_router.post("/results", auth=jwt_auth, response=Dict[str, Any])
 def create_scale_result(request, data: ScaleResultCreateSchema):
-    """提交量表结果（无 config 区分）"""
+    """提交量表结果"""
     try:
         user_id = str(request.user.id)
-        from apps.scales.definitions.registry import ScaleRegistry
-
         ScaleRegistry.discover_scales()
         scale_obj = ScaleRegistry.get_scale(data.scale_code)
         if not scale_obj:
-            logger.error(f"量表未注册: scale_code={data.scale_code}, data={data}")
-            return {
-                "error": "量表未注册",
-                "debug": {"scale_code": data.scale_code, "data": str(data)},
-            }
-        analysis = scale_obj.calculate(data.selected_options)
+            logger.error("量表未注册: scale_code=%s", data.scale_code)
+            return {"error": "量表未注册"}
+
+        analysis = ScaleRegistry.calculate(data.scale_code, data.selected_options)
         from apps.scales.models import ScaleResult
 
-        # 优化插件机制：统一通过 ScaleRegistry.calculate 调用，避免实例化参数错误
-        from apps.scales.definitions.registry import ScaleRegistry
-        analysis = ScaleRegistry.calculate(data.scale_code, data.selected_options)
         result = ScaleResult.objects.create(
             user_id=user_id,
             scale_code=data.scale_code,
@@ -81,36 +74,19 @@ def create_scale_result(request, data: ScaleResultCreateSchema):
             started_at=data.started_at,
             completed_at=data.completed_at,
         )
-        if result:
-            logger.info(
-                f"量表结果创建成功: id={result.id}, user_id={user_id}, scale_code={data.scale_code}"
-            )
-            return {
-                "id": result.id,
-                "score": result.score,
-                "success": True,
-                "message": "量表结果提交成功",
-                "debug": {
-                    "user_id": user_id,
-                    "scale_code": data.scale_code,
-                    "data": str(data),
-                },
-            }
-        else:
-            logger.error(
-                f"量表结果创建失败: user_id={user_id}, scale_code={data.scale_code}, data={data}"
-            )
-            return {
-                "error": "提交失败",
-                "debug": {
-                    "user_id": user_id,
-                    "scale_code": data.scale_code,
-                    "data": str(data),
-                },
-            }
+        logger.info(
+            "量表结果创建成功: id=%s, user_id=%s, scale_code=%s",
+            result.id, user_id, data.scale_code,
+        )
+        return {
+            "id": result.id,
+            "score": result.score,
+            "success": True,
+            "message": "量表结果提交成功",
+        }
     except Exception as e:
-        logger.error(f"提交量表结果失败: {str(e)}, data={data}")
-        return {"error": f"提交失败: {str(e)}", "debug": {"data": str(data)}}
+        logger.error("提交量表结果失败: %s", str(e), exc_info=True)
+        return {"error": "提交失败"}
 
 
 @scales_router.get("/list", response=List[Dict])

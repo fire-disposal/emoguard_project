@@ -222,7 +222,7 @@ def get_user_report_summary(request):
     )
 
 @reports_router.get("/trends", response=list[HealthTrendSchema], auth=jwt_auth)
-def get_health_trends(request, days: int = Query(90)):
+def get_health_trends(request, days: int = Query(90, ge=1, le=365)):
     """
     获取当前用户健康趋势
     """

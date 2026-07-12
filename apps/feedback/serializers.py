@@ -1,12 +1,12 @@
 """用户反馈序列化器 - 简化版本"""
-from ninja import Schema
+from ninja import Schema, Field
 from typing import Optional
 
 
 class FeedbackCreateSchema(Schema):
     """创建反馈的序列化器 - 最简版本"""
-    rating: int  # 评分 1-5
-    content: Optional[str] = None  # 反馈内容，最多500字
+    rating: int = Field(ge=1, le=5)  # 评分 1-5
+    content: Optional[str] = Field(default=None, max_length=500)  # 反馈内容，最多500字
 
 
 class FeedbackResponseSchema(Schema):
