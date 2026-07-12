@@ -1,6 +1,5 @@
 """认知流模块的 admin 配置"""
 from django.contrib import admin
-from django.utils.html import format_html
 from apps.users.admin_mixins import UUIDUserAdminMixin, UserRealNameFilter
 from .models import CognitiveAssessmentRecord
 

@@ -1,7 +1,6 @@
 """报告模块的 admin 配置"""
 from django.contrib import admin
 from django.utils.html import format_html
-from django.utils import timezone
 import json
 from apps.users.admin_mixins import UUIDUserAdminMixin, UserRealNameFilter
 from .models import HealthReport
@@ -56,19 +55,22 @@ class HealthReportAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
     )
     
     def recommendations_display(self, obj):
-        """建议列表显示"""
+        """建议列表显示（转义用户内容防 XSS）"""
+        from django.utils.html import format_html, mark_safe
         if obj.recommendations:
             try:
                 if isinstance(obj.recommendations, list):
-                    items = []
+                    rows = []
                     for i, rec in enumerate(obj.recommendations, 1):
                         if isinstance(rec, dict):
-                            title = rec.get('title', f'建议 {i}')
-                            content = rec.get('content', '')
-                            items.append(f"<strong>{title}:</strong> {content}")
+                            rows.append(format_html(
+                                "<strong>{}:</strong> {}",
+                                rec.get('title', f'建议 {i}'),
+                                rec.get('content', ''),
+                            ))
                         else:
-                            items.append(f"{i}. {rec}")
-                    return format_html("<br>".join(items))
+                            rows.append(format_html("{}. {}", i, rec))
+                    return mark_safe("<br>".join(str(r) for r in rows))
                 else:
                     return str(obj.recommendations)
             except Exception:
@@ -76,7 +78,6 @@ class HealthReportAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
         return "无建议"
     
     recommendations_display.short_description = '建议列表'
-    recommendations_display.allow_tags = True
     
     def trend_data_display(self, obj):
         """趋势数据显示"""

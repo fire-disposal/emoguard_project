@@ -1,6 +1,5 @@
 """情绪日记模块的 admin 配置"""
 from django.contrib import admin
-from django.utils.html import format_html
 from apps.users.admin_mixins import ForeignKeyUserAdminMixin, UserRealNameFilter
 from .models import MoodJournal
 
