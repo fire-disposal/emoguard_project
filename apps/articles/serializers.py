@@ -1,15 +1,15 @@
 from ninja import Schema
-from typing import Optional
+from typing import Optional, Literal
 
 class ArticleCreateSchema(Schema):
     title: str
     content: str
-    status: str = "draft"
+    status: Literal["draft", "published"] = "draft"
 
 class ArticleUpdateSchema(Schema):
     title: Optional[str] = None
     content: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[Literal["draft", "published"]] = None
 
 class ArticleResponseSchema(Schema):
     id: int

@@ -26,25 +26,26 @@ def rate_limit(key_prefix, max_requests=5, window_seconds=60):
             # 获取客户端IP
             x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
             if x_forwarded_for:
-                ip = x_forwarded_for.split(',')[0]
+                ip = x_forwarded_for.split(',')[0].strip()
             else:
                 ip = request.META.get('REMOTE_ADDR')
-            
+
             # 构造缓存键
             cache_key = f"rate_limit:{key_prefix}:{ip}"
-            
-            # 获取当前计数
-            current = cache.get(cache_key, 0)
-            
-            if current >= max_requests:
-                logger.warning(f"频率限制触发: {ip} -> {key_prefix}")
+
+            # 原子递增；首次用 add 建立窗口，避免 get+set 竞态
+            try:
+                current = cache.incr(cache_key)
+            except ValueError:
+                cache.add(cache_key, 1, window_seconds)
+                current = 1
+
+            if current > max_requests:
+                logger.warning("频率限制触发: %s -> %s", ip, key_prefix)
                 raise HttpError(429, "请求过于频繁，请稍后重试")
-            
-            # 增加计数
-            cache.set(cache_key, current + 1, window_seconds)
-            
+
             return view_func(request, *args, **kwargs)
-        
+
         return wrapped_view
     return decorator
 
@@ -74,11 +75,12 @@ class RefreshTokenRateLimitMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.path == "/api/token/refresh/":
+        if request.path in ("/api/token/refresh/", "/api/token/refresh"):
             # 直接调用装饰器内部逻辑
             try:
                 refresh_token_rate_limit(lambda req: None)(request)
-            except Exception:
+            except HttpError:
                 from django.http import JsonResponse
                 return JsonResponse({"detail": "请求过于频繁，请稍后重试"}, status=429)
+            # 其它异常（如缓存后端故障）不拦截，放行以保可用性
         return self.get_response(request)

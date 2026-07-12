@@ -58,12 +58,12 @@ def list_journals(request, filters: MoodJournalListQuerySchema = Query(...)):
         for j in journals
     ]
 
-@journals_router.get("/{journal_id}", response=MoodJournalResponseSchema)
+@journals_router.get("/{journal_id}", response=MoodJournalResponseSchema, auth=jwt_auth)
 def get_journal(request, journal_id: int):
     """
-    获取单条情绪日记详情
+    获取单条情绪日记详情（仅本人）
     """
-    journal = get_object_or_404(MoodJournal, id=journal_id)
+    journal = get_object_or_404(MoodJournal, id=journal_id, user_id=request.auth.id)
     return MoodJournalResponseSchema(
         id=journal.id,
         mainMood=journal.mainMood,

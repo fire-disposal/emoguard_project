@@ -149,13 +149,13 @@ def get_scale(request, scale_code: str):
         return {"error": f"获取量表定义失败: {str(e)}"}
 
 
-@scales_router.get("/results/{result_id}", response=ScaleResultResponseSchema)
+@scales_router.get("/results/{result_id}", response=ScaleResultResponseSchema, auth=jwt_auth)
 def get_scale_result(request, result_id: int):
-    """获取单量表结果详情（自动适配插件处理类）"""
+    """获取单量表结果详情（仅本人）"""
     try:
         from apps.scales.models import ScaleResult
 
-        result = ScaleResult.objects.filter(id=result_id).first()
+        result = ScaleResult.objects.filter(id=result_id, user_id=str(request.user.id)).first()
         if not result:
             return {"error": "结果不存在"}
         ScaleRegistry.discover_scales()
