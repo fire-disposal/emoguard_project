@@ -182,7 +182,7 @@ def get_scale_result(request, result_id: int):
             created_at=str(result.created_at),
         )
     except Exception as e:
-        logger.error(f"获取量表结果失败: {str(e)}")
-        return {"error": f"获取结果失败: {str(e)}"}
+        logger.error("获取量表结果失败: %s", str(e), exc_info=True)
+        return {"error": "获取结果失败"}
 
 

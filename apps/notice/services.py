@@ -94,7 +94,7 @@ def send_template_msg(user, template_id, page_path, data_dict):
     # 3. 发送（token 失效 40001 时刷新重试一次）
     try:
         res_json = _do_send(access_token)
-        if res_json.get('errcode') == 40001:
+        if isinstance(res_json, dict) and res_json.get('errcode') == 40001:
             access_token = get_wechat_access_token(force_refresh=True)
             if access_token:
                 res_json = _do_send(access_token)
@@ -108,6 +108,8 @@ def send_template_msg(user, template_id, page_path, data_dict):
         return False
 
     # 4. 处理结果
+    if not isinstance(res_json, dict):
+        res_json = {}
     if res_json.get('errcode') == 0:
         NotificationLog.objects.create(
             user=user, template_id=template_id, message_data=data_dict,
