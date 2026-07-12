@@ -1,7 +1,6 @@
 """通用的用户管理 mixin 类"""
 from django.contrib import admin
 from django.db.models import Q
-from django.utils.html import format_html
 from apps.users.models import User
 
 

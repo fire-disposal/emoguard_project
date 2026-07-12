@@ -117,78 +117,64 @@ class WeChatAuthService:
     
     def validate_wechat_code(self, code):
         """
-        验证微信登录凭证code是否已使用
-        
+        验证微信登录凭证code是否已使用（原子 SET NX 防并发重放）
+
         Args:
             code: 微信登录凭证
-            
+
         Raises:
             Exception: code已使用或无效
         """
         cache_key = f"wechat_code_{code}"
-        if cache.get(cache_key):
+        # cache.add 在 Redis 上是原子 SET NX；返回 False 表示 key 已存在（已用过）
+        if not cache.add(cache_key, True, 300):
             raise Exception("微信登录凭证已使用")
-        # 设置5分钟有效期，防止重放攻击
-        cache.set(cache_key, True, 300)
-        logger.info(f"微信code验证通过: {code[:10]}...")
+        logger.info("微信code验证通过: %s...", code[:10])
 
     def get_or_create_user(self, openid, unionid=None, user_info=None):
         """
-        根据openid获取或创建用户 - 单模型设计
-        
+        根据openid获取或创建用户（并发安全）
+
         Args:
             openid: 微信openid
             unionid: 微信unionid（可选）
             user_info: 用户信息（可选）
-            
+
         Returns:
             tuple: (user, created) 用户对象和是否创建的标志
         """
-        try:
-            user = User.objects.get(wechat_openid=openid)
-            created = False
-            logger.info(f"找到现有微信用户: {openid}")
-            
-            # 更新unionid（如果提供且不同）
-            update_fields = []
-            if unionid and user.wechat_unionid != unionid:
-                user.wechat_unionid = unionid
-                update_fields.append('wechat_unionid')
-            
-            # 更新用户资料（如果提供且相关字段为空）
-            if user_info:
-                if not user.gender and user_info.get('gender'):
-                    user.gender = self._convert_gender(user_info.get('gender'))
-                    update_fields.append('gender')
-            
-            if update_fields:
-                user.save(update_fields=update_fields)
-                logger.info(f"更新用户信息: {openid}, 字段: {update_fields}")
-                
-        except User.DoesNotExist:
-            # 创建新用户,使用事务确保数据一致性
-            with transaction.atomic():  # type: ignore[misc]
-                # 准备用户资料
-                gender = ''
-                
-                if user_info:
-                    gender = self._convert_gender(user_info.get('gender'))
-                
-                # 创建用户，直接包含资料字段
-                user = User.objects.create(
-                    username=openid,
-                    wechat_openid=openid,
-                    wechat_unionid=unionid,
-                    role='user',
-                    gender=gender,
-                )
+        gender = ''
+        if user_info:
+            gender = self._convert_gender(user_info.get('gender'))
+
+        with transaction.atomic():
+            user, created = User.objects.get_or_create(
+                wechat_openid=openid,
+                defaults={
+                    'username': openid,
+                    'wechat_unionid': unionid,
+                    'role': 'user',
+                    'gender': gender,
+                },
+            )
+            if created:
                 user.set_unusable_password()
-                user.save()
-                
-                created = True
-                logger.info(f"创建新微信用户: {openid}")
-        
-        return user, created
+                user.save(update_fields=['password'])
+                logger.info("创建新微信用户: %s", openid)
+                return user, True
+
+        # 已存在：按需更新 unionid / gender
+        update_fields = []
+        if unionid and user.wechat_unionid != unionid:
+            user.wechat_unionid = unionid
+            update_fields.append('wechat_unionid')
+        if user_info and not user.gender and user_info.get('gender'):
+            user.gender = self._convert_gender(user_info.get('gender'))
+            update_fields.append('gender')
+        if update_fields:
+            user.save(update_fields=update_fields)
+            logger.info("更新用户信息: %s, 字段: %s", openid, update_fields)
+        return user, False
 
     def _convert_gender(self, gender_value):
         """

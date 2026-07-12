@@ -93,7 +93,7 @@ def get_assessment_history(request):
     try:
         from apps.cognitive_flow.models import CognitiveAssessmentRecord
         user_id = request.auth.id
-        records = CognitiveAssessmentRecord.objects.filter(user_id=user_id).order_by("-created_at")
+        records = CognitiveAssessmentRecord.objects.filter(user_id=user_id).order_by("-created_at")[:200]
         result = []
         for record in records:
             result.append(

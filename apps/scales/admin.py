@@ -1,7 +1,6 @@
 """量表模块的 admin 配置"""
 from django.contrib import admin
 from django.utils.html import format_html
-from django.utils import timezone
 import json
 from apps.users.admin_mixins import UUIDUserAdminMixin, UserRealNameFilter
 from .models import ScaleResult
@@ -48,19 +47,22 @@ class ScaleResultAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
     )
     
     def selected_options_display(self, obj):
-        """选项选择显示"""
+        """选项选择显示（转义用户内容防 XSS）"""
+        from django.utils.html import format_html, mark_safe
         if obj.selected_options:
             try:
                 if isinstance(obj.selected_options, list):
-                    items = []
+                    rows = []
                     for i, option in enumerate(obj.selected_options, 1):
                         if isinstance(option, dict):
-                            question = option.get('question', f'问题 {i}')
-                            answer = option.get('answer', '')
-                            items.append(f"<strong>{question}:</strong> {answer}")
+                            rows.append(format_html(
+                                "<strong>{}:</strong> {}",
+                                option.get('question', f'问题 {i}'),
+                                option.get('answer', ''),
+                            ))
                         else:
-                            items.append(f"{i}. {option}")
-                    return format_html("<br>".join(items))
+                            rows.append(format_html("{}. {}", i, option))
+                    return mark_safe("<br>".join(str(r) for r in rows))
                 else:
                     # 如果是其他格式，尝试格式化为 JSON
                     formatted = json.dumps(obj.selected_options, ensure_ascii=False, indent=2)
@@ -74,7 +76,6 @@ class ScaleResultAdmin(UUIDUserAdminMixin, admin.ModelAdmin):
         return "无选项数据"
     
     selected_options_display.short_description = '选项选择'
-    selected_options_display.allow_tags = True
     
     def duration_display(self, obj):
         """显示答题时长"""

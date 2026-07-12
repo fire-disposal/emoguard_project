@@ -2,6 +2,7 @@ from ninja import Router, Query
 from ninja.errors import HttpError
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg, Count
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import MoodJournal
@@ -57,12 +58,12 @@ def list_journals(request, filters: MoodJournalListQuerySchema = Query(...)):
         for j in journals
     ]
 
-@journals_router.get("/{journal_id}", response=MoodJournalResponseSchema)
+@journals_router.get("/{journal_id}", response=MoodJournalResponseSchema, auth=jwt_auth)
 def get_journal(request, journal_id: int):
     """
-    获取单条情绪日记详情
+    获取单条情绪日记详情（仅本人）
     """
-    journal = get_object_or_404(MoodJournal, id=journal_id)
+    journal = get_object_or_404(MoodJournal, id=journal_id, user_id=request.auth.id)
     return MoodJournalResponseSchema(
         id=journal.id,
         mainMood=journal.mainMood,
@@ -160,47 +161,45 @@ def delete_journal(request, journal_id: int):
     return {"success": True}
 
 @journals_router.get("/statistics/daily", response=list[MoodStatisticsSchema], auth=jwt_auth)
-def get_daily_statistics(request, days: int = Query(30)):
+def get_daily_statistics(request, days: int = Query(30, ge=1, le=365)):
     """
     获取当前用户的日情绪统计
     """
     current_user = request.auth
-    end_date = timezone.now().date()
-    start_date = end_date - timedelta(days=days)
-    
-    # 按日期分组统计
-    statistics = MoodJournal.objects.filter(
-        user_id=current_user.id,
-        record_date__date__gte=start_date,
-        record_date__date__lte=end_date
-    ).values('record_date__date').annotate(
-        avg_score=Avg('moodIntensity'),
-        mood_count=Count('id'),
-        dominant_mood=Count('mainMood')
-    ).order_by('record_date__date')
-    
-    # 获取每个日期的主要情绪
+    tz = timezone.get_current_timezone()
+    end_date = timezone.localtime().date()
+    start_date = end_date - timedelta(days=days - 1)
+
+    statistics = (
+        MoodJournal.objects.filter(user_id=current_user.id)
+        .annotate(local_date=TruncDate('record_date', tzinfo=tz))
+        .filter(local_date__gte=start_date, local_date__lte=end_date)
+        .values('local_date')
+        .annotate(avg_score=Avg('moodIntensity'), mood_count=Count('id'))
+        .order_by('local_date')
+    )
+
     result = []
     for stat in statistics:
-        # 获取该日期的主要情绪
-        dominant_mood = MoodJournal.objects.filter(
-            user_id=current_user.id,
-            record_date__date=stat['record_date__date']
-        ).values('mainMood').annotate(
-            count=Count('id')
-        ).order_by('-count').first()
-        
+        dominant_mood = (
+            MoodJournal.objects.filter(user_id=current_user.id)
+            .annotate(local_date=TruncDate('record_date', tzinfo=tz))
+            .filter(local_date=stat['local_date'])
+            .values('mainMood')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+            .first()
+        )
         result.append(MoodStatisticsSchema(
-            date=stat['record_date__date'].isoformat(),
-            avg_score=round(stat['avg_score'], 2),
+            date=stat['local_date'].isoformat(),
+            avg_score=round(stat['avg_score'], 2) if stat['avg_score'] is not None else 0,
             mood_count=stat['mood_count'],
-            dominant_mood=dominant_mood['mainMood'] if dominant_mood else '未知'
+            dominant_mood=dominant_mood['mainMood'] if dominant_mood and dominant_mood['mainMood'] else '未知'
         ))
-    
     return result
 
 @journals_router.get("/trends/score", response=dict, auth=jwt_auth)
-def get_mood_trends(request, days: int = Query(30)):
+def get_mood_trends(request, days: int = Query(30, ge=1, le=365)):
     """
     获取当前用户情绪分数趋势
     """

@@ -12,7 +12,7 @@
 | 情绪日记 | 用户主观情绪记录、日统计、趋势分析 |
 | EMA 日常追踪 | 每日早晚情绪自评（抑郁/焦虑/精力/睡眠），服务端判定时段 |
 | 认知评估 | 一次性提交 6 项量表（SCD/MMSE/MoCA/GAD-7/PHQ-9/ADL） |
-| 量表系统 | 插件化量表架构，支持 YAML 配置导入，已实现 GAD-7 |
+| 量表系统 | 插件化量表架构（Python 定义类，registry 自动发现），已实现 GAD-7 |
 | 健康报告 | 风险评级、趋势分析、专业建议 |
 | 文章资讯 | 内容管理，草稿/发布状态 |
 | 微信通知 | 订阅配额管理，每日早晚提醒推送（Celery Beat 定时任务） |
@@ -75,7 +75,7 @@ docker compose build
 docker compose up -d
 ```
 
-容器启动后自动执行数据库迁移、静态文件收集、管理员创建、量表配置加载、定时任务注册。
+容器启动后自动执行数据库迁移、静态文件收集、管理员创建、定时任务注册。
 
 ### 健康检查
 
@@ -126,7 +126,7 @@ emoguard_project/
 
 - 依赖更新：修改 `pyproject.toml` 后运行 `uv lock`，重新构建镜像
 - 定时任务：`setup_periodic_tasks` 管理命令（容器启动自动执行）
-- 量表配置：YAML 文件位于 `apps/scales/yaml_configs/`，启动时自动导入
+- 量表配置：Python 定义类位于 `apps/scales/definitions/`，由 registry 在运行时自动发现
 - JWT 有效期：access 24 小时 / refresh 30 天（启用轮换 + 黑名单，支持吊销）
 - Python 版本要求：≥ 3.13
 - 管理员联系邮箱：3295829485@qq.com

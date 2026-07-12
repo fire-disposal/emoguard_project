@@ -61,7 +61,7 @@ class Command(BaseCommand):
                         self.style.SUCCESS(f'管理员账户已重置: {username}')
                     )
                     self.stdout.write(
-                        self.style.WARNING(f'密码: {password}')
+                        self.style.WARNING('密码已重置为环境变量提供的值，请及时修改。')
                     )
                     self.stdout.write(
                         self.style.WARNING('请及时修改默认密码！')
@@ -78,7 +78,8 @@ class Command(BaseCommand):
             user = User.objects.create_superuser(
                 username=username,
                 email=email,
-                password=password
+                password=password,
+                role='admin'
             )
             
             self.stdout.write(
@@ -88,10 +89,7 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f'邮箱: {email}')
             )
             self.stdout.write(
-                self.style.WARNING(f'密码: {password}')
-            )
-            self.stdout.write(
-                self.style.WARNING('请及时修改默认密码！')
+                self.style.WARNING('请通过环境变量 DJANGO_SUPERUSER_PASSWORD 设置的密码登录，并及时修改。')
             )
             
         except IntegrityError as e:

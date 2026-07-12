@@ -60,12 +60,12 @@ def list_reports(request, filters: HealthReportListQuerySchema = Query(...)):
         for r in reports
     ]
 
-@reports_router.get("/{report_id}", response=HealthReportResponseSchema)
+@reports_router.get("/{report_id}", response=HealthReportResponseSchema, auth=jwt_auth)
 def get_report(request, report_id: int):
     """
-    获取单份健康报告详情
+    获取单份健康报告详情（仅本人）
     """
-    report = get_object_or_404(HealthReport, id=report_id)
+    report = get_object_or_404(HealthReport, id=report_id, user_id=request.auth.id)
     return HealthReportResponseSchema(
         id=report.id,
         user_id=str(report.user_id),
@@ -114,12 +114,12 @@ def create_report(request, data: HealthReportCreateSchema):
         updated_at=report.updated_at.isoformat()
     )
 
-@reports_router.put("/{report_id}", response=HealthReportResponseSchema)
+@reports_router.put("/{report_id}", response=HealthReportResponseSchema, auth=jwt_auth)
 def update_report(request, report_id: int, data: HealthReportUpdateSchema):
     """
-    更新健康报告
+    更新健康报告（仅本人）
     """
-    report = get_object_or_404(HealthReport, id=report_id)
+    report = get_object_or_404(HealthReport, id=report_id, user_id=request.auth.id)
     
     # 更新字段
     if data.overall_risk is not None:
@@ -152,12 +152,12 @@ def update_report(request, report_id: int, data: HealthReportUpdateSchema):
         updated_at=report.updated_at.isoformat()
     )
 
-@reports_router.delete("/{report_id}")
+@reports_router.delete("/{report_id}", auth=jwt_auth)
 def delete_report(request, report_id: int):
     """
-    删除健康报告
+    删除健康报告（仅本人）
     """
-    report = get_object_or_404(HealthReport, id=report_id)
+    report = get_object_or_404(HealthReport, id=report_id, user_id=request.auth.id)
     report.delete()
     return {"success": True}
 
@@ -222,7 +222,7 @@ def get_user_report_summary(request):
     )
 
 @reports_router.get("/trends", response=list[HealthTrendSchema], auth=jwt_auth)
-def get_health_trends(request, days: int = Query(90)):
+def get_health_trends(request, days: int = Query(90, ge=1, le=365)):
     """
     获取当前用户健康趋势
     """

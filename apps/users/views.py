@@ -210,7 +210,9 @@ def update_my_profile(request, data: UserProfileUpdateSchema):
 
 @users_router.get("/users", response=list[UserResponseSchema], auth=jwt_auth)
 def list_users(request, role=None):
-    """获取用户列表，支持按角色过滤"""
+    """获取用户列表（仅管理员），支持按角色过滤"""
+    if request.auth.role != "admin":
+        raise HttpError(403, "需要管理员权限")
     queryset = User.objects.all()
     if role:
         queryset = queryset.filter(role=role)
@@ -220,7 +222,9 @@ def list_users(request, role=None):
 
 @users_router.get("/users/{user_id}", response=UserResponseSchema, auth=jwt_auth)
 def get_user(request, user_id):
-    """获取单个用户信息"""
+    """获取单个用户信息（仅管理员或本人）"""
+    if request.auth.role != "admin" and str(request.auth.id) != str(user_id):
+        raise HttpError(403, "无权限查看其他用户")
     user = get_object_or_404(User, id=user_id)
     return _user_to_response_schema(user)
 

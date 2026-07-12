@@ -64,13 +64,7 @@ if [ "$CONTAINER_ROLE" = "backend" ]; then
         echo "ℹ️ DJANGO_SUPERUSER_USERNAME not set. Skipping superuser creation."
     fi
     
-    # 4. 加载量表配置
-    if [ -d "apps/scales/yaml_configs" ]; then
-        echo "📊 Loading scale configurations from YAML..."
-        uv run python manage.py load_scales_from_yaml
-    fi
-    
-    # 5. 创建定时任务
+    # 4. 创建定时任务
     echo "🗓️ Setting up periodic tasks..."
     uv run python manage.py setup_periodic_tasks
     
