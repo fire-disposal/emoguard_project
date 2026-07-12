@@ -70,10 +70,14 @@ def send_mood_reminder(self, period: Literal['morning', 'evening'] = "morning"):
     # 2. 筛选需要提醒的用户: 
     #    - 排除已填写用户 ID
     #    - 考虑过滤有额度的用户 (如果启用)
-    users_to_remind = User.objects.exclude(id__in=filled_user_ids)
-    
-    # 启用额度过滤 (如果需要，取消注释下面一行)
-    users_to_remind = users_to_remind.filter(notice_quotas__count__gt=0).distinct()
+    users_to_remind = (
+        User.objects
+        .exclude(id__in=filled_user_ids)
+        .exclude(wechat_openid__isnull=True)
+        .exclude(wechat_openid__exact='')
+        .filter(notice_quotas__template_id=template_id, notice_quotas__count__gt=0)
+        .distinct()
+    )
     
     logger.info(f"[{task_id}] 共有 {users_to_remind.count()} 位用户需要发送 {period} 提醒.")
 

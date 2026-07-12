@@ -23,15 +23,16 @@ def sync_subscribe(request, data: SubscribeSyncSchema):
     action = data.action
 
     if action == 'accept':
-        quota, created = UserQuota.objects.get_or_create(
-            user=request.user,
-            template_id=template_id
-        )
-        quota.count = F('count') + 1
-        quota.save()
-        quota.refresh_from_db()
         import logging
         logger = logging.getLogger("notice.views")
-        logger.info(f"用户 {request.user.username} 模板 {template_id} 订阅额度变更: 当前额度 {quota.count}")
+        UserQuota.objects.get_or_create(user=request.user, template_id=template_id)
+        UserQuota.objects.filter(
+            user=request.user, template_id=template_id
+        ).update(count=F('count') + 1)
+        quota = UserQuota.objects.get(user=request.user, template_id=template_id)
+        logger.info(
+            "用户 %s 模板 %s 订阅额度变更: 当前额度 %s",
+            request.user.username, template_id, quota.count,
+        )
         return SubscribeSyncResponseSchema(status="success", msg="订阅次数已增加")
     return SubscribeSyncResponseSchema(status="ignored", msg="用户拒绝或被封禁")
