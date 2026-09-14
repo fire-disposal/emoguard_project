@@ -11,8 +11,10 @@ on:
 env:
   IMAGE_BASE: ghcr.io/${{ github.repository }}/emoguard-backend
   DEPLOY_ROOT: /var/www/emoguard
-
-
+  # 2026-09-14 校准：部署目录不再用 ~（那会让 compose 项目名变成 root、文件散落在 /root），
+  # 统一到 /opt/emoguard，并用显式项目名 emoguard（容器名与卷名在 compose 内已钉死，数据不受影响）。
+  DEPLOY_DIR: /opt/emoguard
+  COMPOSE_PROJECT: emoguard
 
 jobs:
   deploy:
@@ -72,9 +74,13 @@ jobs:
           sed "s|__IMAGE__|${{ steps.ver.outputs.IMAGE }}|g" \
             docker-compose.yml > docker-compose.rendered.yml
 
-          echo "📤 Uploading compose to server (server-side ~/.env is manually managed, untouched)..."
+          echo "📁 确保部署目录存在: ${{ env.DEPLOY_DIR }}"
+          ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "sudo mkdir -p ${{ env.DEPLOY_DIR }} && sudo chown \$USER:\$USER ${{ env.DEPLOY_DIR }}"
+
+          echo "📤 Uploading compose to server (server-side ${{ env.DEPLOY_DIR }}/.env is manually managed, untouched)..."
           scp -i ~/.ssh/id_rsa docker-compose.rendered.yml \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/docker-compose.yml
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/docker-compose.yml
 
       - name: Deploy Stack via SSH
         shell: bash
@@ -82,29 +88,27 @@ jobs:
           ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -euo pipefail
 
-            echo "🔎 校验服务器 ~/.env (运行时密钥由服务器手动维护, CI 不再生成)..."
-            if [ ! -f ~/.env ]; then
-              echo "❌ ~/.env 不存在。请先在服务器创建并填入运行时密钥后重试。"
+            DEPLOY_DIR="${{ env.DEPLOY_DIR }}"
+            COMPOSE="docker compose -p ${{ env.COMPOSE_PROJECT }} -f $DEPLOY_DIR/docker-compose.yml --env-file $DEPLOY_DIR/.env"
+
+            echo "🔎 校验服务器 $DEPLOY_DIR/.env (运行时密钥由服务器手动维护, CI 不再生成)..."
+            if [ ! -f "$DEPLOY_DIR/.env" ]; then
+              echo "❌ $DEPLOY_DIR/.env 不存在。请先在服务器创建并填入运行时密钥后重试。"
               exit 1
             fi
             for k in JWT_SIGNING_KEY SECRET_KEY POSTGRES_PASSWORD REDIS_PASSWORD \
                      DJANGO_SUPERUSER_USERNAME WECHAT_MINI_PROGRAM_APP_ID \
                      WECHAT_MINI_PROGRAM_APP_SECRET WECHAT_SUBSCRIPTION_TEMPLATES; do
-              grep -q "^${k}=" ~/.env || { echo "❌ ~/.env 缺少必需键: ${k}"; exit 1; }
+              grep -q "^${k}=" "$DEPLOY_DIR/.env" || { echo "❌ .env 缺少必需键: ${k}"; exit 1; }
             done
-            echo "✅ ~/.env 必需键齐全"
+            echo "✅ .env 必需键齐全"
 
             echo "🔑 Docker登录..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            echo "📥 拉取镜像..."
-            docker compose -f ~/docker-compose.yml --env-file ~/.env pull
-            
+
             echo "📂 确保挂载目录存在并设置权限..."
-            # 尝试创建标准目录，如果失败则输出指导信息
             if sudo mkdir -p ${{ env.DEPLOY_ROOT }}/media ${{ env.DEPLOY_ROOT }}/staticfiles ${{ env.DEPLOY_ROOT }}/logs; then
                 echo "✅ 目录已就绪: ${{ env.DEPLOY_ROOT }}"
-                # 设置权限给当前用户或 docker 用户 (通常 uid 1000)
                 sudo chown -R 1000:1000 ${{ env.DEPLOY_ROOT }} || echo "⚠️ 无法设置chown，可能需要手动介入"
                 sudo chmod -R 775 ${{ env.DEPLOY_ROOT }} || echo "⚠️ 无法设置chmod"
             else
@@ -115,19 +119,26 @@ jobs:
                 echo "   sudo chmod -R 775 ${{ env.DEPLOY_ROOT }}"
                 exit 1
             fi
-            
-            echo "�🔍 验证镜像:"
+
+            # 回滚锚点：记录当前在用的镜像 tag（失败时回退到它）
+            OLD_IMG=$(docker inspect --format '{{.Config.Image}}' emoguard-backend 2>/dev/null || echo "")
+            OLD_TAG=$(echo "$OLD_IMG" | rev | cut -d: -f1 | rev)
+            echo "🔖 当前版本（回滚锚点）: ${OLD_TAG:-无}"
+
+            echo "📥 拉取镜像..."
+            $COMPOSE pull
+
+            echo "🔍 验证镜像:"
             docker images | grep emoguard || echo "⚠️ 未找到emoguard镜像"
 
-            echo "🚀 停止旧容器..."
-            docker compose -f ~/docker-compose.yml --env-file ~/.env down --remove-orphans
-            
-            echo "🚀 启动新容器..."
-            docker compose -f ~/docker-compose.yml --env-file ~/.env up -d
-            
+            # 2026-09-14 校准：不再 down→up（那会造成停机窗口且失败时无回滚）；
+            # 改为就地 up -d --remove-orphans（compose 只重建变化的容器）。
+            echo "🚀 启动/更新容器..."
+            $COMPOSE up -d --remove-orphans
+
             echo "⏳ 等待容器初始化..."
             sleep 10
-            
+
             echo "📋 检查容器状态:"
             docker ps -a | grep emoguard || true
 
@@ -146,24 +157,39 @@ jobs:
               if [ $i -eq 5 ] || [ $i -eq 10 ] || [ $i -eq 15 ]; then
                 echo "--- 诊断信息 ---"
                 docker ps -a | grep emoguard
-                docker compose logs backend --tail 50
+                $COMPOSE logs backend --tail 50
                 echo "----------------"
               fi
               sleep 5
             done
 
             if [ "$health_check_passed" != "true" ]; then
-              echo "❌ 健康检查失败，收集最终诊断信息:"
-              docker ps -a
-              docker compose logs backend --tail 50
-              docker compose logs db --tail 20
-              docker compose logs redis --tail 20
+              echo "❌ 健康检查失败"
+              docker ps -a | grep emoguard || true
+              $COMPOSE logs backend --tail 50 || true
+              $COMPOSE logs db --tail 20 || true
+              $COMPOSE logs redis --tail 20 || true
+              if [ -n "${OLD_TAG:-}" ] && [ "$OLD_TAG" != "${{ steps.ver.outputs.TAG }}" ]; then
+                echo "↩️ 自动回滚到 $OLD_TAG ..."
+                IMAGE_OVERRIDE="${{ env.IMAGE_BASE }}:${OLD_TAG}"
+                docker image inspect "$IMAGE_OVERRIDE" >/dev/null 2>&1 || docker pull "$IMAGE_OVERRIDE" || true
+                sed "s|image: .*emoguard-backend:.*|image: ${IMAGE_OVERRIDE}|g" "$DEPLOY_DIR/docker-compose.yml" > "$DEPLOY_DIR/docker-compose.rollback.yml"
+                docker compose -p ${{ env.COMPOSE_PROJECT }} -f "$DEPLOY_DIR/docker-compose.rollback.yml" --env-file "$DEPLOY_DIR/.env" up -d --remove-orphans || true
+                echo "⚠️ 已尝试回滚到 ${OLD_TAG}，请人工确认后重试部署"
+              else
+                echo "⚠️ 无可用的回滚锚点，请人工介入"
+              fi
               exit 1
             fi
-            
+
             echo "📦 记录成功部署的版本..."
-            echo "${{ steps.ver.outputs.TAG }}" > ~/last_successful_version.txt
+            echo "${{ steps.ver.outputs.TAG }}" > "$DEPLOY_DIR/last_successful_version.txt"
+
+            echo "🧹 清理悬空镜像（保留在用与最近 3 个）..."
+            docker image prune -f >/dev/null 2>&1 || true
+
             echo "✅ Deploy OK"
           EOF
+
       - name: ✅ Finish Deployment
         run: "echo \"🚀 Deploy finished — Image: ${{ steps.ver.outputs.IMAGE }}\""
