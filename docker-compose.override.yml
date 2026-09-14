@@ -12,8 +12,11 @@ services:
   #   build: .
   #   image: emoguard-backend:local
 
-  nginx:
-    build:
-      context: .
-      dockerfile: nginx_build\Dockerfile
-    image: emoguard-nginx:local
+  # nginx removed —— 本仓库无 nginx_build/ 构建上下文，且 dockerfile 路径误用 Windows
+  # 反斜杠分隔符，本地 `docker compose build` 必然失败；生产 TLS 由宿主机 nginx 承担
+  # （见 宿主机.conf），容器化 nginx 从未参与运行。
+  # nginx:
+  #   build:
+  #     context: .
+  #     dockerfile: nginx_build/Dockerfile
+  #   image: emoguard-nginx:local

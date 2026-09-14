@@ -140,10 +140,17 @@ services:
 # Named Volumes and Network Configuration
 # ----------------------------------------------------
 volumes:
+  # external: true —— 复用服务器上已存在的数据卷（2025-11-22 创建，标签属旧项目 root）。
+  # 不加 external 时 compose 视卷为己有，`down -v` 或 `down --volumes` 会连带删除
+  # emoguard_pg_data（全部业务数据）与 emoguard_redis_data；声明为 external 后 compose
+  # 只引用、不创建也不删除，且不再输出 "created for project ..." 归属警告。
+  # 代价：新宿主机首次部署前必须先建卷，deploy.yml 的前置检查会自动创建。
   pg_data:
     name: emoguard_pg_data
+    external: true
   redis_data:
     name: emoguard_redis_data
+    external: true
 
 networks:
   emoguard-net:

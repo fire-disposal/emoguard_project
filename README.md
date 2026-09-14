@@ -60,22 +60,53 @@
 | `WECHAT_MINI_PROGRAM_APP_ID` / `_APP_SECRET` | 微信小程序凭证 |
 | `WECHAT_SUBSCRIPTION_TEMPLATES` | 微信订阅消息模板 ID |
 
-> **密钥管理约定**：运行时密钥由服务器上手动维护的 `~/.env` 提供，CI/CD **不再生成或覆盖** `~/.env`。
-> 新增/轮换运行时密钥请直接编辑服务器 `~/.env` 后执行 `docker compose --env-file ~/.env up -d`。
+> **密钥管理约定**：运行时密钥由服务器 `/opt/emoguard/.env` 手工维护，CI/CD **不再生成或覆盖**该文件。
+> 新增/轮换运行时密钥请编辑服务器 `/opt/emoguard/.env`，然后执行
+> `ssh yecaoyun 'cd /opt/emoguard && docker compose -p emoguard -f docker-compose.yml --env-file .env up -d'`。
 > GitHub Secrets 仅保留部署必须项（`SERVER_SSH_KEY` / `SERVER_HOST` / `SERVER_USER` 及自动注入的 `GITHUB_TOKEN`）。
-> 服务器 `~/.env` 须离线加密备份（密码管理器 / sops），**严禁提交进 git**。
+> `/opt/emoguard/.env` 须离线加密备份（密码管理器 / sops），**严禁提交进 git**。
 
-### 启动
+### 部署（CI/CD）
+
+发布走 GitHub Actions 手动触发（`.github/workflows/deploy.yml`，`workflow_dispatch` → **Run workflow**）：无 push/PR 自动触发，`environment: dev` 无需人工审批。单次运行会：
+
+1. 构建镜像并推送 GHCR，tag 为提交短哈希（`<sha8>`）与 `latest`；
+2. 将 `docker-compose.yml` 中的 `__IMAGE__` 渲染成本次镜像后上传至服务器 `/opt/emoguard/docker-compose.yml`；
+3. 校验 `/opt/emoguard/.env` 必需键**存在且非空**；
+4. 确认命名数据卷存在，以 `docker compose up -d --remove-orphans` 就地更新（不 `down`，避免停机窗口）；
+5. 在容器内探测 `/health/`（最多 20 次、间隔 5 秒）；**`up` 失败或健康检查失败都会自动回滚到上一镜像 tag**；成功后把 tag 写入 `last_successful_version.txt`。
+
+服务器目录布局：
+
+| 路径 | 用途 |
+|------|------|
+| `/opt/emoguard/docker-compose.yml` | CI 渲染后上传，**勿手改**（下次部署覆盖） |
+| `/opt/emoguard/.env` | 运行时密钥，手工维护，CI 不读不写 |
+| `/opt/emoguard/last_successful_version.txt` | 最近一次成功部署的镜像 tag |
+| `/opt/emoguard/docker-compose.rollback.yml` | 回滚时生成的临时编排，可删 |
+| `/var/www/emoguard/{media,staticfiles,logs}` | 绑定挂载；宿主机 nginx 直接读 `static/`、`media/` |
+| `宿主机.conf` | 宿主机 nginx vhost（TLS + 静态/媒体 + 路由白名单）；改后 `nginx -t && systemctl reload nginx` |
+
+手工回滚（CI 回滚未生效，或需指定更早版本时）：
 
 ```bash
-# 构建镜像
-docker compose build
-
-# 启动全部服务
-docker compose up -d
+ssh yecaoyun
+cd /opt/emoguard
+TAG=$(cat last_successful_version.txt)   # 也可填任意历史 tag（见 docker images）
+sed -E "s|image: .*emoguard-backend.*|image: ghcr.io/fire-disposal/emoguard_project/emoguard-backend:${TAG}|" \
+  docker-compose.yml > docker-compose.rollback.yml
+docker compose -p emoguard -f docker-compose.rollback.yml --env-file .env up -d --remove-orphans
 ```
 
-容器启动后自动执行数据库迁移、静态文件收集、管理员创建、定时任务注册。
+> **数据卷红线**：`emoguard_pg_data` / `emoguard_redis_data` 在编排中声明为 `external: true`，compose 只引用、不创建也不删除。
+> **严禁 `docker compose down -v` / `docker volume rm`**——那会清空全部业务数据。
+> `POSTGRES_PASSWORD` 已固化进 `emoguard_pg_data`，改值会导致数据库不可访问；新宿主机首次部署前需先建这两个卷（CI 前置检查会自动创建）。
+
+### 本地开发
+
+`docker-compose.override.yml` 仅供本地：将 backend / celery-worker 改为 `build: .` 并标记为 `emoguard-backend:local`。
+生产编排中的 `image: __IMAGE__` 是 CI 渲染占位符，不是合法镜像名——**在未渲染的编排上直接 `docker compose build` 会失败**，本地务必让 override 生效（同目录 `docker compose` 命令默认即生效），并先复制 `.env.example` 为 `.env` 填值。
+本地不启 nginx（override 中该服务已停用），TLS 由宿主机 nginx 承担。
 
 ### 健康检查
 
@@ -83,7 +114,7 @@ docker compose up -d
 curl http://localhost:8000/health/
 ```
 
-返回数据库和缓存连接状态。
+返回数据库和缓存连接状态（不健康时返回 503）。
 
 ## API 文档
 

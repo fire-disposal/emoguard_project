@@ -85,7 +85,7 @@ jobs:
       - name: Deploy Stack via SSH
         shell: bash
         run: |
-          ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'EOF'
             set -euo pipefail
 
             DEPLOY_DIR="${{ env.DEPLOY_DIR }}"
@@ -96,12 +96,15 @@ jobs:
               echo "❌ $DEPLOY_DIR/.env 不存在。请先在服务器创建并填入运行时密钥后重试。"
               exit 1
             fi
+            # 注意：`VAR=`（空值）在 compose 里算“已设置”，旧检查 grep -q "^VAR=" 会放过，
+            # 直到容器启动才因 JWT_SIGNING_KEY 为空而失败。故此处校验值非空。
             for k in JWT_SIGNING_KEY SECRET_KEY POSTGRES_PASSWORD REDIS_PASSWORD \
                      DJANGO_SUPERUSER_USERNAME WECHAT_MINI_PROGRAM_APP_ID \
                      WECHAT_MINI_PROGRAM_APP_SECRET WECHAT_SUBSCRIPTION_TEMPLATES; do
-              grep -q "^${k}=" "$DEPLOY_DIR/.env" || { echo "❌ .env 缺少必需键: ${k}"; exit 1; }
+              v=$(sed -n "s/^${k}=//p" "$DEPLOY_DIR/.env" | tail -n1)
+              [ -n "$v" ] || { echo "❌ .env 的 ${k} 缺失或为空值"; exit 1; }
             done
-            echo "✅ .env 必需键齐全"
+            echo "✅ .env 必需键齐全且非空"
 
             echo "🔑 Docker登录..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -120,10 +123,33 @@ jobs:
                 exit 1
             fi
 
+            echo "🗄️ 确保命名数据卷存在（compose 已声明 external，不会被创建或删除）..."
+            for v in emoguard_pg_data emoguard_redis_data; do
+              docker volume inspect "$v" >/dev/null 2>&1 || { echo "➕ 创建数据卷 $v"; docker volume create "$v" >/dev/null; }
+            done
+            echo "🔒 数据卷就绪（严禁 docker compose down -v / docker volume rm）"
+
             # 回滚锚点：记录当前在用的镜像 tag（失败时回退到它）
             OLD_IMG=$(docker inspect --format '{{.Config.Image}}' emoguard-backend 2>/dev/null || echo "")
             OLD_TAG=$(echo "$OLD_IMG" | rev | cut -d: -f1 | rev)
+            NEW_TAG="${{ steps.ver.outputs.TAG }}"
             echo "🔖 当前版本（回滚锚点）: ${OLD_TAG:-无}"
+
+            # 回滚：把编排中的镜像换成旧 tag 后就地重启。两个失败出口（compose up 失败、
+            # 健康检查失败）都走这里，避免“新版本起不来且未回退”的持续停机。
+            rollback() {
+              local target="$1"
+              if [ -z "$target" ] || [ "$target" = "$NEW_TAG" ]; then
+                echo "⚠️ 无可用的回滚锚点，请人工介入（$NEW_TAG 未能就绪）"
+                return 1
+              fi
+              echo "↩️ 自动回滚到 $target ..."
+              local img="${{ env.IMAGE_BASE }}:${target}"
+              docker image inspect "$img" >/dev/null 2>&1 || docker pull "$img" || true
+              sed "s|image: .*emoguard-backend:.*|image: ${img}|g" "$DEPLOY_DIR/docker-compose.yml" > "$DEPLOY_DIR/docker-compose.rollback.yml"
+              docker compose -p ${{ env.COMPOSE_PROJECT }} -f "$DEPLOY_DIR/docker-compose.rollback.yml" --env-file "$DEPLOY_DIR/.env" up -d --remove-orphans || true
+              echo "⚠️ 已尝试回滚到 ${target}，请人工确认后重试部署"
+            }
 
             echo "📥 拉取镜像..."
             compose pull
@@ -134,7 +160,13 @@ jobs:
             # 2026-09-14 校准：不再 down→up（那会造成停机窗口且失败时无回滚）；
             # 改为就地 up -d --remove-orphans（compose 只重建变化的容器）。
             echo "🚀 启动/更新容器..."
-            compose up -d --remove-orphans
+            if ! compose up -d --remove-orphans; then
+              echo "❌ compose up 失败（容器未能更新）"
+              docker ps -a | grep emoguard || true
+              compose logs backend --tail 50 || true
+              rollback "$OLD_TAG"
+              exit 1
+            fi
 
             echo "⏳ 等待容器初始化..."
             sleep 10
@@ -169,16 +201,7 @@ jobs:
               compose logs backend --tail 50 || true
               compose logs db --tail 20 || true
               compose logs redis --tail 20 || true
-              if [ -n "${OLD_TAG:-}" ] && [ "$OLD_TAG" != "${{ steps.ver.outputs.TAG }}" ]; then
-                echo "↩️ 自动回滚到 $OLD_TAG ..."
-                IMAGE_OVERRIDE="${{ env.IMAGE_BASE }}:${OLD_TAG}"
-                docker image inspect "$IMAGE_OVERRIDE" >/dev/null 2>&1 || docker pull "$IMAGE_OVERRIDE" || true
-                sed "s|image: .*emoguard-backend:.*|image: ${IMAGE_OVERRIDE}|g" "$DEPLOY_DIR/docker-compose.yml" > "$DEPLOY_DIR/docker-compose.rollback.yml"
-                docker compose -p ${{ env.COMPOSE_PROJECT }} -f "$DEPLOY_DIR/docker-compose.rollback.yml" --env-file "$DEPLOY_DIR/.env" up -d --remove-orphans || true
-                echo "⚠️ 已尝试回滚到 ${OLD_TAG}，请人工确认后重试部署"
-              else
-                echo "⚠️ 无可用的回滚锚点，请人工介入"
-              fi
+              rollback "$OLD_TAG"
               exit 1
             fi
 

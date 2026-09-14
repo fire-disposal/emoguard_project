@@ -1,5 +1,9 @@
 # JWT 强化与密钥迁移 实施计划
 
+> **归档说明（2026-09-14）**：本计划已执行完毕并归档，仅作历史记录，**不得照文中路径操作**。
+> 文中 `~/.env`（即 `/root/.env`）等路径已过时：现行部署目录为 `/opt/emoguard`、密钥文件为 `/opt/emoguard/.env`，
+> 编排以显式项目名 `emoguard` 运行。现行流程见 `README.md` 部署章节与 `doc/TODO.md`。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 修复令牌刷新链路的客户端与后端缺陷,并把非部署必须的运行时密钥从 GitHub Secrets 迁回服务器手动管理的 `~/.env`。
