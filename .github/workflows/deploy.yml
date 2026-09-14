@@ -89,7 +89,7 @@ jobs:
             set -euo pipefail
 
             DEPLOY_DIR="${{ env.DEPLOY_DIR }}"
-            COMPOSE="docker compose -p ${{ env.COMPOSE_PROJECT }} -f $DEPLOY_DIR/docker-compose.yml --env-file $DEPLOY_DIR/.env"
+            compose() { docker compose -p ${{ env.COMPOSE_PROJECT }} -f "$DEPLOY_DIR/docker-compose.yml" --env-file "$DEPLOY_DIR/.env" "$@"; }
 
             echo "🔎 校验服务器 $DEPLOY_DIR/.env (运行时密钥由服务器手动维护, CI 不再生成)..."
             if [ ! -f "$DEPLOY_DIR/.env" ]; then
@@ -126,7 +126,7 @@ jobs:
             echo "🔖 当前版本（回滚锚点）: ${OLD_TAG:-无}"
 
             echo "📥 拉取镜像..."
-            $COMPOSE pull
+            compose pull
 
             echo "🔍 验证镜像:"
             docker images | grep emoguard || echo "⚠️ 未找到emoguard镜像"
@@ -134,7 +134,7 @@ jobs:
             # 2026-09-14 校准：不再 down→up（那会造成停机窗口且失败时无回滚）；
             # 改为就地 up -d --remove-orphans（compose 只重建变化的容器）。
             echo "🚀 启动/更新容器..."
-            $COMPOSE up -d --remove-orphans
+            compose up -d --remove-orphans
 
             echo "⏳ 等待容器初始化..."
             sleep 10
@@ -157,7 +157,7 @@ jobs:
               if [ $i -eq 5 ] || [ $i -eq 10 ] || [ $i -eq 15 ]; then
                 echo "--- 诊断信息 ---"
                 docker ps -a | grep emoguard
-                $COMPOSE logs backend --tail 50
+                compose logs backend --tail 50
                 echo "----------------"
               fi
               sleep 5
@@ -166,9 +166,9 @@ jobs:
             if [ "$health_check_passed" != "true" ]; then
               echo "❌ 健康检查失败"
               docker ps -a | grep emoguard || true
-              $COMPOSE logs backend --tail 50 || true
-              $COMPOSE logs db --tail 20 || true
-              $COMPOSE logs redis --tail 20 || true
+              compose logs backend --tail 50 || true
+              compose logs db --tail 20 || true
+              compose logs redis --tail 20 || true
               if [ -n "${OLD_TAG:-}" ] && [ "$OLD_TAG" != "${{ steps.ver.outputs.TAG }}" ]; then
                 echo "↩️ 自动回滚到 $OLD_TAG ..."
                 IMAGE_OVERRIDE="${{ env.IMAGE_BASE }}:${OLD_TAG}"
