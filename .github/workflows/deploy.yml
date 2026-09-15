@@ -82,6 +82,10 @@ jobs:
           scp -i ~/.ssh/id_rsa docker-compose.rendered.yml \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/docker-compose.yml
 
+          # 部署前备份脚本（该库此前没有任何备份）
+          scp -i ~/.ssh/id_rsa scripts/pre-deploy-backup.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/pre-deploy-backup.sh
+
       - name: Deploy Stack via SSH
         shell: bash
         run: |
@@ -150,6 +154,12 @@ jobs:
               docker compose -p ${{ env.COMPOSE_PROJECT }} -f "$DEPLOY_DIR/docker-compose.rollback.yml" --env-file "$DEPLOY_DIR/.env" up -d --remove-orphans || true
               echo "⚠️ 已尝试回滚到 ${target}，请人工确认后重试部署"
             }
+
+            # —— 部署前数据库备份（fail-closed）——
+            # 该库此前完全没有备份（12 MB / 29 张表，卷 emoguard_pg_data）；备份失败即中止，
+            # 避免“升级出问题、又没有可回退的数据状态”。
+            echo "🗄️ 备份数据库（失败即中止部署）"
+            bash "$DEPLOY_DIR/pre-deploy-backup.sh" backup
 
             echo "📥 拉取镜像..."
             compose pull
