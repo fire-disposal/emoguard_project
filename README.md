@@ -70,10 +70,10 @@
 
 发布走 GitHub Actions 手动触发（`.github/workflows/deploy.yml`，`workflow_dispatch` → **Run workflow**）：无 push/PR 自动触发，`environment: dev` 无需人工审批。单次运行会：
 
-1. 构建镜像并推送 GHCR，tag 为提交短哈希（`<sha8>`）与 `latest`；
+1. 先检查部署输入文件和备份脚本语法，再构建镜像并推送 GHCR，tag 为提交短哈希（`<sha8>`）与 `latest`；
 2. 将 `docker-compose.yml` 中的 `__IMAGE__` 渲染成本次镜像后上传至服务器 `/opt/emoguard/docker-compose.yml`；
 3. 校验 `/opt/emoguard/.env` 必需键**存在且非空**；
-4. 确认命名数据卷存在，以 `docker compose up -d --remove-orphans` 就地更新（不 `down`，避免停机窗口）；
+4. 确认命名数据卷存在；先在现有 `emoguard-db` 内用 PostgreSQL 15 的 `pg_dump` 备份 `emoguard` 库，成功后才拉取镜像并执行 `docker compose up -d --remove-orphans`（不 `down`）；
 5. 在容器内探测 `/health/`（最多 20 次、间隔 5 秒）；**`up` 失败或健康检查失败都会自动回滚到上一镜像 tag**；成功后把 tag 写入 `last_successful_version.txt`。
 
 服务器目录布局：
@@ -86,6 +86,19 @@
 | `/opt/emoguard/docker-compose.rollback.yml` | 回滚时生成的临时编排，可删 |
 | `/var/www/emoguard/{media,staticfiles,logs}` | 绑定挂载；宿主机 nginx 直接读 `static/`、`media/` |
 | `宿主机.conf` | 宿主机 nginx vhost（TLS + 静态/媒体 + 路由白名单）；改后 `nginx -t && systemctl reload nginx` |
+
+数据库部署前备份由 `scripts/pre-deploy-backup.sh` 管理，产物为
+`/opt/emoguard/backups/pre-deploy-YYYYmmdd-HHMMSS.sql.gz`，最新路径写入 `.last-pre-deploy`。
+检查 `pg_dump` 退出码、gzip 完整性及 dump 头尾标记；失败中止部署。
+写操作共用文件锁，同秒运行不覆盖旧文件。保留最近 10 份、6 小时内文件及
+`.pre-deploy-keep` 指定锚点；清单缺失／不可读或参数非法时拒绝裁剪，但不影响已成功的备份。
+不需要锚点时，管理员可明确保留空清单。脚本不再自动补空清单。
+只匹配 `pre-deploy-*.sql`／`.sql.gz`，不清理其他备份。
+
+该备份是 gzip 包装的 SQL，不是 `pg_restore` 使用的 custom dump；需要解压后用相同
+PostgreSQL 大版本的 `psql` 导入准备好的干净目标库，并核对角色、扩展和应用版本。
+这些是格式与版本前提，不是恢复成功证明；镜像回滚不会自动回滚数据库。
+目前仅有部署前备份，未接入周期全库备份或树莓派异地副本；媒体文件和 Redis 不在 SQL 中。
 
 手工回滚（CI 回滚未生效，或需指定更早版本时）：
 

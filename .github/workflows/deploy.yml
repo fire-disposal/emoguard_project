@@ -28,6 +28,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Preflight deployment inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in Dockerfile docker-compose.yml scripts/pre-deploy-backup.sh; do
+            [[ -f "$file" && -r "$file" && -s "$file" ]] || {
+              echo "::error::Missing deployment input: $file"
+              exit 1
+            }
+          done
+          bash -n scripts/pre-deploy-backup.sh
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
