@@ -75,8 +75,10 @@ jobs:
             docker-compose.yml > docker-compose.rendered.yml
 
           echo "📁 确保部署目录存在: ${{ env.DEPLOY_DIR }}"
+          # backups/ 一并创建并归属部署用户：否则首次部署前备份会因目录不可写而
+          # fail-closed 卡住（该目录由 root 预建过）
           ssh -i ~/.ssh/id_rsa -T ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "sudo mkdir -p ${{ env.DEPLOY_DIR }} && sudo chown \$USER:\$USER ${{ env.DEPLOY_DIR }}"
+            "sudo mkdir -p ${{ env.DEPLOY_DIR }}/backups && sudo chown \$USER:\$USER ${{ env.DEPLOY_DIR }} ${{ env.DEPLOY_DIR }}/backups"
 
           echo "📤 Uploading compose to server (server-side ${{ env.DEPLOY_DIR }}/.env is manually managed, untouched)..."
           scp -i ~/.ssh/id_rsa docker-compose.rendered.yml \
