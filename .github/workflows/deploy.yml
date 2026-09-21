@@ -28,17 +28,35 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # 运维工具（备份/恢复脚本）跟随**执行中的工作流提交**，不随被部署的提交漂移：
+      # 否则从旧提交/旧 tag 触发部署时，上传的就是旧版备份/恢复入口 —— 旧脚本的缺陷
+      # 不能成为"备份/恢复门被绕过"的理由。应用镜像仍构建自被部署的提交。
+      - name: Checkout backup/restore tools at workflow SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .deploy-ops
+          sparse-checkout: |
+            scripts/pre-deploy-backup.sh
+            scripts/db-restore.sh
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Preflight deployment inputs
         shell: bash
         run: |
           set -euo pipefail
-          for file in Dockerfile docker-compose.yml scripts/pre-deploy-backup.sh; do
+          # 校验的必须是**实际上传的那一份**：两个脚本都来自 .deploy-ops（workflow SHA）。
+          for file in Dockerfile docker-compose.yml \
+                      .deploy-ops/scripts/pre-deploy-backup.sh .deploy-ops/scripts/db-restore.sh; do
             [[ -f "$file" && -r "$file" && -s "$file" ]] || {
               echo "::error::Missing deployment input: $file"
               exit 1
             }
           done
-          bash -n scripts/pre-deploy-backup.sh
+          for script in .deploy-ops/scripts/pre-deploy-backup.sh .deploy-ops/scripts/db-restore.sh; do
+            bash -n "$script"
+          done
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -96,9 +114,13 @@ jobs:
           scp -i ~/.ssh/id_rsa docker-compose.rendered.yml \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/docker-compose.yml
 
-          # 部署前备份脚本（该库此前没有任何备份）
-          scp -i ~/.ssh/id_rsa scripts/pre-deploy-backup.sh \
+          # 备份/恢复入口（都来自上面 .deploy-ops 的 workflow SHA checkout）：入库到部署目录。
+          # 恢复脚本必须在宿主上可用 —— 只存在于仓库里的恢复入口等于没有恢复入口
+          # （nursing 踩过：db-restore.sh 长期没有下发项，宿主副本漂移）。
+          scp -i ~/.ssh/id_rsa .deploy-ops/scripts/pre-deploy-backup.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/pre-deploy-backup.sh
+          scp -i ~/.ssh/id_rsa .deploy-ops/scripts/db-restore.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/db-restore.sh
 
       - name: Deploy Stack via SSH
         shell: bash
@@ -169,11 +191,17 @@ jobs:
               echo "⚠️ 已尝试回滚到 ${target}，请人工确认后重试部署"
             }
 
-            # —— 部署前数据库备份（fail-closed）——
-            # 该库此前完全没有备份（12 MB / 29 张表，卷 emoguard_pg_data）；备份失败即中止，
-            # 避免“升级出问题、又没有可回退的数据状态”。
-            echo "🗄️ 备份数据库（失败即中止部署）"
-            bash "$DEPLOY_DIR/pre-deploy-backup.sh" backup
+            # —— 部署前数据库备份（走宿主备份层 CLI，fail-closed）——
+            # 宿主 /opt/server-ops/backup/cli.py 按 datasets.toml 声明的 emoguard-db 跑项目脚本
+            # （/opt/emoguard/pre-deploy-backup.sh backup，子进程带 BK_RECORD=0），**代记**账本、
+            # 按 dir+glob 认本次新增产物、写 .meta.json 并跑声明的 verify；失败退出 1 ⇒ set -e
+            # 中止部署。备份调度与记账只有宿主一处实现，CI 不再自带一份。
+            echo "🗄️ 备份数据库（宿主备份层 backup/cli.py，失败即中止部署）"
+            if [ ! -r /opt/server-ops/backup/cli.py ]; then
+              echo "❌ 宿主备份层缺失（/opt/server-ops/backup/cli.py）：先在 yecaoyun 执行 ops.sh sync 下发/修复宿主运维仓，再重试部署。"
+              exit 1
+            fi
+            (cd /opt/server-ops && /usr/bin/python3 backup/cli.py run emoguard-db --kind pre-deploy --notify)
 
             echo "📥 拉取镜像..."
             compose pull
