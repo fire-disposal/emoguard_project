@@ -25,11 +25,23 @@
 #   emoguard_project/scripts/pre-deploy-backup.sh
 set -uo pipefail
 
+# ── 备份事件账本接线（宿主 /opt/server-ops/backup/lib.sh）────────────────────
+# 库缺失时退化为空实现：脚本仍可独立运行（fail-open，见 server-ops docs/backup-design.md §10）
+BK_LIB="${BK_LIB:-/opt/server-ops/backup/lib.sh}"
+if [ -r "$BK_LIB" ]; then
+  # shellcheck source=/dev/null
+  . "$BK_LIB"
+else
+  bk_begin() { :; }; bk_artifact() { :; }; bk_context() { :; }; bk_note() { :; }
+  bk_restore_begin() { :; }; bk_restore_end() { :; }; bk_refused() { :; }
+fi
+
 # ── 站点默认值（本文件唯一的仓库差异区）──
 BACKUP_DIR="${BACKUP_DIR:-/opt/emoguard/backups}"
 PG_CONTAINER="${PG_CONTAINER:-emoguard-db}"
 PG_USER="${PG_USER:-emoguard}"
 PG_DB="${PG_DB:-emoguard}"
+DATASET="${DATASET:-emoguard-db}"   # 事件账本数据集名
 PG_ENV_ARGS=()                 # 容器内 trust 认证，无需传密码
 # 该库此前完全没有备份，先按“最近 N 次部署”兜底。
 KEEP_N="${KEEP_N:-10}"
@@ -94,6 +106,8 @@ cmd_backup() {
     name="pre-deploy-$(date +%Y%m%d-%H%M%S).sql.gz"
   done
   local tmp="$BACKUP_DIR/.$name.tmp.$$" errf="$BACKUP_DIR/.$name.err.$$"
+  # 账本：先记 attempt（EXIT trap 在退出时补 ok/fail），产物落位后再记 bytes/sha256
+  bk_begin "$DATASET" backup pre-deploy
 
   # 上次被 kill（超时/断连）可能留下半成品临时文件；>24h 才清理，避免误删并发运行的
   find "$BACKUP_DIR" -maxdepth 1 -type f -name '.pre-deploy-*.tmp.*' -mmin +1440 -delete 2>/dev/null || true
@@ -128,6 +142,7 @@ cmd_backup() {
   esac
 
   mv -f "$tmp" "$BACKUP_DIR/$name" || { rm -f "$tmp"; die "无法写入 $BACKUP_DIR/$name"; }
+  bk_artifact "$BACKUP_DIR/$name"
   printf '%s\n' "$BACKUP_DIR/$name" >"$STATE_FILE.tmp.$$" &&
     mv -f "$STATE_FILE.tmp.$$" "$STATE_FILE" || die "备份已保存，但无法更新 $STATE_FILE"
   log "ok        $name  $(human "$(stat -c%s "$BACKUP_DIR/$name")")"
